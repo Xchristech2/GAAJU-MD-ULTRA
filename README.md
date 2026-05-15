@@ -1,33 +1,38 @@
 <div align="center">
 
-<!-- TELEGRAM -->
-<a href="https://t.me/chrisgaajutechs">
-  <img src="https://img.shields.io/badge/Telegram-%40chrisgaajutechs-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"/>
-</a>
-[Telegram](https://t.me/chrisgaajutechs?utm_source=chatgpt.com)
+  <img src="https://raw.githubusercontent.com/Xchristech2/GAAJU-MD-ULTRA/main/assets/xd-logo.jpg" width="180" style="border-radius:16px;" />
 
-<br><br>
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=0,2,2,5,30&height=120&section=header&text=GAAJU-MD%20ULTRA&fontSize=42&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=WhatsApp%20Bot%20v1.2.0&descAlignY=60&descSize=18" width="100%"/>
 
-<!-- WHATSAPP CHAT -->
-<a href="https://wa.me/message/toosiitech">
-  <img src="https://img.shields.io/badge/WhatsApp-Chat%20Us-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
-</a>
-[WhatsApp Chat](https://wa.me/message/toosiitech?utm_source=chatgpt.com)
+  <img src="https://img.shields.io/badge/version-1.2.0-blueviolet?style=for-the-badge&logo=whatsapp&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Node.js-20.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Commands-255+-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Made%20by-TOOSII%20TECH-FF6B6B?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge"/>
 
-<br><br>
+  <br><br>
 
-<!-- WHATSAPP GROUP -->
-<a href="https://chat.whatsapp.com/GAA2tc6PPqX82aY9dwr24g?mode=gi_t">
-  <img src="https://img.shields.io/badge/WhatsApp%20Group-Join%20Now-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
-</a>
-[WhatsApp Group](https://chat.whatsapp.com/GAA2tc6PPqX82aY9dwr24g?mode=gi_t&utm_source=chatgpt.com)
+  **A powerful, free, open-source WhatsApp bot with 255+ commands**  
+  *AI · Games · Utility · Group Management · Media · Search · and more*
 
-<br><br>
+  <br><br>
 
-<!-- PAIR SITE -->
-<a href="https://gaaju-ultra-pair-3vy0.onrender.com/">
-  <img src="https://img.shields.io/badge/PAIR%20SITE-Get%20Session%20ID-FF6B6B?style=for-the-badge&logo=whatsapp&logoColor=white"/>
-</a>
-[Pair Site](https://gaaju-ultra-pair-3vy0.onrender.com/?utm_source=chatgpt.com)
+  ## 🔑 SESSION & SETUP
+
+  👉 Get your Session ID here:  
+  [Session Generator](https://gaaju-ultra-pair-3vy0.onrender.com/?utm_source=chatgpt.com)
+
+  <br>
+
+  ## 🔗 IMPORTANT LINKS
+
+  📡 Telegram Channel:  
+  [Telegram Channel](https://t.me/chrisgaajutechs?utm_source=chatgpt.com)
+
+  💬 WhatsApp Group:  
+  [WhatsApp Group](https://chat.whatsapp.com/GAA2tc6PPqX82aY9dwr24g?mode=gi_t&utm_source=chatgpt.com)
+
+  🤖 WhatsApp Chat:  
+  [WhatsApp Chat](https://wa.me/message/toosiitech?utm_source=chatgpt.com)
 
 </div>
