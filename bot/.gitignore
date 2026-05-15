@@ -1,0 +1,27 @@
+# WhatsApp session — NEVER commit these
+  session/
+  sessions/
+  *.db
+  *.sqlite
+
+  # Environment
+  .env
+  .env.local
+
+  # Bot runtime files
+  .botname.json
+  data/
+  logs/
+
+  # Dependencies
+  node_modules/
+
+  # Replit-specific
+  attached_assets/
+  .replit
+  replit.nix
+
+  # OS
+  .DS_Store
+  Thumbs.db
+  
