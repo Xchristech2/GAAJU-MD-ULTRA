@@ -30,9 +30,9 @@
   [Telegram Channel](https://t.me/chrisgaajutechs?utm_source=chatgpt.com)
 
   💬 WhatsApp Group:  
-  [WhatsApp Group](https://chat.whatsapp.com/GAA2tc6PPqX82aY9dwr24g?mode=gi_t&utm_source=chatgpt.com)
+  [WhatsApp Group](https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl?mode=gi_t&utm_source=chatgpt.com)
 
   🤖 WhatsApp Chat:  
-  [WhatsApp Chat](https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl?utm_source=chatgpt.com)
+  [WhatsApp Chat](https://chat.whatsapp.com/GAA2tc6PPqX82aY9dwr24g?mode=gi_t?utm_source=chatgpt.com)
 
 </div>
