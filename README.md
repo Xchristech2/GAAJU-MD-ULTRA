@@ -20,7 +20,7 @@
   ## 🔑 SESSION & SETUP
 
   👉 Get your Session ID here:  
-  <a href="https://gaaju-ultra-pair-3vy0.onrender.com/?utm_source=chatgpt.com">
+  <a href="https://gaaju-ultra-pair-ljtv.onrender.com/?utm_source=chatgpt.com">
     <img src="https://img.shields.io/badge/SESSION-GENERATOR-blue?style=for-the-badge&logo=render&logoColor=white"/>
   </a>
 
