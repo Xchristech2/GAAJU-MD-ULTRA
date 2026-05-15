@@ -1,0 +1,64 @@
+# ── Credentials & secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*
+
+# ── Session files ─────────────────────────────────────────────────────────────
+# Never commit — creds are restored from SESSION_ID env var at startup
+bot/session/
+
+# ── Node dependencies ─────────────────────────────────────────────────────────
+node_modules/
+bot/node_modules/
+npm-debug.log
+*.log
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Logs & temp ───────────────────────────────────────────────────────────────
+logs/
+bot/tmp/
+
+# ── Replit-specific ───────────────────────────────────────────────────────────
+.replit
+replit.nix
+.breakpoints
+.local/
+.agents/
+.cache/
+.upm/
+attached_assets/
+artifacts/
+lib/
+scripts/
+toosii-bot/
+replit.md
+
+# ── Binary downloads (auto-fetched on startup) ────────────────────────────────
+bot/yt-dlp
+
+# ── Launcher PID lock (runtime only) ─────────────────────────────────────────
+.launcher.pid
+
+# ── Runtime data files — written by the bot while running ────────────────────
+# These ship with clean defaults in the repo.
+# Changes made while the bot runs are instance-specific — do NOT commit them.
+bot/data/config.json
+bot/data/warnings.json
+bot/data/sudo.json
+bot/data/antigroupmention.json
+bot/data/antigroupstatus.json
+bot/data/antistatusmention.json
+bot/data/antitag.json
+bot/data/antispam.json
+bot/data/autoconfig.json
+bot/data/status_detection_logs.json
+bot/data/autoViewConfig.json
+bot/data/autoReactConfig.json
+bot/data/member_detection.json
+bot/data/welcome_data.json
+bot/data/viewonce_messages/
+bot/data/antiviewonce/
+bot/.botname.json
