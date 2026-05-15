@@ -156,7 +156,7 @@
 
   <div align="center">
 
-  Crafted by **XCHRIST TECH**
+  Crafted by **XCHRIS TECH**
 
   [![Telegram](https://img.shields.io/badge/Telegram-%40toosiitech-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/toosiitech)
   [![WhatsApp](https://img.shields.io/badge/WhatsApp-Chat%20Us-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/message/toosiitech)
