@@ -55,16 +55,22 @@ function getCategoryData() {
             ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
             ...allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
         ];
+
         const catData = [];
         let totalCmds = 0;
+
         for (const cat of ordered) {
-            // commandCategories stores all names including aliases — deduplicate by
-            // cross-checking with the commands Map (which holds canonical names only once)
+
+            // commandCategories stores all names including aliases
             const cmdNames = [...new Set((liveRegistry.get(cat) || []))];
+
             if (cmdNames.length === 0) continue;
+
             totalCmds += cmdNames.length;
+
             catData.push({ cat, cmdNames });
         }
+
         return { catData, totalCmds };
     }
 
@@ -72,33 +78,59 @@ function getCategoryData() {
     const allCats = fs.readdirSync(CMDS_DIR).filter(item =>
         fs.statSync(path.join(CMDS_DIR, item)).isDirectory()
     );
+
     const ordered = [
         ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
         ...allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
     ];
+
     let totalCmds = 0;
     const catData = [];
+
     for (const cat of ordered) {
+
         const names = [];
+
         try {
+
             const files = fs.readdirSync(path.join(CMDS_DIR, cat))
-                .filter(f => f.endsWith('.js') && !f.includes('.test.') && !f.includes('.disabled.'))
+                .filter(f =>
+                    f.endsWith('.js') &&
+                    !f.includes('.test.') &&
+                    !f.includes('.disabled.')
+                )
                 .sort();
+
             for (const file of files) {
+
                 try {
+
                     const mod = require(path.join(CMDS_DIR, cat, file));
                     const raw = mod.default || mod;
-                    const list = Array.isArray(raw) ? raw : (raw && raw.name ? [raw] : []);
+
+                    const list = Array.isArray(raw)
+                        ? raw
+                        : (raw && raw.name ? [raw] : []);
+
                     for (const cmd of list) {
                         if (cmd && cmd.name) names.push(cmd.name);
                     }
+
                 } catch {}
             }
+
         } catch {}
+
         if (names.length === 0) continue;
+
         totalCmds += names.length;
-        catData.push({ cat, cmdNames: names });
+
+        catData.push({
+            cat,
+            cmdNames: names
+        });
     }
+
     return { catData, totalCmds };
 }
 
@@ -106,44 +138,66 @@ function getPlatform() {
     if (process.env.DYNO) return 'Heroku';
     if (process.env.RAILWAY_ENVIRONMENT) return 'Railway';
     if (process.env.RENDER) return 'Render';
+
     return 'VPS';
 }
 
 function getUptime() {
     const s = Math.floor(process.uptime());
+
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
+
     return `${h}h ${m}m ${sec}s`;
 }
 
 function getUsage() {
     try {
+
         const used  = process.memoryUsage().rss / 1024 / 1024;
         const total = os.totalmem() / 1024 / 1024 / 1024;
+
         return `${used.toFixed(1)} MB of ${total.toFixed(2)} GB`;
-    } catch { return 'N/A'; }
+
+    } catch {
+
+        return 'N/A';
+    }
 }
 
 function getSpeed(msg) {
     try {
-        if (msg._botReceivedAt) return `${Date.now() - msg._botReceivedAt}ms`;
+
+        if (msg._botReceivedAt) {
+            return `${Date.now() - msg._botReceivedAt}ms`;
+        }
+
     } catch {}
+
     return 'N/A';
 }
 
 module.exports = {
-    name:        'menu',
-    aliases:     ['help', 'cmds', 'commands', 'list'],
+    name: 'menu',
+    aliases: ['help', 'cmds', 'commands', 'list'],
     description: 'Show all available bot commands',
-    category:    'utility',
+    category: 'utility',
 
     async execute(sock, msg, args, prefix, ctx) {
+
         const chatId  = msg.key.remoteJid;
         const botName = getBotName();
-        const p       = prefix || cfg.PREFIX || '.';
-        const owner   = cfg.OWNER_NUMBER ? `+${cfg.OWNER_NUMBER}` : (cfg.OWNER_NAME || 'GAAJU');
-        const mode    = (cfg.MODE || 'public').charAt(0).toUpperCase() + (cfg.MODE || 'public').slice(1);
+
+        const p = prefix || cfg.PREFIX || '.';
+
+        const owner = cfg.OWNER_NUMBER
+            ? `+${cfg.OWNER_NUMBER}`
+            : (cfg.OWNER_NAME || 'GAAJU');
+
+        const mode = (cfg.MODE || 'public')
+            .charAt(0)
+            .toUpperCase() + (cfg.MODE || 'public').slice(1);
 
         const { catData, totalCmds } = getCategoryData();
 
@@ -163,8 +217,11 @@ module.exports = {
         ];
 
         for (const { cat, cmdNames } of catData) {
+
             const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+
             lines.push(`╠═| ■-${label} -■`);
+
             for (const name of cmdNames) {
                 lines.push(`║  ◇ ${p}${name}`);
             }
@@ -175,20 +232,25 @@ module.exports = {
 
         const caption = lines.join('\n');
 
-        const newsletterJid = cfg.NEWSLETTER_JID || '';
+        // YOUR NEWSLETTER ID
+        const newsletterJid = '120363406588763460@newsletter';
+
         const msgOptions = { quoted: msg };
 
-        // Build contextInfo: newsletter attribution + View Channel button at bottom
+        // Build contextInfo
         msgOptions.contextInfo = {
             ...(newsletterJid ? {
                 forwardingScore: 999,
                 isForwarded: true,
+
                 forwardedNewsletterMessageInfo: {
                     newsletterJid,
                     serverMessageId: -1,
                     newsletterName: botName,
                 }
+
             } : {}),
+
             externalAdReply: {
                 title: botName,
                 body: '📢 View Channel',
@@ -199,16 +261,30 @@ module.exports = {
             }
         };
 
-        // Send as image with caption (XD logo), fall back to text only
+        // Send as image with caption
         try {
+
             const img = fs.readFileSync(LOGO_PATH);
-            await sock.sendMessage(chatId, {
-                image: img,
-                caption,
-                mimetype: 'image/jpeg',
-            }, msgOptions);
+
+            await sock.sendMessage(
+                chatId,
+                {
+                    image: img,
+                    caption,
+                    mimetype: 'image/jpeg',
+                },
+                msgOptions
+            );
+
         } catch {
-            await sock.sendMessage(chatId, { text: caption }, msgOptions);
+
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: caption
+                },
+                msgOptions
+            );
         }
     },
 };
