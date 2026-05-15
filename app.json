@@ -1,0 +1,82 @@
+{
+  "name": "GAAJU-MD ULTRA",
+  "description": "A powerful WhatsApp bot with 255+ commands — AI, Games, Group Management, Media Tools, Anti-ViewOnce, Auto-reactions & more. Built with Baileys & Node.js.",
+  "image": "https://raw.githubusercontent.com/Xchristech2/GAAJU-MD-ULTRA/main/assets/xd-logo.jpg",
+  "logo": "https://raw.githubusercontent.com/Xchristech2/GAAJU-MD-ULTRA/main/assets/xd-logo.jpg",
+  "repository": "https://github.com/Xchristech2/GAAJU-MD-ULTRA",
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "nodejs",
+    "baileys",
+    "multi-device"
+  ],
+  "env": {
+    "SESSION_ID": {
+      "description": "Your session ID — get it FREE at: https://toosiitechdevelopertools.zone.id/session",
+      "value": "",
+      "required": true
+    },
+    "OWNER_NUMBER": {
+      "description": "Your WhatsApp number with country code, no + (e.g. 2348069675806)",
+      "value": "",
+      "required": true
+    },
+    "PREFIX": {
+      "description": "Bot command prefix (e.g. . or , or ! or /)",
+      "value": ".",
+      "required": false
+    },
+    "BOT_NAME": {
+      "description": "Name of your bot",
+      "value": "GAAJU-MD ULTRA",
+      "required": false
+    },
+    "OWNER_NAME": {
+      "description": "Your name shown in menus",
+      "value": "",
+      "required": false
+    },
+    "MODE": {
+      "description": "public = everyone can use | private = owner only",
+      "value": "public",
+      "required": false
+    },
+    "TIME_ZONE": {
+      "description": "Timezone for time commands (e.g. Africa/Lagos, America/New_York, Asia/Kolkata)",
+      "value": "Africa/Lagos",
+      "required": false
+    },
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key — enables GPT-powered AI commands (optional)",
+      "value": "",
+      "required": false
+    },
+    "GEMINI_API_KEY": {
+      "description": "Google Gemini API key — enables Gemini AI chatbot (optional)",
+      "value": "",
+      "required": false
+    },
+    "WEATHER_API_KEY": {
+      "description": "OpenWeatherMap API key — enables weather command (optional, get free at openweathermap.org)",
+      "value": "",
+      "required": false
+    },
+    "NEWSAPI_API_KEY": {
+      "description": "NewsAPI key — enables news commands (optional, get free at newsapi.org)",
+      "value": "",
+      "required": false
+    },
+    "RAPIDAPI_API_KEY": {
+      "description": "RapidAPI key — enables extra media/search commands (optional)",
+      "value": "",
+      "required": false
+    }
+  },
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "gaaju-md-ultra-deploy",
+  "version": "1.2.0",
+  "description": "GAAJU-MD WhatsApp Bot",
+  "engines": {
+    "node": "20.x",
+    "npm": ">=9"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "postinstall": "cd bot && npm install --omit=dev"
+  }
+}
