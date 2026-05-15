@@ -73,6 +73,13 @@
 
   <br><br>
 
+  📢 WhatsApp Channel:  
+  <a href="https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z">
+    <img src="https://img.shields.io/badge/WHATSAPP-CHANNEL-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
+  </a>
+
+  <br><br>
+
   💬 WhatsApp Group:  
   <a href="https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl?mode=gi_t&utm_source=chatgpt.com">
     <img src="https://img.shields.io/badge/WHATSAPP-GROUP-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
