@@ -158,9 +158,12 @@ module.exports = {
         const { catData, totalCmds } = getCategoryData();
         const usage = getUsage();
 
+        // 🔥 READ MORE SYSTEM (3 TIMES EFFECT)
+        const readMore = String.fromCharCode(8206).repeat(4000);
+
         const lines = [];
 
-        // HEADER (NEW STYLE)
+        // ================= HEADER
         lines.push(`┏━━❐✧ ${botName} ✧❐`);
         lines.push(`┃✦ Prefix: [${p}]`);
         lines.push(`┃✦ Owner: ${owner}`);
@@ -174,8 +177,12 @@ module.exports = {
         lines.push(`┃✦ Commands: ${totalCmds}`);
         lines.push(`┗━━❐`);
 
-        // COMMANDS
-        for (const { cat, cmdNames } of catData) {
+        const mid1 = Math.floor(catData.length / 3);
+        const mid2 = Math.floor(catData.length * 2 / 3);
+
+        // ================= PART 1
+        for (let i = 0; i < mid1; i++) {
+            const { cat, cmdNames } = catData[i];
             const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
             lines.push(`\n┏━━❐ ${label} ❐`);
             for (const cmd of cmdNames) {
@@ -183,6 +190,37 @@ module.exports = {
             }
             lines.push(`┗━━❐`);
         }
+
+        // 🔥 READ MORE 1
+        lines.push(readMore);
+
+        // ================= PART 2
+        for (let i = mid1; i < mid2; i++) {
+            const { cat, cmdNames } = catData[i];
+            const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+            lines.push(`\n┏━━❐ ${label} ❐`);
+            for (const cmd of cmdNames) {
+                lines.push(`┃✦ ${p}${cmd}`);
+            }
+            lines.push(`┗━━❐`);
+        }
+
+        // 🔥 READ MORE 2
+        lines.push(readMore);
+
+        // ================= PART 3
+        for (let i = mid2; i < catData.length; i++) {
+            const { cat, cmdNames } = catData[i];
+            const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+            lines.push(`\n┏━━❐ ${label} ❐`);
+            for (const cmd of cmdNames) {
+                lines.push(`┃✦ ${p}${cmd}`);
+            }
+            lines.push(`┗━━❐`);
+        }
+
+        // 🔥 READ MORE 3 (FINAL PUSH EFFECT)
+        lines.push(readMore);
 
         const caption = lines.join('\n');
 
