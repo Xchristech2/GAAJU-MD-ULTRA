@@ -9,10 +9,15 @@ const CMDS_DIR  = path.join(__dirname, '..');
 const LOGO_PATH = path.join(__dirname, '../../../assets/xd-logo.jpg');
 
 const CHANNEL_URL = 'https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z';
+const NEWSLETTER_JID = '120363406588763460@newsletter';
 
 let BOT_VERSION = 'v1.2.0';
+
 try {
-    const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8'));
+    const pkg = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')
+    );
+
     if (pkg.version) BOT_VERSION = `v${pkg.version}`;
 } catch {}
 
@@ -44,10 +49,13 @@ const CATEGORY_ORDER = [
 ];
 
 function getCategoryData() {
+
     const liveRegistry = globalThis._botCommandCategories;
 
     if (liveRegistry && liveRegistry.size > 0) {
+
         const allCats = [...liveRegistry.keys()];
+
         const ordered = [
             ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
             ...allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
@@ -57,11 +65,16 @@ function getCategoryData() {
         let totalCmds = 0;
 
         for (const cat of ordered) {
+
             const cmdNames = [...new Set((liveRegistry.get(cat) || []))];
+
             if (!cmdNames.length) continue;
+
             totalCmds += cmdNames.length;
+
             catData.push({ cat, cmdNames });
         }
+
         return { catData, totalCmds };
     }
 
@@ -75,28 +88,44 @@ function getCategoryData() {
     ];
 
     let totalCmds = 0;
+
     const catData = [];
 
     for (const cat of ordered) {
+
         const names = [];
+
         try {
+
             const files = fs.readdirSync(path.join(CMDS_DIR, cat))
                 .filter(f => f.endsWith('.js'));
 
             for (const file of files) {
+
                 try {
+
                     const mod = require(path.join(CMDS_DIR, cat, file));
+
                     const raw = mod.default || mod;
-                    const list = Array.isArray(raw) ? raw : (raw?.name ? [raw] : []);
+
+                    const list = Array.isArray(raw)
+                        ? raw
+                        : (raw?.name ? [raw] : []);
+
                     for (const cmd of list) {
+
                         if (cmd?.name) names.push(cmd.name);
                     }
+
                 } catch {}
             }
+
         } catch {}
 
         if (!names.length) continue;
+
         totalCmds += names.length;
+
         catData.push({ cat, cmdNames: names });
     }
 
@@ -104,23 +133,35 @@ function getCategoryData() {
 }
 
 function getPlatform() {
+
     if (process.env.DYNO) return 'Heroku';
+
     if (process.env.RAILWAY_ENVIRONMENT) return 'Railway';
+
     if (process.env.RENDER) return 'Render';
+
     return 'VPS';
 }
 
 function getUptime() {
+
     const s = Math.floor(process.uptime());
+
     const h = Math.floor(s / 3600);
+
     const m = Math.floor((s % 3600) / 60);
+
     const sec = s % 60;
+
     return `${h}h ${m}m ${sec}s`;
 }
 
 function getUsage() {
+
     const usedMB = process.memoryUsage().rss / 1024 / 1024;
+
     const totalGB = os.totalmem() / 1024 / 1024 / 1024;
+
     return {
         text: `${usedMB.toFixed(1)} MB of ${totalGB.toFixed(2)} GB`,
         percent: Math.min(100, (usedMB / (totalGB * 1024)) * 100)
@@ -128,26 +169,40 @@ function getUsage() {
 }
 
 function getSpeed(msg) {
-    if (msg._botReceivedAt) return `${Date.now() - msg._botReceivedAt}ms`;
+
+    if (msg._botReceivedAt) {
+        return `${Date.now() - msg._botReceivedAt}ms`;
+    }
+
     return 'N/A';
 }
 
 function getBar(percent) {
+
     const total = 10;
+
     const filled = Math.round((percent / 100) * total);
+
     return `[${'█'.repeat(filled)}${'░'.repeat(total - filled)}] ${Math.round(percent)}%`;
 }
 
 module.exports = {
+
     name: 'menu',
+
     aliases: ['help', 'cmds', 'commands', 'list'],
+
     description: 'Show all available bot commands',
+
     category: 'utility',
 
     async execute(sock, msg, args, prefix, ctx) {
+
         const chatId  = msg.key.remoteJid;
+
         const botName = getBotName();
-        const p       = prefix || cfg.PREFIX || '.';
+
+        const p = prefix || cfg.PREFIX || '.';
 
         const owner = cfg.OWNER_NUMBER
             ? `+${cfg.OWNER_NUMBER}`
@@ -156,14 +211,16 @@ module.exports = {
         const mode = (cfg.MODE || 'public').toUpperCase();
 
         const { catData, totalCmds } = getCategoryData();
+
         const usage = getUsage();
 
-        // 🔥 READ MORE SYSTEM (3 TIMES EFFECT)
+        // 🔥 READ MORE SYSTEM
         const readMore = String.fromCharCode(8206).repeat(4000);
 
         const lines = [];
 
         // ================= HEADER
+
         lines.push(`┏━━❐✧ ${botName} ✧❐`);
         lines.push(`┃✦ Prefix: [${p}]`);
         lines.push(`┃✦ Owner: ${owner}`);
@@ -178,16 +235,25 @@ module.exports = {
         lines.push(`┗━━❐`);
 
         const mid1 = Math.floor(catData.length / 3);
+
         const mid2 = Math.floor(catData.length * 2 / 3);
 
         // ================= PART 1
+
         for (let i = 0; i < mid1; i++) {
+
             const { cat, cmdNames } = catData[i];
-            const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+
+            const label =
+                CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+
             lines.push(`\n┏━━❐ ${label} ❐`);
+
             for (const cmd of cmdNames) {
+
                 lines.push(`┃✦ ${p}${cmd}`);
             }
+
             lines.push(`┗━━❐`);
         }
 
@@ -195,13 +261,21 @@ module.exports = {
         lines.push(readMore);
 
         // ================= PART 2
+
         for (let i = mid1; i < mid2; i++) {
+
             const { cat, cmdNames } = catData[i];
-            const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+
+            const label =
+                CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+
             lines.push(`\n┏━━❐ ${label} ❐`);
+
             for (const cmd of cmdNames) {
+
                 lines.push(`┃✦ ${p}${cmd}`);
             }
+
             lines.push(`┗━━❐`);
         }
 
@@ -209,24 +283,53 @@ module.exports = {
         lines.push(readMore);
 
         // ================= PART 3
+
         for (let i = mid2; i < catData.length; i++) {
+
             const { cat, cmdNames } = catData[i];
-            const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+
+            const label =
+                CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+
             lines.push(`\n┏━━❐ ${label} ❐`);
+
             for (const cmd of cmdNames) {
+
                 lines.push(`┃✦ ${p}${cmd}`);
             }
+
             lines.push(`┗━━❐`);
         }
 
-        // 🔥 READ MORE 3 (FINAL PUSH EFFECT)
+        // 🔥 READ MORE 3
         lines.push(readMore);
+
+        // ================= CHANNEL FOOTER
+
+        lines.push(``);
+        lines.push(`┏━━❐ CHANNEL ❐`);
+        lines.push(`┃✦ VIEW OUR CHANNEL`);
+        lines.push(`┃✦ ${NEWSLETTER_JID}`);
+        lines.push(`┗━━❐`);
 
         const caption = lines.join('\n');
 
         const msgOptions = { quoted: msg };
 
         msgOptions.contextInfo = {
+
+            mentionedJid: [NEWSLETTER_JID],
+
+            forwardingScore: 999,
+
+            isForwarded: true,
+
+            forwardedNewsletterMessageInfo: {
+                newsletterJid: NEWSLETTER_JID,
+                newsletterName: botName,
+                serverMessageId: 143
+            },
+
             externalAdReply: {
                 title: botName,
                 body: '📢 View Channel',
@@ -238,14 +341,28 @@ module.exports = {
         };
 
         try {
+
             const img = fs.readFileSync(LOGO_PATH);
-            await sock.sendMessage(chatId, {
-                image: img,
-                caption,
-                mimetype: 'image/jpeg',
-            }, msgOptions);
+
+            await sock.sendMessage(
+                chatId,
+                {
+                    image: img,
+                    caption,
+                    mimetype: 'image/jpeg',
+                },
+                msgOptions
+            );
+
         } catch {
-            await sock.sendMessage(chatId, { text: caption }, msgOptions);
+
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: caption,
+                },
+                msgOptions
+            );
         }
     },
 };
