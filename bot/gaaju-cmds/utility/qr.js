@@ -24,7 +24,7 @@ module.exports = {
     const _0x3c2d29 = _0x118f28.join(" ").trim() || _0x3ebdf4?.trim();
     if (!_0x3c2d29) {
       return _0x61694e.sendMessage(_0x5d3dbe, {
-        text: ["╔═|〔  QR CODE 📷 〕", "║", "║ ▸ *Usage*   : " + _0x12c4e1 + "qr <text or URL>", "║ ▸ *Example* : " + _0x12c4e1 + "qr https://wa.me/254706441840", "║ ▸ *Example* : " + _0x12c4e1 + "qr Hello, scan me!", "║ ▸ *Tip*     : Reply any message with " + _0x12c4e1 + "qr", "║", "╚═|〔 " + _0x570860 + " 〕"].join("\n")
+        text: ["╔═|〔  QR CODE 📷 〕", "║", "║ ▸ *Usage*   : " + _0x12c4e1 + "qr <text or URL>", "║ ▸ *Example* : " + _0x12c4e1 + "qr https://wa.me/2348069675806", "║ ▸ *Example* : " + _0x12c4e1 + "qr Hello, scan me!", "║ ▸ *Tip*     : Reply any message with " + _0x12c4e1 + "qr", "║", "╚═|〔 " + _0x570860 + " 〕"].join("\n")
       }, {
         quoted: _0xc45072
       });
