@@ -13,7 +13,7 @@ const PLATFORM  = IS_HEROKU ? 'Heroku' : 'VPS/Panel';
 
 const GITHUB_URL = `https://github.com/${REPO}.git`;
 
-// __dirname = bot/toosi-cmds/owner
+// __dirname = bot/gaaju-cmds/owner
 // BOT_ROOT  = bot/
 // REPO_ROOT = the folder containing bot/ (i.e. the project root)
 const BOT_ROOT  = path.resolve(__dirname, '../../');
