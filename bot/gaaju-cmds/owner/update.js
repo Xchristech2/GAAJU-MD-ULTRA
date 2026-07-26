@@ -6,10 +6,11 @@ const fs    = require('fs');
 const { getBotName } = require('../../lib/botname');
 
 const REPO   = 'Xchristech2/GAAJU-MD-ULTRA';
-const BRANCH = 'heroku';
+const BRANCH = 'main';
 
-const IS_HEROKU = !!process.env.DYNO;
-const PLATFORM  = IS_HEROKU ? 'Heroku' : 'VPS/Panel';
+//const IS_HEROKU = !!process.env.DYNO;
+//const PLATFORM  = IS_HEROKU ? 
+//'Heroku' : 'VPS/Panel';
 
 const GITHUB_URL = `https://github.com/${REPO}.git`;
 
