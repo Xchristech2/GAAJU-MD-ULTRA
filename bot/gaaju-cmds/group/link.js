@@ -15,7 +15,11 @@ module.exports = {
     } catch {}
     if (!_0x20fb65.endsWith("@g.us")) {
       return _0x504aea.sendMessage(_0x20fb65, {
-        text: "╔═|〔  LINK 〕\n║\n║ ▸ Group only command\n║\n╚═╝"
+        text: `╭━━━〔 🔗 LINK 〕━━━⬣
+┃
+┃ ✦ Status : ❌ Group Only Command
+┃
+╰━━━━━━━━━━━━━━━⬣`
       }, {
         quoted: _0x1bfe04
       });
@@ -24,13 +28,17 @@ module.exports = {
       const _0x446955 = await _0x504aea.groupInviteCode(_0x20fb65);
       const _0x426236 = "https://chat.whatsapp.com/" + _0x446955;
       await _0x504aea.sendMessage(_0x20fb65, {
-        text: "╔═|〔  GROUP LINK 〕\n║\n║ ▸ *Link* : " + _0x426236 + "\n║\n╚═╝"
+        text: `╭━━━〔 🔗 GROUP LINK 〕━━━⬣
+┃
+┃ ✦ Link : ${_0x426236}
+┃
+╰━━━━━━━━━━━━━━━⬣`
       }, {
         quoted: _0x1bfe04
       });
     } catch (_0x5307e6) {
       await _0x504aea.sendMessage(_0x20fb65, {
-        text: "╔═|〔  LINK 〕\n║\n║ ▸ *Status* : ❌ Failed\n║ ▸ *Reason* : " + _0x5307e6.message + "\n║\n╚═╝"
+        text: "╭━━━〔 🔗 LINK 〕━━━⬣\n┃\n┃ ✦ Status : ❌ Failed\n┃ ✦ Reason : " + _0x5307e6.message + "\n┃\n╰━━━━━━━━━━━━━━━〔 " + getBotName() + " 〕⬣"
       }, {
         quoted: _0x1bfe04
       });
