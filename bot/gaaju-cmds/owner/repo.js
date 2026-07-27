@@ -47,7 +47,7 @@ function ghGet(path) {
 
     https.get(url, {
       headers: {
-        "User-Agent": "GAAJU-MD-Bot",
+        "User-Agent": "GAAJU-MD-ULTRA-Bot",
         Accept: "application/vnd.github+json"
       }
     }, res => {
@@ -109,11 +109,12 @@ module.exports = {
     if (input && !repo) {
       return sock.sendMessage(jid, {
         text:
-`╔═|〔  🐙 REPO INFO 〕
-║
-║ ▸ *Usage*  : ${prefix}repo [owner/name or github-url]
-║ ▸ *Tip*    : leave blank to show the bot's own repo
-║
+`╭━━━〔 🐙 REPOSITORY INFO 〕━━━⬣
+┃
+┃ ✦ Usage   : ${prefix}repo <owner/repo>
+┃ ✦ Example : ${prefix}repo Xchristech2/GAAJU-MD-ULTRA
+┃ ✦ Tip     : Leave blank to view the bot's default repository.
+┃
 ${footer}`
       }, { quoted: msg });
     }
@@ -148,20 +149,25 @@ ${footer}`
         const stars = ok ? num(data.stargazers_count) : "—";
         const forks = ok ? num(data.forks_count) : "—";
 
-        text = [
-`╔═|〔  🤖 GAAJU-MD ULTRA 〕`,
-`║`,
-`║ ⭐ *Stars* : ${stars}`,
-`║ 🍴 *Forks* : ${forks}`,
-`║`,
-`║ 🔗 *Repo* : https://github.com/${OWN_REPO}`,
-`║`,
-`║ 🎬 *Deploy Video* : ${YOUTUBE_DEPLOY}`,
-`║ 📢 *WhatsApp Channel* : ${WHATSAPP_CHANNEL}`,
-`║`,
-`║ ⭐ Star & Fork to support the project`,
-`║ 📲 Share with others`,
-`║`,
+        text = [        
+`╭━━━〔 🤖 GAAJU-MD ULTRA 〕━━━⬣`,
+`┃`,
+`┃ ⭐ Stars   : ${stars}`,
+`┃ 🍴 Forks   : ${forks}`,
+`┃`,
+`┃ 🔗 Repository`,
+`┃ ${`https://github.com/${OWN_REPO}`}`,
+`┃`,
+`┃ 🎬 Deploy Video`,
+`┃ ${YOUTUBE_DEPLOY}`,
+`┃`,
+`┃ 📢 WhatsApp Channel`,
+`┃ ${WHATSAPP_CHANNEL}`,
+`┃`,
+`┃ ✦ Don't forget to ⭐ Star & 🍴 Fork`,
+`┃ ✦ Share the project with your friends`,
+`┃`,
+`╰━━━━━━━━━━━━━━━━━━━━⬣`,
 footer
         ];
       } else if (ok && data) {
@@ -171,26 +177,27 @@ footer
           : "N/A";
 
         text = [
-`╔═|〔  🐙 REPO INFO 〕`,
-`║`,
-`║ ▸ *Repo*    : ${data.full_name}`,
-`║ ▸ *About*   : ${trunc(data.description, 75)}`,
-`║ ▸ *Language*: ${data.language || "N/A"}`,
-`║ ▸ *License* : ${data.license?.name || "N/A"}`,
-`║ ▸ *Topics*  : ${topics}`,
-`║`,
-`║ 📊 *Stats*`,
-`║ ▸ ⭐ Stars    : ${num(data.stargazers_count)}`,
-`║ ▸ 🍴 Forks    : ${num(data.forks_count)}`,
-`║ ▸ 👁️ Watchers : ${num(data.subscribers_count)}`,
-`║ ▸ 🐛 Issues   : ${num(data.open_issues_count)}`,
-`║`,
-`║ 📅 *Activity*`,
-`║ ▸ Created : ${fmtDate(data.created_at)}`,
-`║ ▸ Updated : ${fmtDate(data.updated_at)}`,
-`║`,
-`║ 🔗 https://github.com/${repo}`,
-`║`,
+`╭━━━〔 🎯 REPOSITORY INFO 〕━━━⬣`,
+`┃`,
+`┃ ✦ Repository : ${data.full_name}`,
+`┃ ✦ About      : ${trunc(data.description, 75)}`,
+`┃ ✦ Language   : ${data.language || "N/A"}`,
+`┃ ✦ License    : ${data.license?.name || "N/A"}`,
+`┃ ✦ Topics     : ${topics}`,
+`┃`,
+`┃ 📊 Statistics`,
+`┃ ⭐ Stars      : ${num(data.stargazers_count)}`,
+`┃ 🍴 Forks      : ${num(data.forks_count)}`,
+`┃ 👁️ Watchers   : ${num(data.subscribers_count)}`,
+`┃ 🐛 Issues     : ${num(data.open_issues_count)}`,
+`┃`,
+`┃ 📅 Activity`,
+`┃ ✦ Created    : ${fmtDate(data.created_at)}`,
+`┃ ✦ Updated    : ${fmtDate(data.updated_at)}`,
+`┃`,
+`┃ 🔗 ${data.html_url}`,
+`┃`,
+`╰━━━━━━━━━━━━━━━⬣`,
 footer
         ];
       } else {
@@ -204,11 +211,11 @@ footer
     } catch (e) {
       await sock.sendMessage(jid, {
         text:
-`╔═|〔  🐙 REPO INFO 〕
-║
-║ ▸ *Status* : ❌ Failed
-║ ▸ *Reason* : ${e.message}
-║
+`╭━━━〔 ❌ REPOSITORY ERROR 〕━━━⬣
+┃
+┃ ✦ Status : Failed
+┃ ✦ Reason : ${e.message}
+┃
 ${footer}`
       }, { quoted: msg });
     }
