@@ -16,21 +16,35 @@ module.exports = {
 
         if (!chatId.endsWith('@g.us')) {
             return sock.sendMessage(chatId, {
-                text: `╔═|〔  DEMOTE 〕\n║\n║ ▸ *Status* : ❌ Group only\n║\n╚═|〔 ${name} 〕`
+                text: `╭━━━〔 ⬇️ DEMOTE 〕━━━⬣
+┃
+┃ ✦ Status : ❌ Group Only
+┃
+╰━━━━━━━━━━━━━━━〔 ${name} 〕⬣`
             }, { quoted: msg });
         }
 
         const { ok } = await checkPrivilege(sock, chatId, msg, ctx);
         if (!ok) {
             return sock.sendMessage(chatId, {
-                text: `╔═|〔  DEMOTE 〕\n║\n║ ▸ *Status* : ❌ Permission denied\n║ ▸ *Reason* : Sudo users and group admins only\n║\n╚═|〔 ${name} 〕`
+                text: `╭━━━〔 👥 DEMOTE 〕━━━⬣
+┃
+┃ ✦ Status : ❌ Permission Denied
+┃ ✦ Reason : Sudo Users & Group Admins Only
+┃
+╰━━━━━━━━━━━━━━━〔 ${name} 〕⬣`
             }, { quoted: msg });
         }
 
         const target = getTarget(msg, args);
         if (!target) {
             return sock.sendMessage(chatId, {
-                text: `╔═|〔  DEMOTE 〕\n║\n║ ▸ *Usage* : ${prefix}demote @user or reply a message\n║\n╚═|〔 ${name} 〕`
+                text: `╭━━━〔 👥 DEMOTE 〕━━━⬣
+┃
+┃ ✦ Usage : ${prefix}demote @user
+┃ ✦         or reply to a message
+┃
+╰━━━━━━━━━━━━━━━〔 ${name} 〕⬣`
             }, { quoted: msg });
         }
 
@@ -38,14 +52,24 @@ module.exports = {
             const display = await resolveDisplay(sock, chatId, target);
             await sock.groupParticipantsUpdate(chatId, [target], 'demote');
             await sock.sendMessage(chatId, {
-                text: `╔═|〔  DEMOTE 〕\n║\n║ ▸ *User*   : ${display}\n║ ▸ *Status* : ✅ Demoted to Member\n║\n╚═|〔 ${name} 〕`
+                text: `╭━━━〔 👥 DEMOTE 〕━━━⬣
+┃
+┃ ✦ User   : ${display}
+┃ ✦ Status : ✅ Demoted to Member
+┃
+╰━━━━━━━━━━━━━━━〔 ${name} 〕⬣`
             }, { quoted: msg });
         } catch (e) {
             const reason = /not-authorized|forbidden/i.test(e.message)
                 ? 'Bot is not an admin — promote the bot first'
                 : e.message;
             await sock.sendMessage(chatId, {
-                text: `╔═|〔  DEMOTE 〕\n║\n║ ▸ *Status* : ❌ Failed\n║ ▸ *Reason* : ${reason}\n║\n╚═|〔 ${name} 〕`
+                text: `╭━━━〔 👥 DEMOTE 〕━━━⬣
+┃
+┃ ✦ Status : ❌ Failed
+┃ ✦ Reason : ${reason}
+┃
+╰━━━━━━━━━━━━━━━〔 ${name} 〕⬣`
             }, { quoted: msg });
         }
     }
