@@ -220,9 +220,16 @@ module.exports = {
         }
 
         // 🔥 READ MORE 3 (FINAL PUSH EFFECT)
-        lines.push(readMore);
+lines.push(readMore);
 
-        const caption = lines.join('\n');
+// ================= FOOTER
+lines.push('');
+lines.push('╭━━━〔 🤖 SYSTEM 〕━━━⬣');
+lines.push(`┃ ✦ ${botName}`);
+lines.push('┃ ✦ Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ');
+lines.push('╰━━━━━━━━━━━━━━━━━━〔 🪀 〕 ');
+
+const caption = lines.join('\n');
 
         const msgOptions = { quoted: msg };
 
