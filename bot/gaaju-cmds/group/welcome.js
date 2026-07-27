@@ -12,16 +12,16 @@ const CHANNEL_ID = "120363406588763460@newsletter";
 const CHANNEL_LINK = "https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z";
 
 const DEFAULT_MSG = [
-  "╔═|〔  WELCOME 〕",
-  "║",
-  "║ 🎉 {mention} just dropped in!",
-  "║ ▸ *Group*   : {group}",
-  "║ ▸ *Member*  : #{count}",
-  "║",
-  "║ 🌐 View Channel:",
-  "║ 👉 " + CHANNEL_LINK,
-  "║",
-  "╚═╝"
+  "╭━━━〔 👋 WELCOME 〕━━━⬣",
+  "┃",
+  "┃ 🎉 {mention} just dropped in!",
+  "┃ ✦ Group   : {group}",
+  "┃ ✦ Member  : #{count}",
+  "┃",
+  "┃ 🌐 View Channel",
+  "┃ 👉 " + CHANNEL_LINK,
+  "┃",
+  "╰━━━━━━━━━━━━━━━⬣"
 ].join("\n");
 
 function loadCfg() {
@@ -154,14 +154,14 @@ module.exports = {
     if (!cmd) {
       return sock.sendMessage(chatId, {
         text:
-`╔═|〔  WELCOME 〕
-║
-║ ▸ *State* : ${group.enabled ? "ON" : "OFF"}
-║
-║ 🌐 View Channel:
-║ 👉 ${CHANNEL_LINK}
-║
-╚═╝`
+`╭━━━〔 👋 WELCOME 〕━━━⬣
+┃
+┃ ✦ State   : ${group.enabled ? "🟢 ON" : "🔴 OFF"}
+┃
+┃ 🌐 View Channel
+┃ 👉 ${CHANNEL_LINK}
+┃
+╰━━━━━━━━━━━━━━━⬣`
       }, { quoted: msg });
     }
 
@@ -177,14 +177,14 @@ module.exports = {
 
     return sock.sendMessage(chatId, {
       text:
-`╔═|〔  WELCOME 〕
-║
-║ ▸ *State* : ${group.enabled ? "ON" : "OFF"}
-║
-║ 🌐 View Channel:
-║ 👉 ${CHANNEL_LINK}
-║
-╚═╝`
+`╭━━━〔 👋 WELCOME 〕━━━⬣
+┃
+┃ ✦ State : ${group.enabled ? "🟢 ON" : "🔴 OFF"}
+┃
+┃ 🌐 View Channel
+┃ 👉 ${CHANNEL_LINK}
+┃
+╰━━━━━━━━━━━━━━━⬣`
     }, { quoted: msg });
   }
 };
