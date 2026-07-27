@@ -25,7 +25,12 @@ module.exports = {
 
         if (!quoted) {
             return sock.sendMessage(chatId, {
-                text: `╔═|〔  SAVE 〕\n║\n║ ▸ *Status* : ❌ Reply to a message to save it\n║\n╚═╝`
+                text: `╭━━━〔 💾 SAVE MESSAGE 〕━━━⬣
+┃
+┃ ✦ Status : ❌ No message replied
+┃ ✦ Reply to a message to save it.
+┃
+╰━━━━━━━━━━━━━━━━━━━━⬣`
             }, { quoted: msg });
         }
 
@@ -48,7 +53,13 @@ module.exports = {
                 // Plain text message
                 const text = quoted.conversation || quoted.extendedTextMessage?.text || '';
                 await sock.sendMessage(ownerJid, {
-                    text: `╔═|〔  SAVED MESSAGE 〕\n║\n║ ▸ *From* : ${fromLabel}\n║ ▸ *Content* : ${text.slice(0, 500)}\n║\n╚═╝`
+                    text: `╭━━━〔 💾 SAVED MESSAGE 〕━━━⬣
+┃
+┃ ✦ From    : ${fromLabel}
+┃ ✦ Content :
+┃ ${text.slice(0, 500)}
+┃
+╰━━━━━━━━━━━━━━━━━━━━⬣`
                 });
             } else {
                 // Media message — download and forward
@@ -60,7 +71,11 @@ module.exports = {
                 const buffer = await downloadMediaMessage(mediaMsg, 'buffer', {});
                 const mediaInfo = quoted[msgType];
                 const caption = (mediaInfo.caption || '').slice(0, 300);
-                const headerNote = `╔═|〔  SAVED MESSAGE 〕\n║\n║ ▸ *From* : ${fromLabel}\n║\n╚═╝`;
+                const headerNote = `╭─❍「 💾 SAVED MESSAGE 」
+│
+│ ✦ From : ${fromLabel}
+│
+╰────────────❍`;
 
                 if (msgType === 'imageMessage') {
                     await sock.sendMessage(ownerJid, {
@@ -105,12 +120,22 @@ module.exports = {
             }
 
             await sock.sendMessage(chatId, {
-                text: `╔═|〔  SAVE 〕\n║\n║ ▸ *Status* : ✅ Saved to your DM\n║\n╚═╝`
+                text: `╭─❍「 💾 SAVE 」
+│
+│ ✦ Status : Saved Successfully ✅
+│ ✦ Sent To : Your DM
+│
+╰────────────❍`
             }, { quoted: msg });
 
         } catch (e) {
             await sock.sendMessage(chatId, {
-                text: `╔═|〔  SAVE 〕\n║\n║ ▸ *Status* : ❌ Failed\n║ ▸ *Reason* : ${e.message}\n║\n╚═╝`
+                text: `╭━━━〔 ❌ SAVE FAILED 〕━━━⬣
+┃
+┃ ✦ Status : Failed
+┃ ✦ Reason : ${e.message}
+┃
+╰━━━━━━━━━━━━━━━━━━━━⬣`
             }, { quoted: msg });
         }
     }
