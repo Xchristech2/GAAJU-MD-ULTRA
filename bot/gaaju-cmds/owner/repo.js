@@ -109,7 +109,7 @@ module.exports = {
     if (input && !repo) {
       return sock.sendMessage(jid, {
         text:
-`╭━━━〔 🐙 REPOSITORY INFO 〕━━━⬣
+`╭━━━〔 🎯 REPOSITORY INFO 〕━━━⬣
 ┃
 ┃ ✦ Usage   : ${prefix}repo <owner/repo>
 ┃ ✦ Example : ${prefix}repo Xchristech2/GAAJU-MD-ULTRA
@@ -121,7 +121,7 @@ ${footer}`
 
     try {
       await sock.sendMessage(jid, {
-        react: { text: "🐙", key: msg.key }
+        react: { text: "🎯", key: msg.key }
       });
 
       const isOwn = repo === OWN_REPO;
