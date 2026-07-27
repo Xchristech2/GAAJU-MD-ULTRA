@@ -33,23 +33,13 @@ module.exports = {
     if (!_0x4d5d09.endsWith("@g.us")) {
       return _0x5150ef.sendMessage(_0x4d5d09, {
         text:
-          "╔═|〔  BAN 〕\n" +
-          "║\n" +
-          "║ ▸ *Status* : ❌ Group only\n" +
-          "║\n" +
-          "╚═|〔 " + _0x492bfb + " 〕",
+          `╭━━━〔 🚫 BAN 〕━━━⬣
+┃
+┃ ✦ Status : ❌ Group Only
+┃
+╰━━━━━━━━━━━━━━━〔 ${_0x492bfb} 〕⬣`,
 
-        contextInfo: {
-          externalAdReply: {
-            title: "GAAJU MD ULTRA",
-            body: "View Group",
-            mediaType: 1,
-            renderLargerThumbnail: false,
-            showAdAttribution: true,
-            sourceUrl: "https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl"
-          }
-        }
-      }, {
+        
         quoted: _0x48b3cc
       });
     }
@@ -60,24 +50,14 @@ module.exports = {
     if (!_0x22c382) {
       return _0x5150ef.sendMessage(_0x4d5d09, {
         text:
-          "╔═|〔  BAN 〕\n" +
-          "║\n" +
-          "║ ▸ *Status* : ❌ Permission denied\n" +
-          "║ ▸ *Reason* : Sudo users and group admins only\n" +
-          "║\n" +
-          "╚═|〔 " + _0x492bfb + " 〕",
+          `╭━━━〔 🚫 BAN 〕━━━⬣
+┃
+┃ ✦ Status : ❌ Permission Denied
+┃ ✦ Reason : Sudo Users & Group Admins Only
+┃
+╰━━━━━━━━━━━━━━━〔 ${_0x492bfb} 〕⬣`,
 
-        contextInfo: {
-          externalAdReply: {
-            title: "GAAJU MD ULTRA",
-            body: "View Group",
-            mediaType: 1,
-            renderLargerThumbnail: false,
-            showAdAttribution: true,
-            sourceUrl: "https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl"
-          }
-        }
-      }, {
+        
         quoted: _0x48b3cc
       });
     }
@@ -87,23 +67,14 @@ module.exports = {
     if (!_0xf2338b) {
       return _0x5150ef.sendMessage(_0x4d5d09, {
         text:
-          "╔═|〔  BAN 〕\n" +
-          "║\n" +
-          "║ ▸ *Usage* : " + _0x1a349c + "ban @user or reply a message\n" +
-          "║\n" +
-          "╚═|〔 " + _0x492bfb + " 〕",
+          `╭━━━〔 🚫 BAN 〕━━━⬣
+┃
+┃ ✦ Usage : ${_0x1a349c}ban @user
+┃ ✦         or reply to a message
+┃
+╰━━━━━━━━━━━━━━━〔 ${_0x492bfb} 〕⬣`,
 
-        contextInfo: {
-          externalAdReply: {
-            title: "GAAJU MD ULTRA",
-            body: "View Group",
-            mediaType: 1,
-            renderLargerThumbnail: false,
-            showAdAttribution: true,
-            sourceUrl: "https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl"
-          }
-        }
-      }, {
+        
         quoted: _0x48b3cc
       });
     }
@@ -119,24 +90,14 @@ module.exports = {
 
       await _0x5150ef.sendMessage(_0x4d5d09, {
         text:
-          "╔═|〔  BAN 〕\n" +
-          "║\n" +
-          "║ ▸ *User*   : " + _0x445f1f + "\n" +
-          "║ ▸ *Status* : ✅ Removed from group\n" +
-          "║\n" +
-          "╚═|〔 " + _0x492bfb + " 〕",
+          `╭━━━〔 🚫 BAN 〕━━━⬣
+┃
+┃ ✦ User   : ${_0x445f1f}
+┃ ✦ Status : ✅ Removed from Group
+┃
+╰━━━━━━━━━━━━━━━〔 ${_0x492bfb} 〕⬣`,
 
-        contextInfo: {
-          externalAdReply: {
-            title: "GAAJU MD ULTRA",
-            body: "View Group",
-            mediaType: 1,
-            renderLargerThumbnail: false,
-            showAdAttribution: true,
-            sourceUrl: "https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl"
-          }
-        }
-      }, {
+        
         quoted: _0x48b3cc
       });
 
@@ -149,24 +110,14 @@ module.exports = {
 
       await _0x5150ef.sendMessage(_0x4d5d09, {
         text:
-          "╔═|〔  BAN 〕\n" +
-          "║\n" +
-          "║ ▸ *Status* : ❌ Failed\n" +
-          "║ ▸ *Reason* : " + _0x32c9fd + "\n" +
-          "║\n" +
-          "╚═|〔 " + _0x492bfb + " 〕",
+          `╭━━━〔 🚫 BAN 〕━━━⬣
+┃
+┃ ✦ Status : ❌ Failed
+┃ ✦ Reason : ${_0x32c9fd}
+┃
+╰━━━━━━━━━━━━━━━〔 ${_0x492bfb} 〕⬣`,
 
-        contextInfo: {
-          externalAdReply: {
-            title: "GAAJU MD ULTRA",
-            body: "View Group",
-            mediaType: 1,
-            renderLargerThumbnail: false,
-            showAdAttribution: true,
-            sourceUrl: "https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl"
-          }
-        }
-      }, {
+        
         quoted: _0x48b3cc
       });
     }
