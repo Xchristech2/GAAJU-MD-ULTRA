@@ -224,10 +224,9 @@ lines.push(readMore);
 
 // ================= FOOTER
 lines.push('');
-lines.push('╭━━━〔 🤖 SYSTEM 〕━━━⬣');
-lines.push(`┃ ✦ ${botName}`);
-lines.push('┃ ✦ Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ');
-lines.push('╰━━━━━━━━━━━━━━━━━━〔 🪀 〕 ');
+lines.push('');
+lines.push(` ${botName}`);
+lines.push('> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ');
 
 const caption = lines.join('\n');
 
