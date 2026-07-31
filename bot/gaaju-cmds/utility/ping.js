@@ -12,16 +12,16 @@ module.exports = {
 
         // Send temporary message
         const sent = await sock.sendMessage(chatId, {
-            text: "```Checking ping...```"
+            text: "*Checking ping...*"
         }, {
             quoted: msg
         });
 
         const latency = Date.now() - start;
 
-        // Edit the message (works on newer versions of Baileys/WhatsApp)
+        // Edit the message
         await sock.sendMessage(chatId, {
-            text: `\`\`\`ⓘ Pong! ${latency}ms\nLegacy\`\`\``,
+            text: `*⚡ PONG!* *${latency}ms*`,
             edit: sent.key
         });
     },
