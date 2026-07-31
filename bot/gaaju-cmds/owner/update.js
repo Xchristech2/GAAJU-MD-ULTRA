@@ -1,28 +1,22 @@
 'use strict';
 const { execSync } = require('child_process');
 const https = require('https');
-const path  = require('path');
-const fs    = require('fs');
+const path = require('path');
+const fs = require('fs');
 const { getBotName } = require('../../lib/botname');
 
-const REPO   = 'Xchristech2/GAAJU-MD-ULTRA';
+const REPO = 'Xchristech2/GAAJU-MD-ULTRA';
 const BRANCH = 'main';
 
-//const IS_HEROKU = !!process.env.DYNO;
-//const PLATFORM  = IS_HEROKU ? 
-//'Heroku' : 'VPS/Panel';
+const IS_HEROKU = !!process.env.DYNO;
+const PLATFORM = IS_HEROKU ? 'Heroku' : 'VPS/Panel';
 
 const GITHUB_URL = `https://github.com/${REPO}.git`;
 
-// __dirname = bot/gaaju-cmds/owner
-// BOT_ROOT  = bot/
-// REPO_ROOT = the folder containing bot/ (i.e. the project root)
-const BOT_ROOT  = path.resolve(__dirname, '../../');
+const BOT_ROOT = path.resolve(__dirname, '../../');
 const REPO_ROOT = path.resolve(BOT_ROOT, '..');
 
-// Session lives at bot/session/
-const SESSION_DIR    = path.join(BOT_ROOT, 'session');
-// Backup goes to project root level so it's never touched by zip extraction
+const SESSION_DIR = path.join(BOT_ROOT, 'session');
 const SESSION_BACKUP = path.join(REPO_ROOT, '_session_update_backup');
 
 function run(cmd, opts = {}) {
@@ -53,7 +47,6 @@ async function getLatestCommit() {
     });
 }
 
-// Recursively copy a directory
 function copyDirSync(src, dest) {
     if (!fs.existsSync(src)) return;
     fs.mkdirSync(dest, { recursive: true });
@@ -64,7 +57,6 @@ function copyDirSync(src, dest) {
     }
 }
 
-// Backup entire session folder to a safe location
 function backupSession() {
     try {
         if (!fs.existsSync(SESSION_DIR)) return false;
@@ -74,7 +66,6 @@ function backupSession() {
     } catch { return false; }
 }
 
-// Restore session folder from backup
 function restoreSession() {
     try {
         if (!fs.existsSync(SESSION_BACKUP)) return false;
@@ -85,7 +76,6 @@ function restoreSession() {
     } catch { return false; }
 }
 
-// Download zip with redirect support — returns a Buffer
 async function downloadZip(url) {
     return new Promise((resolve, reject) => {
         const request = (reqUrl, redirects = 0) => {
@@ -105,66 +95,58 @@ async function downloadZip(url) {
     });
 }
 
-// Pure Node.js ZIP extractor — no unzip binary required
-// Extracts to REPO_ROOT so "bot/index.js" lands at REPO_ROOT/bot/index.js correctly
 function extractZipBuffer(buf, destDir, skipPaths) {
     const zlib = require('zlib');
-
-    // Find End of Central Directory (signature 0x06054b50)
+    
     let eocdOffset = -1;
     for (let i = buf.length - 22; i >= 0; i--) {
         if (buf.readUInt32LE(i) === 0x06054b50) { eocdOffset = i; break; }
     }
     if (eocdOffset === -1) throw new Error('Invalid ZIP: EOCD not found');
-
-    const cdCount  = buf.readUInt16LE(eocdOffset + 10);
+    
+    const cdCount = buf.readUInt16LE(eocdOffset + 10);
     const cdOffset = buf.readUInt32LE(eocdOffset + 16);
-
+    
     let pos = cdOffset;
     let stripPrefix = null;
-
+    
     for (let i = 0; i < cdCount; i++) {
         if (buf.readUInt32LE(pos) !== 0x02014b50) break;
-
-        const compMethod  = buf.readUInt16LE(pos + 10);
-        const compSize    = buf.readUInt32LE(pos + 20);
-        const uncompSize  = buf.readUInt32LE(pos + 24);
-        const nameLen     = buf.readUInt16LE(pos + 28);
-        const extraLen    = buf.readUInt16LE(pos + 30);
-        const commentLen  = buf.readUInt16LE(pos + 32);
+        
+        const compMethod = buf.readUInt16LE(pos + 10);
+        const compSize = buf.readUInt32LE(pos + 20);
+        const uncompSize = buf.readUInt32LE(pos + 24);
+        const nameLen = buf.readUInt16LE(pos + 28);
+        const extraLen = buf.readUInt16LE(pos + 30);
+        const commentLen = buf.readUInt16LE(pos + 32);
         const localOffset = buf.readUInt32LE(pos + 42);
-        const fileName    = buf.slice(pos + 46, pos + 46 + nameLen).toString('utf8');
-
+        const fileName = buf.slice(pos + 46, pos + 46 + nameLen).toString('utf8');
+        
         pos += 46 + nameLen + extraLen + commentLen;
-
-        // Auto-detect top-level folder prefix (e.g. "GAAJU-MD-ULTRA-main/")
+        
         if (stripPrefix === null) {
             const firstSlash = fileName.indexOf('/');
             stripPrefix = firstSlash > 0 ? fileName.slice(0, firstSlash + 1) : '';
         }
-
-        // Strip the top-level folder so paths are relative to project root
-        const relPath = stripPrefix && fileName.startsWith(stripPrefix)
-            ? fileName.slice(stripPrefix.length)
-            : fileName;
-
-        if (!relPath || relPath.endsWith('/')) continue; // directory entry
-
-        // Skip protected paths — check both top dir and full path prefix
-        const topDir  = relPath.split('/')[0];
+        
+        const relPath = stripPrefix && fileName.startsWith(stripPrefix) ?
+            fileName.slice(stripPrefix.length) :
+            fileName;
+        
+        if (!relPath || relPath.endsWith('/')) continue;
+        
+        const topDir = relPath.split('/')[0];
         const fullDest = path.join(destDir, relPath);
-
-        // Never touch session/ or data/ regardless of where they appear
+        
         if (skipPaths.has(topDir)) continue;
         if (relPath.startsWith('bot/session/') || relPath.startsWith('bot/data/')) continue;
-
-        // Read local file header for actual data offset
-        const localNameLen  = buf.readUInt16LE(localOffset + 26);
+        
+        const localNameLen = buf.readUInt16LE(localOffset + 26);
         const localExtraLen = buf.readUInt16LE(localOffset + 28);
-        const dataStart     = localOffset + 30 + localNameLen + localExtraLen;
-
+        const dataStart = localOffset + 30 + localNameLen + localExtraLen;
+        
         fs.mkdirSync(path.dirname(fullDest), { recursive: true });
-
+        
         if (compMethod === 0) {
             fs.writeFileSync(fullDest, buf.slice(dataStart, dataStart + uncompSize));
         } else if (compMethod === 8) {
@@ -175,34 +157,30 @@ function extractZipBuffer(buf, destDir, skipPaths) {
 
 async function updateViaZip() {
     const zipUrl = `https://codeload.github.com/${REPO}/zip/refs/heads/${BRANCH}`;
-
-    // These top-level dirs in the zip are skipped entirely
     const SKIP = new Set(['.env', 'node_modules']);
-
     const buf = await downloadZip(zipUrl);
-    // Extract to REPO_ROOT (parent of bot/) so zip paths like "bot/index.js" land correctly
     extractZipBuffer(buf, REPO_ROOT, SKIP);
 }
 
 module.exports = {
-    name:        'update',
-    aliases:     ['upgrade', 'pullupdate'],
+    name: 'update',
+    aliases: ['upgrade', 'pullupdate'],
     description: 'Pull latest changes from GitHub and restart',
-    category:    'owner',
-    ownerOnly:   true,
-
+    category: 'owner',
+    ownerOnly: true,
+    
     async execute(sock, msg, args, prefix, ctx) {
-        const chatId  = msg.key.remoteJid;
+        const chatId = msg.key.remoteJid;
         try { await sock.sendMessage(chatId, { react: { text: '🔄', key: msg.key } }); } catch {}
         const botName = getBotName();
-        const foot    = `╚═|〔 ${botName} 〕`;
-
+        const foot = `╚═|〔 ${botName} 〕`;
+        
         if (!ctx?.isOwnerUser && !ctx?.isSudoUser) {
             return await sock.sendMessage(chatId, {
                 text: `╔═|〔  UPDATE 〕\n║\n║ ▸ *Status* : ❌ Owner only\n║\n${foot}`
             }, { quoted: msg });
         }
-
+        
         if (IS_HEROKU) {
             let latest;
             try { latest = await getLatestCommit(); } catch { latest = { sha: '?', message: '?' }; }
@@ -218,7 +196,7 @@ module.exports = {
                 ].join('\n')
             }, { quoted: msg });
         }
-
+        
         let latest;
         try { latest = await getLatestCommit(); }
         catch (err) {
@@ -226,11 +204,11 @@ module.exports = {
                 text: `╔═|〔  UPDATE 〕\n║\n║ ▸ *Status* : ❌ GitHub unreachable\n║ ▸ *Reason* : ${err.message}\n║\n${foot}`
             }, { quoted: msg });
         }
-
-        const current      = getCurrentCommit();
+        
+        const current = getCurrentCommit();
         const shortCurrent = current?.slice(0, 7) || 'unknown';
-        const shortLatest  = latest.sha?.slice(0, 7) || 'unknown';
-
+        const shortLatest = latest.sha?.slice(0, 7) || 'unknown';
+        
         if (current && latest.sha && current === latest.sha) {
             return await sock.sendMessage(chatId, {
                 text: [
@@ -244,12 +222,11 @@ module.exports = {
                 ].join('\n')
             }, { quoted: msg });
         }
-
-        // ── Backup entire session folder BEFORE update ────────────────────────
+        
         const sessionSaved = backupSession();
-
+        
         let pullErr, npmErr, method;
-
+        
         if (isGitRepo()) {
             method = 'git';
             try {
@@ -262,19 +239,18 @@ module.exports = {
                 await updateViaZip();
             } catch (err) { pullErr = err.message?.slice(0, 150); }
         }
-
-        // ── Always restore session regardless of update result ────────────────
+        
         restoreSession();
-
+        
         if (pullErr) {
             return await sock.sendMessage(chatId, {
                 text: `╔═|〔  UPDATE 〕\n║\n║ ▸ *Status* : ❌ Update failed\n║ ▸ *Method* : ${method}\n║ ▸ *Reason* : ${pullErr}\n║\n${foot}`
             }, { quoted: msg });
         }
-
+        
         try { run('npm install --production', { cwd: BOT_ROOT }); }
         catch { npmErr = true; }
-
+        
         await sock.sendMessage(chatId, {
             text: [
                 `╔═|〔  UPDATE 〕`,
@@ -293,7 +269,7 @@ module.exports = {
                 `${foot}`,
             ].join('\n')
         }, { quoted: msg });
-
+        
         setTimeout(() => process.exit(1), 3000);
     },
 };
