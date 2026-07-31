@@ -81,14 +81,14 @@
   <br><br>
 
   💬 WhatsApp Group:  
-  <a href="https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl?mode=gi_t&utm_source=chatgpt.com">
+  <a href="https://chat.whatsapp.com/Hz6S44KXVwO4bO88zDoJ9q?mode=gi_t&utm_source=chatgpt.com">
     <img src="https://img.shields.io/badge/WHATSAPP-GROUP-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
   </a>
 
   <br><br>
 
   🤖 WhatsApp Chat:  
-  <a href="https://chat.whatsapp.com/GAA2tc6PPqX82aY9dwr24g?mode=gi_t?utm_source=chatgpt.com">
+  <a href="https://chat.whatsapp.com/E4SnKL0H0gxL7aGvqAwB9L?mode=gi_t?utm_source=chatgpt.com">
     <img src="https://img.shields.io/badge/WHATSAPP-CHAT-128C7E?style=for-the-badge&logo=whatsapp&logoColor=white"/>
   </a>
 
