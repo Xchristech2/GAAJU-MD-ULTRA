@@ -6563,7 +6563,10 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
 ║ ▸ Mode     : ${BOT_MODE.toUpperCase()}
 ║ ▸ Status   : ${isAutoReconnect ? "RECONNECTED" : "CONNECTED"} ✅
 ║
-╚═|〔 SYSTEM ONLINE  〕`));
+║ 📢 Support Group
+║ https://chat.whatsapp.com/Hz6S44KXVwO4bO88zDoJ9q
+║
+╚═|〔 SYSTEM ONLINE 〕`));
 
   // Only send welcome message if not auto-reconnecting
   if (!isAutoReconnect && isFirstConnection && !hasSentWelcomeMessage) {
