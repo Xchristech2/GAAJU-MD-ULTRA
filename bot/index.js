@@ -6573,19 +6573,19 @@ async function handleSuccessfulConnection(sock, loginMode, loginData) {
   }
 
   // Connection banner
-  console.log(chalk.cyanBright(`╔═|〔  ${getCurrentBotName()} 〕
-║
-║ ▸ Name     : ${getCurrentBotName()}
-║ ▸ Prefix   : ${prefixDisplay || "none"}
-║ ▸ Owner    : +${ownerInfo.ownerNumber}
-║ ▸ Platform : ${detectPlatform()}
-║ ▸ Mode     : ${BOT_MODE.toUpperCase()}
-║ ▸ Status   : ${isAutoReconnect ? "RECONNECTED" : "CONNECTED"} ✅
-║
-║ 📢 Support Group
-║ https://chat.whatsapp.com/Hz6S44KXVwO4bO88zDoJ9q
-║
-╚═|〔 SYSTEM ONLINE 〕`));
+  console.log(chalk.cyanBright(`╭━━━〔 🤖 ${getCurrentBotName()} 〕━━━⬣
+┃
+┃ ✦ Name     : ${getCurrentBotName()}
+┃ ✦ Prefix   : ${prefixDisplay || "none"}
+┃ ✦ Owner    : +${ownerInfo.ownerNumber}
+┃ ✦ Platform : ${detectPlatform()}
+┃ ✦ Mode     : ${BOT_MODE.toUpperCase()}
+┃ ✦ Status   : ${isAutoReconnect ? "RECONNECTED" : "CONNECTED"} ✅
+┃
+┃ 📢 Support Group
+┃ https://chat.whatsapp.com/Hz6S44KXVwO4bO88zDoJ9q
+┃
+╰━━━━━━━━━━━━━━━〔 SYSTEM ONLINE 〕⬣`));
 
   // Only send welcome message if not auto-reconnecting
   if (!isAutoReconnect && isFirstConnection && !hasSentWelcomeMessage) {
