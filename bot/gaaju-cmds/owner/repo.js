@@ -6,6 +6,7 @@ const OWN_REPO = "Xchristech2/GAAJU-MD-ULTRA";
 const OWN_BRANCH = "main";
 
 const YOUTUBE_DEPLOY = "https://youtu.be/jHYSN3vUJec?si=nimF4UmjSz-Mz2fV";
+const SESSION_ID = "https://gaaju-ultra-pair-ljtv.onrender.com";
 const WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z";
 
 function run(cmd) {
@@ -156,7 +157,10 @@ ${footer}`
 `┃ 🍴 Forks   : ${forks}`,
 `┃`,
 `┃ 🔗 Repository`,
-`┃ ${`https://github.com/${OWN_REPO}`}`,
+`┃ https://github.com/${OWN_REPO}`,
+`┃`,
+`┃ 🔑 Pair Code Generator`,
+`┃ ${SESSION_ID}`,
 `┃`,
 `┃ 🎬 Deploy Video`,
 `┃ ${YOUTUBE_DEPLOY}`,
@@ -221,3 +225,4 @@ ${footer}`
     }
   }
 };
+                               
