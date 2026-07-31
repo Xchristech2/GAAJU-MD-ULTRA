@@ -26,41 +26,22 @@ module.exports = {
 
     const _0xbd8bb2 = [];
 
-    if (_0x2b6d98) {
-      _0xbd8bb2.push(_0x2b6d98 + "d");
-    }
-
-    if (_0x253a7a) {
-      _0xbd8bb2.push(_0x253a7a + "h");
-    }
-
-    if (_0xc8e476) {
-      _0xbd8bb2.push(_0xc8e476 + "m");
-    }
+    if (_0x2b6d98) _0xbd8bb2.push(_0x2b6d98 + "d");
+    if (_0x253a7a) _0xbd8bb2.push(_0x253a7a + "h");
+    if (_0xc8e476) _0xbd8bb2.push(_0xc8e476 + "m");
 
     _0xbd8bb2.push(_0x39e2d7 + "s");
 
     await _0x9d31e.sendMessage(
       _0x1cadeb,
       {
-        text:
-          "╔═|〔  UPTIME 〕\n" +
-          "║\n" +
-          "║ ▸ *Runtime* : " + _0xbd8bb2.join(" ") + "\n" +
-          "║\n" +
-          "╚═╝",
+        text: `╭━━━〔 ⏱️ UPTIME 〕━━━⬣
+┃
+┃ ✦ Runtime : ${_0xbd8bb2.join(" ")}
+┃
+╰━━━━━━━━━━━━━━━〔 GAAJU-MD ULTRA 〕⬣`,
 
-        contextInfo: {
-          externalAdReply: {
-            title: "GAAJU MD ULTRA",
-            body: "Join Group",
-            mediaType: 1,
-            renderLargerThumbnail: false,
-            showAdAttribution: true,
-            sourceUrl: "https://chat.whatsapp.com/J2H0ksHUHaLDhYkjxVzvvl"
-          }
-        }
-      },
+             },
       {
         quoted: _0x8e593c
       }
