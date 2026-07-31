@@ -39,7 +39,7 @@ module.exports = {
 ┃
 ┃ ✦ Runtime : ${_0xbd8bb2.join(" ")}
 ┃
-`╰━━━━━━〔 ${botName} 〕⬣`,
+`╰━━━━━━〔 GAAJU-MD ULTRA 〕⬣`,
 
              },
       {
