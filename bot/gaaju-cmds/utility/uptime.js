@@ -40,7 +40,7 @@ await _0x9d31e.sendMessage(
 ┃
 ┃ ✦ Runtime : ${_0xbd8bb2.join(" ")}
 ┃
-╰━━━━━━━━━━━━━━━〔 GAAJU-MD ULTRA 〕⬣`,
+╰━━━━━━〔 GAAJU-MD ULTRA 〕⬣`,
 
 },  
   {  
