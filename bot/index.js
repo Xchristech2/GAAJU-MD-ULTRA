@@ -5169,7 +5169,26 @@ async function startBot(loginMode = "auto", loginData = null) {
             const ramPct = Math.min(100, Math.round(_mem.heapUsed / _mem.heapTotal * 100));
             const filled = Math.round(ramPct / 10);
             const ramBar = "█".repeat(filled) + "░".repeat(10 - filled);
-            const successMessage = `╔═|〔  ${getCurrentBotName()} 〕\n║\n║ ▸ *Name*     : ${getCurrentBotName()}\n║ ▸ *Prefix*   : ${getCurrentPrefix() || "none"}\n║ ▸ *Owner*    : +${displayOwnerNumber}\n║ ▸ *Mode*     : ${modeDisplay}\n║ ▸ *Platform* : ${detectPlatform()}\n║ ▸ *Version*  : v${VERSION}\n║ ▸ *Uptime*   : ${uptimeStr}\n║ ▸ *Commands* : ${new Set([...commands.values()].map(c => c.name)).size}\n║ ▸ *Usage*    : ${usedMB} MB of ${totalGB} GB\n║ ▸ *RAM*      : [${ramBar}] ${ramPct}%\n║ ▸ *Speed*    : ~${Date.now() - _pingStart}ms\n║ ▸ *Status*   : CONNECTED ✅\n║\n╚═|〔 SYSTEM ONLINE  〕`;
+            const successMessage = `╔═|〔  ${getCurrentBotName()} 〕
+║
+║ ▸ *Name*     : ${getCurrentBotName()}
+║ ▸ *Prefix*   : ${getCurrentPrefix() || "none"}
+║ ▸ *Owner*    : +${displayOwnerNumber}
+║ ▸ *Mode*     : ${modeDisplay}
+║ ▸ *Platform* : ${detectPlatform()}
+║ ▸ *Version*  : v${VERSION}
+║ ▸ *Uptime*   : ${uptimeStr}
+║ ▸ *Commands* : ${new Set([...commands.values()].map(c => c.name)).size}
+║ ▸ *Usage*    : ${usedMB} MB of ${totalGB} GB
+║ ▸ *RAM*      : [${ramBar}] ${ramPct}%
+║ ▸ *Speed*    : ~${Date.now() - _pingStart}ms
+║ ▸ *Status*   : CONNECTED ✅
+║
+║ 📢 *Support Group*
+
+https://chat.whatsapp.com/Hz6S44KXVwO4bO88zDoJ9q
+
+╚═|〔 SYSTEM ONLINE 〕`;
             const sendPromise = sock.sendMessage(targetJid, {
               text: successMessage
             });
