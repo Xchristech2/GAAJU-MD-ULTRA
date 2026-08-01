@@ -164,62 +164,65 @@ module.exports = {
         const lines = [];
 
         // ================= HEADER
-        lines.push(`┏━━❐✧ ${botName} ✧❐`);
-        lines.push(`┃✦ Prefix: [${p}]`);
-        lines.push(`┃✦ Owner: ${owner}`);
-        lines.push(`┃✦ Mode: ${mode}`);
-        lines.push(`┃✦ Platform: ${getPlatform()}`);
-        lines.push(`┃✦ Speed: ${getSpeed(msg)}`);
-        lines.push(`┃✦ Uptime: ${getUptime()}`);
-        lines.push(`┃✦ Version: ${BOT_VERSION}`);
-        lines.push(`┃✦ Usage: ${usage.text}`);
-        lines.push(`┃✦ RAM: ${getBar(usage.percent)}`);
-        lines.push(`┃✦ Commands: ${totalCmds}`);
-        lines.push(`┗━━❐`);
+lines.push(`┏━━❐✧ ${botName} ✧❐`);
+lines.push(`┃✦ Prefix: [${p}]`);
+lines.push(`┃✦ Owner: ${owner}`);
+lines.push(`┃✦ Mode: ${mode}`);
+lines.push(`┃✦ Platform: ${getPlatform()}`);
+lines.push(`┃✦ Speed: ${getSpeed(msg)}`);
+lines.push(`┃✦ Uptime: ${getUptime()}`);
+lines.push(`┃✦ Version: ${BOT_VERSION}`);
+lines.push(`┃✦ Usage: ${usage.text}`);
+lines.push(`┃✦ RAM: ${getBar(usage.percent)}`);
+lines.push(`┃✦ Commands: ${totalCmds}`);
+lines.push(`┗━━❐`);
 
-        const mid1 = Math.floor(catData.length / 3);
-        const mid2 = Math.floor(catData.length * 2 / 3);
+// 🔥 NEW READ MORE (ADD THIS)
+lines.push(readMore);
 
-        // ================= PART 1
-        for (let i = 0; i < mid1; i++) {
-            const { cat, cmdNames } = catData[i];
-            const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
-            lines.push(`\n┏━━❐ ${label} ❐`);
-            for (const cmd of cmdNames) {
-                lines.push(`┃✦ ${p}${cmd}`);
-            }
-            lines.push(`┗━━❐`);
-        }
+const mid1 = Math.floor(catData.length / 3);
+const mid2 = Math.floor(catData.length * 2 / 3);
 
-        // 🔥 READ MORE 1
-        lines.push(readMore);
+// ================= PART 1
+for (let i = 0; i < mid1; i++) {
+    const { cat, cmdNames } = catData[i];
+    const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+    lines.push(`\n┏━━❐ ${label} ❐`);
+    for (const cmd of cmdNames) {
+        lines.push(`┃✦ ${p}${cmd}`);
+    }
+    lines.push(`┗━━❐`);
+}
 
-        // ================= PART 2
-        for (let i = mid1; i < mid2; i++) {
-            const { cat, cmdNames } = catData[i];
-            const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
-            lines.push(`\n┏━━❐ ${label} ❐`);
-            for (const cmd of cmdNames) {
-                lines.push(`┃✦ ${p}${cmd}`);
-            }
-            lines.push(`┗━━❐`);
-        }
+// 🔥 READ MORE 1
+lines.push(readMore);
 
-        // 🔥 READ MORE 2
-        lines.push(readMore);
+// ================= PART 2
+for (let i = mid1; i < mid2; i++) {
+    const { cat, cmdNames } = catData[i];
+    const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+    lines.push(`\n┏━━❐ ${label} ❐`);
+    for (const cmd of cmdNames) {
+        lines.push(`┃✦ ${p}${cmd}`);
+    }
+    lines.push(`┗━━❐`);
+}
 
-        // ================= PART 3
-        for (let i = mid2; i < catData.length; i++) {
-            const { cat, cmdNames } = catData[i];
-            const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
-            lines.push(`\n┏━━❐ ${label} ❐`);
-            for (const cmd of cmdNames) {
-                lines.push(`┃✦ ${p}${cmd}`);
-            }
-            lines.push(`┗━━❐`);
-        }
+// 🔥 READ MORE 2
+lines.push(readMore);
 
-        // 🔥 READ MORE 3 (FINAL PUSH EFFECT)
+// ================= PART 3
+for (let i = mid2; i < catData.length; i++) {
+    const { cat, cmdNames } = catData[i];
+    const label = CATEGORY_LABELS[cat] || `📁 ${cat.toUpperCase()}`;
+    lines.push(`\n┏━━❐ ${label} ❐`);
+    for (const cmd of cmdNames) {
+        lines.push(`┃✦ ${p}${cmd}`);
+    }
+    lines.push(`┗━━❐`);
+}
+
+// 🔥 READ MORE 3 (FINAL PUSH EFFECT)
 lines.push(readMore);
 
 // ================= FOOTER
@@ -230,7 +233,7 @@ lines.push('> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ');
 
 const caption = lines.join('\n');
 
-        const msgOptions = { quoted: msg };
+const msgOptions = { quoted: msg };
 
         msgOptions.contextInfo = {
             externalAdReply: {
