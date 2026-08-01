@@ -1,13 +1,25 @@
 {
-  "name": "gaaju-md-ultra-deploy",
+  "name": "gaaju-md-ultra",
   "version": "1.2.0",
   "description": "GAAJU-MD WhatsApp Bot",
+  "main": "index.js",
+  "type": "commonjs",
   "engines": {
     "node": "20.x",
     "npm": ">=9"
   },
   "scripts": {
     "start": "node index.js",
-    "postinstall": "cd bot && npm install --omit=dev"
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
+    "@whiskeysockets/baileys": "7.0.0-rc.9",
+    "axios": "^1.15.0",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.6.1",
+    "node-cache": "^5.1.2",
+    "pino": "^9.14.0",
+    "yt-search": "^2.12.1"
   }
 }
