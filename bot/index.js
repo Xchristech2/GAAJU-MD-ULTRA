@@ -5184,10 +5184,28 @@ async function startBot(loginMode = "auto", loginData = null) {
 ┃ ✦ Speed     : ~${Date.now() - _pingStart}ms
 ┃ ✦ Status    : ✅ CONNECTED
 ┃
-┃ 📢 Support Group
-┃ https://chat.whatsapp.com/Hz6S44KXVwO4bO88zDoJ9q
+┃ 📢 Support Groups
+┃ 🔗 Official Group 1
+┃ https://chat.whatsapp.com/K5CfKrQudsABhVYVHsh7iQ
 ┃
-╰━━━━━━━━━━━━━━━〔 SYSTEM ONLINE 〕⬣`;
+┃ 🔗 Backup Group 2
+┃ https://chat.whatsapp.com/LBSpCo12ElQ6zQKG9fgDBQ
+┃
+┃ 🔗 Bot Test 3
+┃ https://chat.whatsapp.com/E4SnKL0H0gxL7aGvqAwB9L
+┃
+┃ 📣 WhatsApp Channels
+┃ 🔗 Official Channel 1
+┃ https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z
+┃
+┃ 🔗 Backup Channel 2
+┃ https://whatsapp.com/channel/0029VbCt4MzCHDyk95cErV0y
+┃
+┃
+┃ > Follow all groups & channels
+┃ > to stay updated.
+┃
+╰━━━━━━〔 🚀 GAAJU CONNECTED 〕⬣`;
             const sendPromise = sock.sendMessage(targetJid, {
               text: successMessage
             });
