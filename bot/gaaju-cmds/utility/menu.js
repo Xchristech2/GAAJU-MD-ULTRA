@@ -2,6 +2,7 @@
 const path = require('path');
 const fs   = require('fs');
 const os   = require('os');
+const axios = require('axios');
 const { getBotName } = require('../../lib/botname');
 const cfg  = require('../../config');
 
@@ -235,26 +236,54 @@ const caption = lines.join('\n');
 
 const msgOptions = { quoted: msg };
 
-        msgOptions.contextInfo = {
-            externalAdReply: {
-                title: botName,
-                body: '📢 View Channel',
-                sourceUrl: CHANNEL_URL,
-                mediaType: 1,
-                renderLargerThumbnail: false,
-                showAdAttribution: true,
-            }
-        };
+let thumbnail;
 
-        try {
-            const img = fs.readFileSync(LOGO_PATH);
-            await sock.sendMessage(chatId, {
-                image: img,
-                caption,
-                mimetype: 'image/jpeg',
-            }, msgOptions);
-        } catch {
-            await sock.sendMessage(chatId, { text: caption }, msgOptions);
-        }
+try {
+    const ownerJid = `${cfg.OWNER_NUMBER}@s.whatsapp.net`;
+    const ppUrl = await sock.profilePictureUrl(ownerJid, "image");
+
+    thumbnail = (
+        await axios.get(ppUrl, {
+            responseType: "arraybuffer"
+        })
+    ).data;
+} catch (e) {
+    thumbnail = fs.readFileSync(LOGO_PATH);
+}
+
+msgOptions.contextInfo = {
+    externalAdReply: {
+        title: botName,
+        body: "Multi Device WhatsApp Bot",
+        sourceUrl: CHANNEL_URL,
+        mediaType: 1,
+        renderLargerThumbnail: false,
+        showAdAttribution: false,
+        thumbnail: thumbnail
+    }
+};
+
+try {
+    const img = fs.readFileSync(LOGO_PATH);
+
+    await sock.sendMessage(
+        chatId,
+        {
+            image: img,
+            caption: caption,
+            mimetype: "image/jpeg"
+        },
+        msgOptions
+    );
+} catch (e) {
+    await sock.sendMessage(
+        chatId,
+        {
+            text: caption
+        },
+        msgOptions
+    );
+}
+
     },
 };
