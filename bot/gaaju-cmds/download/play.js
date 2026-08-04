@@ -33,7 +33,18 @@ module.exports = {
     
     if (!_0x5aee42) {
       return _0x257fb7.sendMessage(_0x227982, {
-        text: ["╔═|〔  PLAY MUSIC 〕", "║", "║ ▸ *Usage*   : " + _0x45e1a4 + "play <song name>", "║ ▸ *Example* : " + _0x45e1a4 + "play Alan Walker Faded", "║", "╚═|〔 " + _0x48a4b6 + " 〕"].join("\n")
+        text: [
+  "╭━━━━━━━━━━━━━━━━━━╮",
+  "     💿 *MUSIC PLAYER*",
+  "╰━━━━━━━━━━━━━━━━━━╯",
+  "",
+  "🎵 *Usage:* " + _0x45e1a4 + "play <song name>",
+  "🎶 *Example:* " + _0x45e1a4 + "play Alan Walker Faded",
+  "",
+  "╭━━━━━━━━━━━━━━━━━━╮",
+  "     🎧 " + _0x48a4b6,
+  "╰━━━━━━━━━━━━━━━━━━╯"
+].join("\n")
       }, {
         quoted: _0x38eb72
       });
@@ -76,23 +87,28 @@ module.exports = {
       const buffer = await dlBuffer(data.downloadURL);
       
       const caption = [
-        "╔═|〔  PLAY MUSIC 〕",
-        "║",
-        "║ ▸ *Track*   : " + trunc(data.title),
-        "║ ▸ *Quality* : 128kbps",
-        "║ ▸ *Size*    : " + fmtSize(buffer.length),
-        "║",
-        "╚═|〔 " + _0x48a4b6 + " 〕"
-      ].join("\n");
-      
-      await _0x257fb7.sendMessage(
-        _0x227982,
-        {
-          document: buffer,
-          mimetype: "audio/mpeg",
-          fileName: (data.title.replace(/[^\w\s-]/g, "").trim() || "audio") + ".mp3",
-          caption
-        },
+  "╭━━━━━━━━━━━━━━━━━━╮",
+  "     💿 *NOW PLAYING*",
+  "╰━━━━━━━━━━━━━━━━━━╯",
+  "",
+  "🎵 *Title:* " + trunc(data.title),
+  "🎧 *Quality:* 128kbps",
+  "📦 *Size:* " + fmtSize(buffer.length),
+  "",
+  "⏺️ *Status:* Ready",
+  "",
+  "╭━━━━━━━━━━━━━━━━━━╮",
+  "     🎶 " + _0x48a4b6,
+  "╰━━━━━━━━━━━━━━━━━━╯"
+].join("\n");
+
+await _0x257fb7.sendMessage(
+  _0x227982,
+  {
+  audio: buffer,
+  mimetype: "audio/mpeg",
+  caption
+},
         {
           quoted: _0x38eb72
         }
@@ -103,14 +119,18 @@ module.exports = {
         _0x227982,
         {
           text: [
-            "╔═|〔  PLAY MUSIC 〕",
-            "║",
-            "║ ▸ *Query*  : " + trunc(_0x5aee42),
-            "║ ▸ *Status* : ❌ Failed",
-            "║ ▸ *Reason* : " + _0x149386.message,
-            "║",
-            "╚═|〔 " + _0x48a4b6 + " 〕"
-          ].join("\n")
+  "╭━━━━━━━━━━━━━━━━━━╮",
+  "     💿 *MUSIC PLAYER*",
+  "╰━━━━━━━━━━━━━━━━━━╯",
+  "",
+  "🎵 *Query:* " + trunc(_0x5aee42),
+  "❌ *Status:* Failed",
+  "⚠️ *Reason:* " + _0x149386.message,
+  "",
+  "╭━━━━━━━━━━━━━━━━━━╮",
+  "     🎶 " + _0x48a4b6,
+  "╰━━━━━━━━━━━━━━━━━━╯"
+].join("\n")
         },
         {
           quoted: _0x38eb72
