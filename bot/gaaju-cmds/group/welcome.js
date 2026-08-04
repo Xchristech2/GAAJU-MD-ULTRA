@@ -18,6 +18,9 @@ const DEFAULT_MSG = [
   "┃ ✦ Group   : {group}",
   "┃ ✦ Member  : #{count}",
   "┃",
+  "┃ 🌐 View Channel",
+  "┃ 👉 " + CHANNEL_LINK,
+  "┃",
   "╰━━━━━━━━━━━━━━━⬣"
 ].join("\n");
 
@@ -100,10 +103,10 @@ async function sendWelcomeMessage(sock, groupId, users, msgTemplate, { approvedB
           mentionedJid: [user],
 
           forwardedNewsletterMessageInfo: {
-    newsletterJid: CHANNEL_ID,
-    newsletterName: "Xᴄʜʀɪs ᴛᴇᴄʜ2",
-    serverMessageId: 1
-},
+            newsletterJid: CHANNEL_ID,
+            newsletterName: "GAAJU MD ULTRA",
+            serverMessageId: 1
+          },
 
           externalAdReply: {
             title: "🎉 Welcome to " + groupName,
@@ -149,48 +152,39 @@ module.exports = {
     const cmd = args[0]?.toLowerCase();
 
     if (!cmd) {
-  return sock.sendMessage(chatId, {
-    text:
+      return sock.sendMessage(chatId, {
+        text:
+`╭━━━〔 👋 WELCOME 〕━━━⬣
+┃
+┃ ✦ State   : ${group.enabled ? "🟢 ON" : "🔴 OFF"}
+┃
+┃ 🌐 View Channel
+┃ 👉 ${CHANNEL_LINK}
+┃
+╰━━━━━━━━━━━━━━━⬣`
+      }, { quoted: msg });
+    }
+
+    if (cmd === "on") {
+      group.enabled = true;
+      save();
+    }
+
+    if (cmd === "off") {
+      group.enabled = false;
+      save();
+    }
+
+    return sock.sendMessage(chatId, {
+      text:
 `╭━━━〔 👋 WELCOME 〕━━━⬣
 ┃
 ┃ ✦ State : ${group.enabled ? "🟢 ON" : "🔴 OFF"}
 ┃
-╰━━━━━━━━━━━━━━━⬣`,
-    contextInfo: {
-      forwardedNewsletterMessageInfo: {
-        newsletterJid: "120363406588763460@newsletter",
-        newsletterName: "Xᴄʜʀɪs ᴛᴇᴄʜ2",
-        serverMessageId: 1
-      }
-    }
-  }, { quoted: msg });
-}
-
-if (cmd === "on") {
-  group.enabled = true;
-  save();
-}
-
-if (cmd === "off") {
-  group.enabled = false;
-  save();
-}
-
-return sock.sendMessage(chatId, {
-  text:
-`╭━━━〔 👋 WELCOME 〕━━━⬣
+┃ 🌐 View Channel
+┃ 👉 ${CHANNEL_LINK}
 ┃
-┃ ✦ State : ${group.enabled ? "🟢 ON" : "🔴 OFF"}
-┃
-╰━━━━━━━━━━━━━━━⬣`,
-  contextInfo: {
-    forwardedNewsletterMessageInfo: {
-      newsletterJid: "120363406588763460@newsletter",
-      newsletterName: "Xᴄʜʀɪs ᴛᴇᴄʜ2",
-      serverMessageId: 1
-    }
-  }
-}, { quoted: msg });
-
+╰━━━━━━━━━━━━━━━⬣`
+    }, { quoted: msg });
   }
 };
