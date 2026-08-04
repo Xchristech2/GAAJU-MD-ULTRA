@@ -20,5 +20,8 @@
     "dotenv": "^16.6.1",
     "node-cache": "^5.1.2",
     "pino": "^9.14.0"
+  },
+  "overrides": {
+    "protobufjs": "7.5.5"
   }
 }
