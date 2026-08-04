@@ -58,17 +58,19 @@ module.exports = {
         }
       });
       
-      let url = _0x5aee42;
-      
-      if (!/youtu\.?be|youtube\.com/.test(_0x5aee42)) {
-        const search = await yts(_0x5aee42);
-        
-        if (!search.videos?.length) {
-          throw new Error("No search results");
-        }
-        
-        url = search.videos[0].url;
-      }
+let url = _0x5aee42;
+let thumbnail = "";
+
+if (!/youtu\.?be|youtube\.com/.test(_0x5aee42)) {
+  const search = await yts(_0x5aee42);
+
+  if (!search.videos?.length) {
+    throw new Error("No search results");
+  }
+
+  url = search.videos[0].url;
+  thumbnail = search.videos[0].thumbnail;
+}
       
       const { data } = await axios.get(
         "https://eliteprotech-apis.zone.id/convert",
@@ -105,14 +107,26 @@ module.exports = {
 await _0x257fb7.sendMessage(
   _0x227982,
   {
-  audio: buffer,
-  mimetype: "audio/mpeg",
-  caption
-},
-        {
-          quoted: _0x38eb72
-        }
-      );
+    audio: buffer,
+    mimetype: "audio/mpeg",
+    ptt: false,
+    caption,
+    contextInfo: {
+      externalAdReply: {
+        showAdAttribution: false,
+        renderLargerThumbnail: true,
+        mediaType: 1,
+        title: trunc(data.title),
+        body: "ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ",
+        thumbnailUrl: thumbnail,
+        sourceUrl: url
+      }
+    }
+  },
+  {
+    quoted: _0x38eb72
+  }
+);
       
     } catch (_0x149386) {
       await _0x257fb7.sendMessage(
