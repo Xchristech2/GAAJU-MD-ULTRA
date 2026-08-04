@@ -158,7 +158,7 @@ module.exports = {
 ╰━━━━━━━━━━━━━━━⬣`,
     contextInfo: {
       forwardedNewsletterMessageInfo: {
-        newsletterJid: CHANNEL_ID,
+        newsletterJid: "120363406588763460@newsletter",
         newsletterName: "Xᴄʜʀɪs ᴛᴇᴄʜ2",
         serverMessageId: 1
       }
@@ -185,7 +185,7 @@ return sock.sendMessage(chatId, {
 ╰━━━━━━━━━━━━━━━⬣`,
   contextInfo: {
     forwardedNewsletterMessageInfo: {
-      newsletterJid: CHANNEL_ID,
+      newsletterJid: "120363406588763460@newsletter",
       newsletterName: "Xᴄʜʀɪs ᴛᴇᴄʜ2",
       serverMessageId: 1
     }
