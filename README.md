@@ -19,9 +19,34 @@
 
   ## 🔑 SESSION & SETUP
 
-  👉 Get your Session ID here:  
-  <a href="https://gaaju-ultra-pair-ljtv.onrender.com/?utm_source=chatgpt.com">
-    <img src="https://img.shields.io/badge/SESSION-GENERATOR-blue?style=for-the-badge&logo=render&logoColor=white"/>
+  <h3>🟢 Pair Site - Server 1</h3>
+
+  <a href="https://gaaju-ultra-pair-ljtv.onrender.com/">
+    <img src="https://img.shields.io/badge/PAIR%20SITE-SERVER%201-25D366?style=for-the-badge&logo=render&logoColor=white"/>
+  </a>
+
+  <br><br>
+
+  <h3>🔵 Pair Site - Server 2</h3>
+
+  <a href="https://gaaju-ultra-pair04.onrender.com/">
+    <img src="https://img.shields.io/badge/PAIR%20SITE-SERVER%202-1E90FF?style=for-the-badge&logo=render&logoColor=white"/>
+  </a>
+
+  <br><br>
+
+  <b>Generate your Session ID using any server below.</b>
+
+  <br><br>
+
+  <a href="https://gaaju-ultra-pair-ljtv.onrender.com/">
+    <img src="https://img.shields.io/badge/GET%20SESSION-SERVER%201-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
+  </a>
+
+  <br><br>
+
+  <a href="https://gaaju-ultra-pair04.onrender.com/">
+    <img src="https://img.shields.io/badge/GET%20SESSION-SERVER%202-1E90FF?style=for-the-badge&logo=whatsapp&logoColor=white"/>
   </a>
 
   <br><br>
@@ -66,29 +91,33 @@
 
   ## 🔗 IMPORTANT LINKS
 
-  📡 Telegram Channel:  
-  <a href="https://t.me/chrisgaajutechs?utm_source=chatgpt.com">
+  📡 Telegram Channel:<br>
+
+  <a href="https://t.me/chrisgaajutechs">
     <img src="https://img.shields.io/badge/TELEGRAM-CHANNEL-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white"/>
   </a>
 
   <br><br>
 
-  📢 WhatsApp Channel:  
+  📢 WhatsApp Channel:<br>
+
   <a href="https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z">
     <img src="https://img.shields.io/badge/WHATSAPP-CHANNEL-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
   </a>
 
   <br><br>
 
-  💬 WhatsApp Group:  
-  <a href="https://chat.whatsapp.com/LBSpCo12ElQ6zQKG9fgDBQ?mode=gi_t&utm_source=chatgpt.com">
+  💬 WhatsApp Group:<br>
+
+  <a href="https://chat.whatsapp.com/LBSpCo12ElQ6zQKG9fgDBQ">
     <img src="https://img.shields.io/badge/WHATSAPP-GROUP-25D366?style=for-the-badge&logo=whatsapp&logoColor=white"/>
   </a>
 
   <br><br>
 
-  🤖 WhatsApp Chat:  
-  <a href="https://chat.whatsapp.com/E4SnKL0H0gxL7aGvqAwB9L?mode=gi_t?utm_source=chatgpt.com">
+  🤖 WhatsApp Chat:<br>
+
+  <a href="https://chat.whatsapp.com/E4SnKL0H0gxL7aGvqAwB9L">
     <img src="https://img.shields.io/badge/WHATSAPP-CHAT-128C7E?style=for-the-badge&logo=whatsapp&logoColor=white"/>
   </a>
 
