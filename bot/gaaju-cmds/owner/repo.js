@@ -1,5 +1,4 @@
 const https = require("https");
-const { execSync } = require("child_process");
 const { getBotName } = require("../../lib/botname");
 
 const OWN_REPO = "Xchristech2/GAAJU-MD-ULTRA";
@@ -70,6 +69,7 @@ function trunc(text, length = 60) {
 
 module.exports = {
     name: "repo",
+
     aliases: [
         "botrepo",
         "repository",
@@ -77,9 +77,7 @@ module.exports = {
         "repostats"
     ],
 
-    description:
-        "Show GitHub repository information",
-
+    description: "Show GitHub repository information",
     category: "owner",
 
     async execute(sock, msg, args, cmdName, prefix) {
@@ -94,13 +92,14 @@ module.exports = {
             return sock.sendMessage(
                 jid,
                 {
-                    text: `┏━━━━━━━━━━━━━━━━━
-
-✧ Usage:    ${prefix}repo owner/repo
-✧ Example:  ${prefix}repo Xchristech2/GAAJU-MD-ULTRA
-
-┗━━━━━━━━━━━━━━━━━
-Powered by ${botName}`
+                    text: `╭━━〔 ⚠️ REPO 〕━━╮
+┃
+┃ ✦ Usage: ${prefix}repo owner/repo
+┃ ✦ Example:
+┃   ${prefix}repo Xchristech2/GAAJU-MD-ULTRA
+┃
+╰━━━━━━━━━━━━━━━╯
+⚡ ${botName}`
                 },
                 { quoted: msg }
             );
@@ -110,7 +109,7 @@ Powered by ${botName}`
 
             await sock.sendMessage(jid, {
                 react: {
-                    text: "📦",
+                    text: "📂",
                     key: msg.key
                 }
             });
@@ -159,8 +158,7 @@ Powered by ${botName}`
             if (Array.isArray(branchRes.data)) {
                 const mainBranch =
                     branchRes.data.find(
-                        b =>
-                            b.name === data.default_branch
+                        b => b.name === data.default_branch
                     );
 
                 branch =
@@ -186,39 +184,42 @@ Powered by ${botName}`
                     ? `${(data.size / 1024).toFixed(2)} MB`
                     : "N/A";
 
-            const text = `┏━━━━━━━━━━━━━━━━━
+            const ownLinks =
+                repo === OWN_REPO
+                    ? `
+┃ 🔑 Pairing  : ${SESSION_ID}
+┃ 🎬 Deploy   : ${YOUTUBE_DEPLOY}
+┃ 📢 Channel  : ${WHATSAPP_CHANNEL}`
+                    : "";
 
-✧ Repository:  ${repository}
-✧ Owner:       ${owner}
-✧ Description: ${description}
-✧ Language:    ${language}
-✧ License:     ${license}
-✧ Branch:      ${branch}
-✧ Visibility:  ${visibility}
+            const text = `╭━━━〔 📦 REPOSITORY 〕━━━╮
+┃
+┃ 📁 Name      : ${repository}
+┃ 👤 Owner     : ${owner}
+┃ 📝 About     : ${description}
+┃ 💻 Language  : ${language}
+┃ 📜 License   : ${license}
+┃ 🌿 Branch    : ${branch}
+┃ ${visibility}
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯
 
-┗━━━━━━━━━━━━━━━━━
-┏━━━━━━━━━━━━━━━━━
+╭━━━〔 📊 STATISTICS 〕━━━╮
+┃
+┃ ⭐ Stars     : ${stars}
+┃ 🍴 Forks     : ${forks}
+┃ 👁️ Watchers  : ${watchers}
+┃ 💾 Size      : ${size}
+┃ 🐛 Issues    : ${issues}
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯
 
-⿻ STATISTICS
-⿻ Stars:       ${stars}
-⿻ Forks:       ${forks}
-⿻ Watchers:    ${watchers}
-⿻ Size:        ${size}
-⿻ Issues:      ${issues}
-
-┗━━━━━━━━━━━━━━━━━
-┏━━━━━━━━━━━━━━━━━
-
-⿻ PROJECT LINKS
-⿻ Repository:  ${data.html_url}
-${repo === OWN_REPO
-    ? `⿻ Pair Site:   ${SESSION_ID}
-⿻ Deploy:      ${YOUTUBE_DEPLOY}
-⿻ Channel:     ${WHATSAPP_CHANNEL}`
-    : ""}
-
-┗━━━━━━━━━━━━━━━━━
-Powered by ${botName}`;
+╭━━━〔 🔗 LINKS 〕━━━╮
+┃
+┃ 🔗 Repo      : ${data.html_url}${ownLinks}
+┃
+╰━━━━━━━━━━━━━━━━╯
+⚡ Powered by ${botName}`;
 
             await sock.sendMessage(
                 jid,
@@ -231,13 +232,13 @@ Powered by ${botName}`;
             await sock.sendMessage(
                 jid,
                 {
-                    text: `┏━━━━━━━━━━━━━━━━━
-
-✧ Status:  ❌ Failed
-✧ Reason:  ${error.message}
-
-┗━━━━━━━━━━━━━━━━━
-Powered by ${botName}`
+                    text: `╭━━━〔 ❌ REPO ERROR 〕━━━╮
+┃
+┃ ✦ Status : Failed
+┃ ✦ Reason : ${error.message}
+┃
+╰━━━━━━━━━━━━━━━━╯
+⚡ Powered by ${botName}`
                 },
                 { quoted: msg }
             );
