@@ -13,6 +13,7 @@ module.exports = {
 
         const chatId = msg.key.remoteJid;
 
+        // ================= REACTION
         try {
             await sock.sendMessage(chatId, {
                 react: {
@@ -24,33 +25,37 @@ module.exports = {
 
         const botName = getBotName();
 
+        // ================= UPTIME
         const uptime = process.uptime();
+
         const h = Math.floor(uptime / 3600);
         const m = Math.floor((uptime % 3600) / 60);
         const s = Math.floor(uptime % 60);
 
+        // ================= OWNER
         const owner = cfg.OWNER_NUMBER
             ? `+${cfg.OWNER_NUMBER}`
             : "Unknown";
 
+        // ================= MODE
         const mode = (
             process.env.BOT_MODE ||
             cfg.MODE ||
             "public"
         ).toUpperCase();
 
-        const text = [
-            "```",
-            `ⓘ ${botName}`,
-            "",
-            `• Prefix : ${prefix || "."}`,
-            `• Owner  : ${owner}`,
-            `• Mode   : ${mode}`,
-            `• Status : ONLINE ✅`,
-            `• Uptime : ${h}h ${m}m ${s}s`,
-            "```"
-        ].join("\n");
+        // ================= ALIVE MESSAGE
+        const text = `╭━━━〔 💚 ${botName} 〕━━━⬣
+┃
+┃ ✦ Prefix : ${prefix || "."}
+┃ ✦ Owner  : ${owner}
+┃ ✦ Mode   : ${mode}
+┃ ✦ Status : ✅ ONLINE
+┃ ✦ Uptime : ${h}h ${m}m ${s}s
+┃
+╰━━━━━━〔 🚀 GAAJU ALIVE 〕⬣`;
 
+        // ================= SEND
         await sock.sendMessage(
             chatId,
             {
