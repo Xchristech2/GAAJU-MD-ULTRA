@@ -99,7 +99,16 @@ module.exports = {
 ┃   ${prefix}repo Xchristech2/GAAJU-MD-ULTRA
 ┃
 ╰━━━━━━━━━━━━━━━╯
-⚡ ${botName}`
+⚡ ${botName}`,
+                    contextInfo: {
+                        forwardingScore: 999,
+                        isForwarded: true,
+                        forwardedNewsletterMessageInfo: {
+                            newsletterJid: "120363406588763460@newsletter",
+                            newsletterName: "GAAJU-MD",
+                            serverMessageId: -1
+                        }
+                    }
                 },
                 { quoted: msg }
             );
@@ -223,7 +232,18 @@ module.exports = {
 
             await sock.sendMessage(
                 jid,
-                { text },
+                { 
+                    text,
+                    contextInfo: {
+                        forwardingScore: 999,
+                        isForwarded: true,
+                        forwardedNewsletterMessageInfo: {
+                            newsletterJid: "120363406588763460@newsletter",
+                            newsletterName: "GAAJU-MD",
+                            serverMessageId: -1
+                        }
+                    }
+                },
                 { quoted: msg }
             );
 
@@ -238,7 +258,16 @@ module.exports = {
 ┃ ✦ Reason : ${error.message}
 ┃
 ╰━━━━━━━━━━━━━━━━╯
-⚡ Powered by ${botName}`
+⚡ Powered by ${botName}`,
+                    contextInfo: {
+                        forwardingScore: 999,
+                        isForwarded: true,
+                        forwardedNewsletterMessageInfo: {
+                            newsletterJid: "120363406588763460@newsletter",
+                            newsletterName: "GAAJU-MD",
+                            serverMessageId: -1
+                        }
+                    }
                 },
                 { quoted: msg }
             );
