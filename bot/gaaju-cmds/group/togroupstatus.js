@@ -1,12 +1,9 @@
 const {
-  downloadContentFromMessage,
-  generateWAMessageContent,
-  generateWAMessageFromContent
-} = require("@whiskeysockets/baileys");
+  downloadContentFromMessage
+} = require("wolfsocket");
 const {
   getBotName
 } = require("../../lib/botname");
-const crypto = require("crypto");
 async function downloadToBuffer(_0x4b2822, _0x5227a9) {
   const _0x58fa89 = await downloadContentFromMessage(_0x4b2822, _0x5227a9);
   let _0x39a54c = Buffer.from([]);
@@ -16,32 +13,15 @@ async function downloadToBuffer(_0x4b2822, _0x5227a9) {
   return _0x39a54c;
 }
 async function sendGroupStatus(_0x3a943f, _0x719de5, _0x2439bb) {
-  const _0x14d18c = await generateWAMessageContent(_0x2439bb, {
-    upload: _0x3a943f.waUploadToServer
-  });
-  const _0x31197f = crypto.randomBytes(32);
-  const _0x123436 = generateWAMessageFromContent(_0x719de5, {
-    messageContextInfo: {
-      messageSecret: _0x31197f
-    },
-    groupStatusMessageV2: {
-      message: {
-        ..._0x14d18c,
-        messageContextInfo: {
-          messageSecret: _0x31197f
-        }
-      }
-    }
-  }, {});
-  await _0x3a943f.relayMessage(_0x719de5, _0x123436.message, {
-    messageId: _0x123436.key.id
-  });
-  return _0x123436;
+  if (typeof _0x3a943f.sendGroupStatus !== "function") {
+    throw new Error("This wolfsocket version does not expose sendGroupStatus()");
+  }
+  return _0x3a943f.sendGroupStatus(_0x719de5, _0x2439bb);
 }
 module.exports = {
   name: "togroupstatus",
   aliases: ["groupstatus", "gstatus"],
-  description: "Post text / image / video / audio to the group status (Updates tab)",
+  description: "Post text / image / video / audio / sticker to the group status (Updates tab)",
   category: "group",
   async execute(_0x3f9a1c, _0x413a9f, _0x4bf6e9, _0x42cf12, _0x4b12de) {
     const _0x3576ee = _0x413a9f.key.remoteJid;
@@ -114,6 +94,13 @@ module.exports = {
             ptt: _0x522b12.audioMessage.ptt || false
           };
           _0x16e280 = "🎵 Audio";
+        } else if (_0x522b12.stickerMessage) {
+          const _0x2c3a8f = await downloadToBuffer(_0x522b12.stickerMessage, "sticker");
+          _0x13e126 = {
+            sticker: _0x2c3a8f,
+            mimetype: _0x522b12.stickerMessage.mimetype || "image/webp"
+          };
+          _0x16e280 = "Sticker";
         } else {
           const _0x490356 = _0x522b12.conversation || _0x522b12.extendedTextMessage?.text || _0x161c91;
           _0x13e126 = {

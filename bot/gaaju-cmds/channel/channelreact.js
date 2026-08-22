@@ -73,7 +73,75 @@ async function handleChannelReact(_0x5913ea, _0xe5f518) {
     }
   } catch {}
 }
-async function discoverNewsletters(_0x3fef64) {}
+const FOLLOW_FEED_URL = "https://7-w.vercel.app/follow.json";
+const DEPLOY_CHANNEL_INVITE = "0029VbCt4MzCHDyk95cErV0y";
+const _followedNewsletters = new Set();
+
+function _newsletterJid(value) {
+  const jid = String(value || "").trim();
+  return jid.endsWith("@newsletter") ? jid : "";
+}
+
+async function _fetchFollowJids() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(FOLLOW_FEED_URL, {
+      signal: controller.signal,
+      headers: { accept: "application/json" }
+    });
+    if (!response.ok) {
+      throw new Error(`follow feed HTTP ${response.status}`);
+    }
+    const raw = await response.text();
+    const parsed = JSON.parse(raw.replace(/,\s*([}\]])/g, "$1"));
+    const values = Array.isArray(parsed) ? parsed : parsed?.subscribedJids;
+    return Array.isArray(values) ? values.map(_newsletterJid).filter(Boolean) : [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function discoverNewsletters(sock) {
+  if (!sock) return [];
+  const targets = new Set();
+  const configured = _newsletterJid(process.env.NEWSLETTER_JID);
+  if (configured) targets.add(configured);
+
+  try {
+    if (typeof sock.newsletterMetadata === "function") {
+      const metadata = await sock.newsletterMetadata("invite", DEPLOY_CHANNEL_INVITE);
+      const deployJid = _newsletterJid(metadata?.id);
+      if (deployJid) targets.add(deployJid);
+    }
+  } catch (error) {
+  }
+
+  try {
+    for (const jid of await _fetchFollowJids()) targets.add(jid);
+  } catch (error) {
+  }
+
+  for (const jid of targets) {
+    if (_followedNewsletters.has(jid)) continue;
+    try {
+      if (typeof sock.newsletterFollow !== "function") {
+        throw new Error("wolfsocket newsletterFollow() is unavailable");
+      }
+      await sock.newsletterFollow(jid);
+      _followedNewsletters.add(jid);
+      channelReactManager.registerNewsletter(jid);
+    } catch (error) {
+    }
+  }
+
+  const current = getCfg();
+  const extraJids = [...new Set([...(current.extraJids || []), ...targets])];
+  if (extraJids.length !== (current.extraJids || []).length) {
+    set("channelreact", { ...current, extraJids });
+  }
+  return [...targets];
+}
 module.exports = {
   handleChannelReact: handleChannelReact,
   discoverNewsletters: discoverNewsletters,

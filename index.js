@@ -1,3 +1,4 @@
+// Credits to Silent Wolf - Kenya
 // Launcher + process manager
 // The panel always sees this process running — it never exits.
 // The bot itself runs as a child. Exit code 1 = restart, 0 = stop.
@@ -145,3 +146,5 @@ acquireLock();
 ensureDeps()
   .then(() => ensureYtDlp().catch((err) => console.error('[launcher] yt-dlp download failed:', err.message)))
   .finally(startBot);
+
+// Credits to Silent Wolf - Kenya

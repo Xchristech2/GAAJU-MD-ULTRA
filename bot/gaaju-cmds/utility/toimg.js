@@ -2,7 +2,7 @@
 
 const {
   downloadMediaMessage
-} = require("@whiskeysockets/baileys");
+} = require("wolfsocket");
 const {
   getBotName
 } = require("../../lib/botname");

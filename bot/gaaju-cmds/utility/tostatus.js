@@ -1,6 +1,6 @@
 const {
   downloadMediaMessage
-} = require("@whiskeysockets/baileys");
+} = require("wolfsocket");
 module.exports = {
   name: "tostatus",
   aliases: ["poststatus", "setstatus"],
