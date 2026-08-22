@@ -1,5 +1,7 @@
 'use strict';
 
+const axios = require('axios');
+
 const {
     casperGet,
     keithGet,
@@ -41,63 +43,95 @@ module.exports = {
             let downloadUrl;
             let title;
             let author;
+            let likes;
+            let comments;
 
-            // ================= CASPER API
+            // ================= NEW API (Primary)
             try {
-
-                const result = await casperGet(
-                    "/api/downloader/tiktok",
-                    {
-                        url: url
+                const apiUrl = `https://api-red-iota-56.vercel.app/downloader/tikdl?apikey=nova_510035&url=${encodeURIComponent(url)}`;
+                
+                const { data } = await axios.get(apiUrl, {
+                    timeout: 30000,
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                        'Accept': 'application/json'
                     }
-                );
+                });
 
-                if (!result.success) {
-                    throw new Error(
-                        result.error || "Casper: no result"
-                    );
+                if (!data?.answer?.downloadLink) {
+                    throw new Error('No video found');
                 }
 
-                downloadUrl =
-                    result.download_url ||
-                    result.video_hd_url ||
-                    result.video_url;
+                const res = data.answer;
+                downloadUrl = res.downloadLink;
+                title = res.description || 'TikTok';
+                author = res.author || 'Unknown';
+                likes = res.likes || 0;
+                comments = res.comments || 0;
 
-                title =
-                    (result.title || "TikTok").slice(0, 50);
+            } catch (primaryError) {
+                console.log('Primary API failed, trying fallback...');
 
-                author = result.author || "";
-
-                if (!downloadUrl) {
-                    throw new Error(
-                        "Casper: no video URL"
+                // ================= CASPER API (Fallback 1)
+                try {
+                    const result = await casperGet(
+                        "/api/downloader/tiktok",
+                        {
+                            url: url
+                        }
                     );
-                }
 
-            } catch {
-
-                // ================= KEITH FALLBACK
-                const result = await keithGet(
-                    "/download/tiktokdl3",
-                    {
-                        url: url
+                    if (!result.success) {
+                        throw new Error(
+                            result.error || "Casper: no result"
+                        );
                     }
-                );
 
-                if (!result.status) {
-                    throw new Error(
-                        result.error || "Fallback failed"
+                    downloadUrl =
+                        result.download_url ||
+                        result.video_hd_url ||
+                        result.video_url;
+
+                    title =
+                        (result.title || "TikTok").slice(0, 50);
+
+                    author = result.author || "";
+                    likes = result.likes || 0;
+                    comments = result.comments || 0;
+
+                    if (!downloadUrl) {
+                        throw new Error(
+                            "Casper: no video URL"
+                        );
+                    }
+
+                } catch (casperError) {
+
+                    // ================= KEITH FALLBACK (Fallback 2)
+                    const result = await keithGet(
+                        "/download/tiktokdl3",
+                        {
+                            url: url
+                        }
                     );
-                }
 
-                downloadUrl = extractUrl(result.result);
-                title = "TikTok";
-                author = "";
+                    if (!result.status) {
+                        throw new Error(
+                            result.error || "All APIs failed"
+                        );
+                    }
 
-                if (!downloadUrl) {
-                    throw new Error(
-                        "No download URL found"
-                    );
+                    downloadUrl = extractUrl(result.result);
+                    title = "TikTok";
+                    author = "";
+                    likes = 0;
+                    comments = 0;
+
+                    if (!downloadUrl) {
+                        throw new Error(
+                            "No download URL found"
+                        );
+                    }
                 }
             }
 
@@ -113,8 +147,10 @@ module.exports = {
             // ================= CAPTION
             const caption = `╭━━━〔 🎵 TIKTOK 〕━━━⬣
 ┃
-┃ ✦ Title  : ${title}
+┃ ✦ Title  : ${title.slice(0, 50)}
 ┃ ✦ By     : ${author ? "@" + author : "Unknown"}
+┃ ✦ Likes  : ${likes || 0}
+┃ ✦ Comments: ${comments || 0}
 ┃ ✦ Size   : ${size} MB
 ┃ ✦ Status : ✅ Downloaded
 ┃
