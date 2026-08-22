@@ -1,86 +1,105 @@
-const { get, set, toggle } = require('../../lib/autoconfig');
-const { getBotName }       = require('../../lib/botname');
-const config               = require('../../config');
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const config = require('../../config');
 
-// Dedup: track message IDs already reacted to (max 200 entries)
-const _reactedIds = new Set();
+const CONFIG_FILE = path.join(__dirname, '../../reactdev.json');
+const DEFAULT_REFRESH_MINUTES = 10;
+const reactedMessages = new Set();
 
-async function handleReactDev(sock, msg) {
-    try {
-        const cfg = get('reactdev');
-        if (!cfg?.enabled) return;
+let developerNumbers = new Set();
+let reactionEmoji = config.REACTDEV_EMOJI || '🔥';
+let lastRefresh = 0;
 
-        // Skip reaction/protocol messages — prevents infinite loop
-        const m = msg.message;
-        if (!m) return;
-        if (m.reactionMessage)              return;
-        if (m.protocolMessage)              return;
-        if (m.senderKeyDistributionMessage) return;
-
-        // Dedup by message ID
-        const msgId = msg.key?.id;
-        if (!msgId) return;
-        if (_reactedIds.has(msgId)) return;
-
-        const sender    = (msg.key.participant || msg.key.remoteJid || '').split('@')[0].split(':')[0].replace(/[^0-9]/g, '');
-        const isCreator = (config.CREATORS || []).some(c => c.replace(/[^0-9]/g, '') === sender);
-        if (!sender || !isCreator) return;
-
-        _reactedIds.add(msgId);
-        if (_reactedIds.size > 200) {
-            const first = _reactedIds.values().next().value;
-            _reactedIds.delete(first);
-        }
-
-        const emoji = cfg.emoji || '🔥';
-        await sock.sendMessage(msg.key.remoteJid, {
-            react: { text: emoji, key: msg.key }
-        });
-    } catch {}
+function normalizeNumber(value) {
+  return String(value || '').replace(/\D/g, '');
 }
 
-module.exports = {
-    handleReactDev,
+function readLocalConfig() {
+  try {
+    const fileConfig = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+    return fileConfig && typeof fileConfig === 'object' ? fileConfig : {};
+  } catch {
+    return {};
+  }
+}
 
-    name:        'reactdev',
-    aliases:     ['rd', 'devreact'],
-    description: 'Auto-react to developer messages',
-    category:    'automation',
+function extractNumbers(data) {
+  if (Array.isArray(data)) return data.map(normalizeNumber).filter(Boolean);
 
-    async execute(sock, msg, args, prefix, ctx) {
-        const chatId = msg.key.remoteJid;
-        const name   = getBotName();
+  const values = [
+    ...(Array.isArray(data?.numbers) ? data.numbers : []),
+    ...(Array.isArray(data?.developers) ? data.developers : []),
+    ...(Array.isArray(data?.developerNumbers) ? data.developerNumbers : [])
+  ];
 
-        if (!ctx?.isOwnerUser && !ctx?.isSudoUser) {
-            return sock.sendMessage(chatId, {
-                text: `╔═|〔  REACT DEV 〕\n║\n║ ▸ *Status* : ❌ Owner only\n║\n╚═|〔 ${name} 〕`
-            }, { quoted: msg });
-        }
+  return values.map(value => normalizeNumber(typeof value === 'object' ? value.number : value)).filter(Boolean);
+}
 
-        const action = args[0]?.toLowerCase();
-        const cfg    = get('reactdev');
+async function refreshDeveloperConfig(force = false) {
+  const local = readLocalConfig();
+  const refreshMinutes = Number(local.refreshMinutes || DEFAULT_REFRESH_MINUTES);
 
-        if (!action || action === 'status') {
-            return sock.sendMessage(chatId, {
-                text: `╔═|〔  REACT DEV 〕\n║\n║ ▸ *State* : ${cfg.enabled ? '✅ ON' : '❌ OFF'}\n║ ▸ *Emoji* : ${cfg.emoji || '🔥'}\n║ ▸ *Usage* : ${prefix}reactdev on/off/emoji <emoji>\n║\n╚═|〔 ${name} 〕`
-            }, { quoted: msg });
-        }
+  if (!force && Date.now() - lastRefresh < refreshMinutes * 60 * 1000) return;
 
-        if (action === 'emoji' && args[1]) {
-            const data = get('reactdev');
-            data.emoji = args[1];
-            set('reactdev', data);
-            return sock.sendMessage(chatId, { text: `╔═|〔  REACT DEV 〕\n║\n║ ▸ *Emoji* : ${args[1]} saved\n║\n╚═|〔 ${name} 〕` }, { quoted: msg });
-        }
+  const localNumbers = [
+    ...extractNumbers(local),
+    ...(Array.isArray(config.REACTDEV_NUMBERS) ? config.REACTDEV_NUMBERS : []),
+    ...(Array.isArray(config.CREATORS) ? config.CREATORS : [])
+  ].map(normalizeNumber).filter(Boolean);
 
-        if (action === 'on')  { const d = get('reactdev'); d.enabled = true;  set('reactdev', d); return sock.sendMessage(chatId, { text: `╔═|〔  REACT DEV 〕\n║\n║ ▸ *State* : ✅ Enabled\n║\n╚═|〔 ${name} 〕` }, { quoted: msg }); }
-        if (action === 'off') { const d = get('reactdev'); d.enabled = false; set('reactdev', d); return sock.sendMessage(chatId, { text: `╔═|〔  REACT DEV 〕\n║\n║ ▸ *State* : ❌ Disabled\n║\n╚═|〔 ${name} 〕` }, { quoted: msg }); }
+  developerNumbers = new Set(localNumbers);
+  if (local.emoji) reactionEmoji = String(local.emoji);
 
-        // unknown arg → ignore silently; only toggle when no arg given
-        if (action) return;
-        const now = toggle('reactdev');
-        return sock.sendMessage(chatId, {
-            text: `╔═|〔  REACT DEV 〕\n║\n║ ▸ *State* : ${now ? '✅ Enabled' : '❌ Disabled'}\n║\n╚═|〔 ${name} 〕`
-        }, { quoted: msg });
+  const remoteUrl = String(local.url || config.REACTDEV_CONFIG_URL || '').trim();
+  if (remoteUrl) {
+    try {
+      const response = await axios.get(remoteUrl, { timeout: 8000 });
+      const remoteNumbers = extractNumbers(response.data);
+      if (remoteNumbers.length) developerNumbers = new Set(remoteNumbers);
+      if (response.data?.emoji) reactionEmoji = String(response.data.emoji);
+    } catch {}
+  }
+
+  lastRefresh = Date.now();
+}
+
+function senderNumber(msg) {
+  const jid = msg?.key?.participant || msg?.key?.remoteJid || '';
+  const raw = jid.split('@')[0].split(':')[0];
+  const direct = normalizeNumber(raw);
+  if (direct && !jid.includes('@lid')) return direct;
+
+  const resolved = global.resolvePhoneFromLid?.(jid) || global.lidPhoneCache?.get(raw);
+  return normalizeNumber(resolved || raw);
+}
+
+async function handleReactDev(sock, msg) {
+  try {
+    if (!msg?.key?.id || !msg.message) return;
+    if (msg.key.fromMe) return;
+
+    const remoteJid = msg.key.remoteJid || '';
+    if (!remoteJid || remoteJid === 'status@broadcast') return;
+
+    const message = msg.message;
+    if (message.reactionMessage || message.protocolMessage || message.senderKeyDistributionMessage) return;
+
+    await refreshDeveloperConfig();
+    if (!developerNumbers.has(senderNumber(msg))) return;
+    if (reactedMessages.has(msg.key.id)) return;
+
+    reactedMessages.add(msg.key.id);
+    if (reactedMessages.size > 500) {
+      reactedMessages.delete(reactedMessages.values().next().value);
     }
-};
+
+    await sock.sendMessage(remoteJid, {
+      react: { text: reactionEmoji, key: msg.key }
+    });
+  } catch {}
+}
+
+refreshDeveloperConfig(true).catch(() => {});
+
+module.exports = { handleReactDev };
