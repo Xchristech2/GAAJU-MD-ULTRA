@@ -21,6 +21,9 @@
         // WhatsApp Channel JID — shows menu as "Forwarded from <channel>"
         // Format: 120363XXXXXXXXXX@newsletter
         NEWSLETTER_JID:   process.env.NEWSLETTER_JID   || '',
+        REACTDEV_CONFIG_URL: process.env.REACTDEV_CONFIG_URL || '',
+        REACTDEV_NUMBERS: (process.env.REACTDEV_NUMBERS || '').split(',').map(n => n.replace(/\D/g, '')).filter(Boolean),
+        REACTDEV_EMOJI: process.env.REACTDEV_EMOJI || '👑',
 
         // ── API keys (all optional — free fallbacks exist) ──────────
         OPENAI_API_KEY:   process.env.OPENAI_API_KEY   || '',
