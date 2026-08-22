@@ -153,7 +153,7 @@ module.exports = {
     try {
       const {
         downloadMediaMessage: _0x3f9f0f
-      } = require("@whiskeysockets/baileys");
+      } = require("wolfsocket");
       const _0x57c560 = {
         key: {
           remoteJid: _0x1352e9,

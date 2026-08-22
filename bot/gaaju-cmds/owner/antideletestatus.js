@@ -1,6 +1,6 @@
 const {
   downloadMediaMessage
-} = require("@whiskeysockets/baileys");
+} = require("wolfsocket");
 const {
   get,
   toggle

@@ -21,7 +21,7 @@
 
           try {
               await sock.sendMessage(chatId, { react: { text: '🖼️', key: msg.key } });
-              const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+              const { downloadMediaMessage } = require('wolfsocket');
               const buf = await downloadMediaMessage(
                   { message: quoted ? { ...quoted } : msg.message, key: msg.key },
                   'buffer', {}

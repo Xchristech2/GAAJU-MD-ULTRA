@@ -1,4 +1,4 @@
-const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
+const { useMultiFileAuthState } = require('wolfsocket');
 
 async function useSQLiteAuthState(rawDb, sessionDir) {
     const dir = sessionDir || './session';

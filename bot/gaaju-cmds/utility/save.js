@@ -1,6 +1,6 @@
 'use strict';
 
-const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+const { downloadMediaMessage } = require('wolfsocket');
 const { getBotName } = require('../../lib/botname');
 const config = require('../../config');
 

@@ -1,4 +1,4 @@
-const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+const { downloadMediaMessage } = require('wolfsocket');
 const { get, toggle }          = require('../../lib/autoconfig');
 const { getBotName }           = require('../../lib/botname');
 const { getPhoneFromLid }      = require('../../lib/sudo-store');

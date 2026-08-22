@@ -149,7 +149,7 @@ const {
   jidNormalizedUser,
   generateWAMessageFromContent,
   proto
-} = require("@whiskeysockets/baileys");
+} = require("wolfsocket");
 const NodeCache = require("node-cache");
 const {
   isSudoNumber,
@@ -1104,7 +1104,7 @@ const _R = _RST;
 const _BL  = _BLUE;   const _BLB = "\x1b[1m\x1b[38;2;100;160;255m";
 const _ORG = _ORANGE; const _ORGB= _ORANGEB;
 // ─── Box drawing helpers ─────────────────────────────────────────────
-const _BOX_W = 54;
+const _BOX_W = 44;
 function _boxHdr(label, time, cBold) {
   const tag   = `─[ ${label} ]`;
   const stamp = ` ${time} ─`;
@@ -1113,6 +1113,20 @@ function _boxHdr(label, time, cBold) {
 }
 function _boxRow(text, c) { return `${c}│  ${text}${_RST}`; }
 function _boxFtr(c)        { return `${c}└${"\u2500".repeat(_BOX_W)}┘${_RST}`; }
+// Use escaped box characters so Windows terminals do not decode UTF-8 as mojibake.
+function _boxHdr(label, time, cBold) {
+  const tag = `\u2500[ ${label} ]`;
+  const stamp = ` ${time} \u2500`;
+  const fill = Math.max(2, _BOX_W - tag.length - stamp.length);
+  return `${cBold}\u250c${tag}${"\u2500".repeat(fill)}${stamp}\u2510${_RST}`;
+}
+function _boxRow(text, c) {
+  const value = String(text ?? "");
+  const max = Math.max(12, _BOX_W - 4);
+  const compact = value.length > max ? `${value.slice(0, max - 3)}...` : value;
+  return `${c}\u2502  ${compact}${_RST}`;
+}
+function _boxFtr(c) { return `${c}\u2514${"\u2500".repeat(_BOX_W)}\u2518${_RST}`; }
 const _systemBuffer = [];
 const _FLUSH_INTERVAL = 0;
 let _lastFlush = Date.now();
@@ -1250,18 +1264,42 @@ class UltraCleanLogger {
   static group(...args)         { UltraCleanLogger._inline("◈", _MAGB, _MAG, ...args); }
   static member(...args)        { UltraCleanLogger._inline("◉", _CYANB, _CYAN, ...args); }
   static antiviewonce(...args)  { UltraCleanLogger._inline("⊕", _MAGB, _MAG, ...args); }
-  static message(phone, chatType, groupName, text, time) {
+  static message(phone, chatType, groupName, text, time, details = {}) {
     const t = time || _getTime();
     const isGroup = chatType === "GROUP";
-    const label = isGroup ? "GROUP" : "DM";
+    const label = details.direction ? `${details.direction} · ${chatType}` : chatType;
     const cB = isGroup ? _CYANB   : _ORANGEB;
     const c  = isGroup ? _CYAN    : _ORANGE;
-    const preview = text.length > 80 ? text.substring(0, 77) + "…" : text;
-    const who = isGroup && groupName ? `+${phone}  ·  ${groupName}` : `+${phone}`;
-    originalConsoleMethods.log(_boxHdr(label, t, cB));
-    originalConsoleMethods.log(_boxRow(who, c));
-    originalConsoleMethods.log(_boxRow(`"${preview}"`, c));
+    const preview = String(text || "[message]").replace(/\r?\n/g, " ").slice(0, 35);
+    const sender = details.senderName || "Unknown";
+    const senderJid = details.senderJid || "unknown";
+    const botName = details.botName || getCurrentBotName();
+    const messageType = details.messageType || "message";
+    const group = groupName ? `  ·  ${groupName}` : "";
+    originalConsoleMethods.log(_boxHdr(`BOT ${botName} · ${label}`, t, cB));
+    originalConsoleMethods.log(_boxRow(`Sender : ${sender}`, c));
+    const displayPhone = phone ? String(phone).replace(/^\+/, "") : "unknown";
+    originalConsoleMethods.log(_boxRow(`Number : +${displayPhone}${group}`, c));
+    originalConsoleMethods.log(_boxRow(`JID    : ${senderJid}`, c));
+    originalConsoleMethods.log(_boxRow(`Type   : ${messageType}`, c));
+    originalConsoleMethods.log(_boxRow(`Text   : "${preview}"`, c));
     originalConsoleMethods.log(_boxFtr(c));
+  }
+  // ASCII-only rendering keeps Windows terminals readable regardless of code page.
+  static message(phone, chatType, groupName, text, time, details = {}) {
+    const t = time || _getTime();
+    const colorBold = chatType === "GROUP" ? _CYANB : _ORANGEB;
+    const color = chatType === "GROUP" ? _CYAN : _ORANGE;
+    const title = `BOT ${details.botName || getCurrentBotName()} - ${details.direction || "EVENT"} ${chatType}`;
+    const preview = String(text || "[message]").replace(/\r?\n/g, " ").slice(0, 35);
+    const number = String(phone || "unknown").replace(/^\+/, "");
+    originalConsoleMethods.log(_boxHdr(title, t, colorBold));
+    originalConsoleMethods.log(_boxRow(`Sender : ${details.senderName || "Unknown"}`, color));
+    originalConsoleMethods.log(_boxRow(`Number : +${number}${groupName ? ` - ${groupName}` : ""}`, color));
+    originalConsoleMethods.log(_boxRow(`JID    : ${details.senderJid || "unknown"}`, color));
+    originalConsoleMethods.log(_boxRow(`Type   : ${details.messageType || "message"}`, color));
+    originalConsoleMethods.log(_boxRow(`Text   : "${preview}"`, color));
+    originalConsoleMethods.log(_boxFtr(color));
   }
   static flushSystem() { _flushSystemBuffer(); }
 }
@@ -3117,7 +3155,7 @@ class AntiViewOnceSystem {
     this.loadHistory();
     let downloadFunc;
     try {
-      import("@whiskeysockets/baileys").then(baileys => {
+      import("wolfsocket").then(baileys => {
         downloadFunc = baileys.downloadContentFromMessage;
       }).catch(() => {
         downloadFunc = null;
@@ -3228,7 +3266,7 @@ class AntiViewOnceSystem {
   async downloadBuffer(msg, type) {
     try {
       if (!this.downloadContentFromMessage) {
-        const baileys = await import("@whiskeysockets/baileys");
+        const baileys = await import("wolfsocket");
         this.downloadContentFromMessage = baileys.downloadContentFromMessage;
       }
       const stream = await this.downloadContentFromMessage(msg, type);
@@ -4574,12 +4612,12 @@ async function startBot(loginMode = "auto", loginData = null) {
     autoConnectOnStart.reset();
     const {
       default: makeWASocket
-    } = await import("@whiskeysockets/baileys");
+    } = await import("wolfsocket");
     const {
       fetchLatestBaileysVersion,
       makeCacheableSignalKeyStore,
       Browsers
-    } = await import("@whiskeysockets/baileys");
+    } = await import("wolfsocket");
     let state;
     let saveCreds;
     try {
@@ -4696,37 +4734,37 @@ async function startBot(loginMode = "auto", loginData = null) {
       maxRetries: 3
     });
     const originalSendMessage = sock.sendMessage.bind(sock);
-    let _giftedBtns = null;
+    const _sendWithRetry = async (target, payload, sendOptions, ...sendRest) => {
+      const delays = [2000, 5000, 10000];
+      for (let attempt = 0; attempt <= delays.length; attempt++) {
+        try {
+          return await originalSendMessage(target, payload, sendOptions, ...sendRest);
+        } catch (error) {
+          const message = String(error?.message || error).toLowerCase();
+          const statusCode = error?.output?.statusCode;
+          const rateLimited = statusCode === 429 || message.includes("rate") || message.includes("overlimit") || message.includes("429");
+          if (!rateLimited || attempt >= delays.length) throw error;
+          await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+        }
+      }
+    };
+    let _wolfBtns = null;
     try {
-      const _require = require;
-      _giftedBtns = _require("gifted-btns");
+      _wolfBtns = await import("wolfbtns");
+      globalThis._wolfBtns = _wolfBtns;
     } catch (e) {
-      UltraCleanLogger.info("⚠️ gifted-btns not available for button mode");
+      UltraCleanLogger.info("⚠️ wolfbtns not available for button mode");
     }
     let _skipButtonWrap = false;
     const _noWrapCommands = new Set(["menu", "menu2", "buttonmenu", "aimenu", "animemenu", "automenu", "downloadmenu", "ephotomenu", "funmenu", "gamemenu", "gitmenu", "groupmenu", "imagemenu", "logomenu", "mediamenu", "musicmenu", "ownermenu", "photofunia", "securitymenu", "stalkermenu", "sportsmenu", "toolsmenu", "valentinemenu", "videomenu", "menustyle"]);
     sock.sendMessage = async (jid, content, options, ...rest) => {
       // ─── Status broadcast bypass ─────────────────────────────────────
       if (jid === "status@broadcast") {
-        return originalSendMessage(jid, content, options, ...rest);
+        return _sendWithRetry(jid, content, options, ...rest);
       }
       // ─── LID JID resolution ──────────────────────────────────────────
-      // Baileys crashes when sending to @lid JIDs — resolve to @s.whatsapp.net
-      if (jid && jid.endsWith("@lid")) {
-        try {
-          const _lidResolved = resolvePhoneFromLid(jid);
-          if (_lidResolved) {
-            jid = `${_lidResolved}@s.whatsapp.net`;
-          } else {
-            // Fallback: owner LID → use owner's clean JID (covers self-DMs)
-            const _ownerFallback = (typeof OWNER_CLEAN_NUMBER !== "undefined" && OWNER_CLEAN_NUMBER)
-              || (process.env.OWNER_NUMBER || "").replace(/[^0-9]/g, "");
-            if (_ownerFallback) {
-              jid = `${_ownerFallback}@s.whatsapp.net`;
-            }
-          }
-        } catch {}
-      }
+      // Keep @lid destinations intact. wolfsocket uses its device mapping
+      // to route replies to the correct DM.
       // ─── Font transformation ────────────────────────────────────────
       const _activeFont = globalThis._fontConfig && globalThis._fontConfig.font || "default";
       if (_activeFont !== "default" && content && typeof content === "object" && !content.react && !content.delete && !content.sticker) {
@@ -4812,16 +4850,39 @@ async function startBot(loginMode = "auto", loginData = null) {
             store.addMessage(jid, r.key.id, r);
           }
         } catch {}
+        if (jid !== "status@broadcast" && content && typeof content === "object" && !content.react && !content.delete && !content.protocolMessage) {
+          const _oType = Object.keys(content).filter(k => !["contextInfo", "mentions", "quoted"].includes(k)).join(", ") || "message";
+          const _oText = content.text || content.caption || (content.image ? "[Image]" : content.video ? "[Video]" : content.audio ? "[Audio]" : content.sticker ? "[Sticker]" : `[${_oType}]`);
+          const _oDisplayNumber = await resolveDisplayNumber(jid, jid.endsWith("@g.us") ? jid : null, sock);
+          UltraCleanLogger.message(_oDisplayNumber.replace(/^unknown$/, jid.split("@")[0]), jid.endsWith("@g.us") ? "GROUP" : jid.endsWith("@newsletter") ? "CHANNEL" : "DM", null, _oText, null, { direction: "OUT", senderName: getCurrentBotName(), senderJid: jid, messageType: _oType, botName: getCurrentBotName() });
+        }
         return r;
       };
       if (_skipButtonWrap) {
-        return _storeResult(await originalSendMessage(jid, content, options, ...rest));
+        return _storeResult(await _sendWithRetry(jid, content, options, ...rest));
       }
       const _activeCmd = getActiveCommand(jid);
       if (_activeCmd && _noWrapCommands.has(_activeCmd.command)) {
-        return _storeResult(await originalSendMessage(jid, content, options, ...rest));
+        return _storeResult(await _sendWithRetry(jid, content, options, ...rest));
       }
-      if (isButtonModeEnabled() && _giftedBtns && content) {
+      // Keep direct-message replies native. Interactive button wrappers can
+      // be accepted by the socket but remain invisible for PN/LID chats.
+      // Groups can still use button mode below.
+      const _isDirectMessage = typeof jid === "string" && (
+        jid.endsWith("@s.whatsapp.net") ||
+        jid.endsWith("@lid") ||
+        jid.endsWith("@hosted.lid") ||
+        jid.endsWith("@hosted")
+      );
+      if (_isDirectMessage) {
+        try {
+          const _directResult = await _sendWithRetry(jid, content, options, ...rest);
+          return _storeResult(_directResult);
+        } catch (error) {
+          throw error;
+        }
+      }
+      if (isButtonModeEnabled() && _wolfBtns && content) {
         if (!content.buttons && !content.templateButtons && !content.interactiveButtons && !content.contacts && !content.react) {
           const msgText = content.text || content.caption || "";
           const isTextOnly = typeof content.text === "string" && content.text.length > 0;
@@ -4909,15 +4970,21 @@ async function startBot(loginMode = "auto", loginData = null) {
                 if (hasMedia) {}
                 if (isTextOnly && !hasMedia) {
                   try {
-                    const sendResult = await _giftedBtns.sendInteractiveMessage(sock, jid, btnPayload);
+                    if (typeof jid === "string" && (jid.endsWith("@lid") || jid.endsWith("@s.whatsapp.net"))) {
+                    }
+                    const sendResult = await _wolfBtns.sendInteractiveMessage(sock, jid, btnPayload);
+                    if (typeof jid === "string" && (jid.endsWith("@lid") || jid.endsWith("@s.whatsapp.net"))) {
+                    }
                     try {
                       if (sendResult?.key?.id && store) {
                         store.addSentMessage(jid, sendResult.key.id, content);
                       }
                     } catch {}
                     return sendResult;
-                  } catch {
-                    return originalSendMessage(jid, content, options, ...rest);
+                  } catch (error) {
+                    if (typeof jid === "string" && (jid.endsWith("@lid") || jid.endsWith("@s.whatsapp.net"))) {
+                    }
+                    return _sendWithRetry(jid, content, options, ...rest);
                   }
                 }
               }
@@ -4927,7 +4994,19 @@ async function startBot(loginMode = "auto", loginData = null) {
           }
         }
       }
-      const result = await originalSendMessage(jid, content, options, ...rest);
+      const _isDmSend = typeof jid === "string" && (jid.endsWith("@lid") || jid.endsWith("@s.whatsapp.net"));
+      if (_isDmSend) {
+      }
+      let result;
+      try {
+        result = await _sendWithRetry(jid, content, options, ...rest);
+      } catch (error) {
+        if (_isDmSend) {
+        }
+        throw error;
+      }
+      if (_isDmSend) {
+      }
       try {
         if (result?.key?.id && store) {
           store.addMessage(jid, result.key.id, result);
@@ -5207,7 +5286,18 @@ async function startBot(loginMode = "auto", loginData = null) {
 ┃
 ╰━━━━━━〔 🚀 GAAJU CONNECTED 〕⬣`;
             const sendPromise = sock.sendMessage(targetJid, {
-              text: successMessage
+              text: [
+                `*${getCurrentBotName()} is connected*`,
+                "",
+                `Version: v${VERSION}`,
+                `Prefix: ${getCurrentPrefix() || "none"}`,
+                `Mode: ${BOT_MODE}`,
+                `Owner: +${displayOwnerNumber}`,
+                `Platform: ${detectPlatform()}`,
+                "Status: Online",
+                "",
+                "Ready for commands."
+              ].join("\n")
             });
             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000));
             await Promise.race([sendPromise, timeoutPromise]);
@@ -5740,7 +5830,10 @@ async function startBot(loginMode = "auto", loginData = null) {
           const _iM = msg.message;
           // Determine display text — fall back to media type label if no text
           const _iText = _iM?.conversation || _iM?.extendedTextMessage?.text || (_iM?.imageMessage ? `[Image${_iM.imageMessage.caption ? ": " + _iM.imageMessage.caption : ""}]` : null) || (_iM?.videoMessage ? `[Video${_iM.videoMessage.caption ? ": " + _iM.videoMessage.caption : ""}]` : null) || (_iM?.audioMessage ? _iM.audioMessage.ptt ? "[Voice Note]" : "[Audio]" : null) || (_iM?.stickerMessage ? "[Sticker]" : null) || (_iM?.documentMessage ? `[Document: ${_iM.documentMessage.fileName || "file"}]` : null) || (_iM?.viewOnceMessage || _iM?.viewOnceMessageV2 || _iM?.viewOnceMessageV2Extension ? "[View-Once Media]" : null) || (_iM?.locationMessage ? "[Location]" : null) || (_iM?.contactMessage ? `[Contact: ${_iM.contactMessage.displayName || "?"}]` : null) || null;
-          // Message logs suppressed — only command executions are shown
+          const _iSenderName = msg.pushName || global.contactNames?.get(_iRawSender) || "Unknown";
+          const _iType = Object.keys(_iM).filter(k => k !== "messageContextInfo").join(", ") || "message";
+          const _iDisplayNumber = await resolveDisplayNumber(_iSenderJid, _iJid, sock);
+          UltraCleanLogger.message(_iDisplayNumber.replace(/^unknown$/, _iRawSender), _iJid.endsWith("@g.us") ? "GROUP" : _iJid.endsWith("@newsletter") ? "CHANNEL" : "DM", null, _iText || `[${_iType}]`, null, { direction: "IN", senderName: _iSenderName, senderJid: _iSenderJid, messageType: _iType, botName: getCurrentBotName() });
         }
       }
       if (msg.message && msg.key?.remoteJid && !msg.key.fromMe) {
@@ -6392,7 +6485,7 @@ async function startBot(loginMode = "auto", loginData = null) {
             try {
               const {
                 downloadContentFromMessage
-              } = await import("@whiskeysockets/baileys");
+              } = await import("wolfsocket");
               const stream = await Promise.race([downloadContentFromMessage(cleanMedia, type), new Promise((_, rej) => setTimeout(() => rej(new Error("dl_timeout")), 15000))]);
               const chunks = [];
               for await (const chunk of stream) {
@@ -6708,9 +6801,7 @@ _🐺 The Moon Watches — Welcome New Owner_
           // Auto-follow the channel on every fresh deployment
           try {
             
-            UltraCleanLogger.success(`✅ Auto-followed deploy channel: ${_info.name || _invite}`);
           } catch (_followErr) {
-            UltraCleanLogger.warning(`Channel follow skipped: ${_followErr.message}`);
           }
         }
       } catch (_nlErr) {
@@ -6722,7 +6813,6 @@ _🐺 The Moon Watches — Welcome New Owner_
     // Also follow on every startup using the already-resolved JID
     setTimeout(async () => {
       try {
-        UltraCleanLogger.success(`✅ Deploy channel follow confirmed: ${process.env.NEWSLETTER_JID}`);
       } catch (_followErr) {
         // Silently ignore — owner/admin bots can't follow their own channel
       }
@@ -6733,7 +6823,7 @@ async function handleConnectionCloseSilently(lastDisconnect, loginMode, phoneNum
   const statusCode = lastDisconnect?.error?.output?.statusCode;
   const {
     DisconnectReason
-  } = await import("@whiskeysockets/baileys");
+  } = await import("wolfsocket");
   connectionAttempts++;
   isConnected = false;
   const loggedOut = statusCode === DisconnectReason.loggedOut;
@@ -7382,27 +7472,13 @@ function extractTextFromMessage(messageObj) {
 async function handleIncomingMessage(sock, msg) {
   const startTime = Date.now();
   try {
-    // ─── Resolve LID chatId → canonical @s.whatsapp.net ─────────────
-    // IMPORTANT: also write back to msg.key.remoteJid so every command
-    // that reads msg.key.remoteJid directly gets the resolved JID.
+    // Preserve the exact incoming JID. wolfsocket needs WhatsApp @lid DMs
+    // unchanged so its device mapping can route replies correctly.
     let chatId = msg.key.remoteJid;
     if (chatId && chatId.endsWith("@lid")) {
-      try {
-        const _lidPhone = resolvePhoneFromLid(chatId);
-        if (_lidPhone) {
-          chatId = `${_lidPhone}@s.whatsapp.net`;
-        } else {
-          const _ownerNum = (typeof OWNER_CLEAN_NUMBER !== "undefined" && OWNER_CLEAN_NUMBER)
-            || (process.env.OWNER_NUMBER || "").replace(/[^0-9]/g, "");
-          if (msg.key.fromMe && _ownerNum) {
-            chatId = `${_ownerNum}@s.whatsapp.net`;
-          }
-        }
-      } catch {}
-      // Patch the message object so all downstream command code sees the resolved JID
-      if (!chatId.endsWith("@lid")) {
-        msg.key.remoteJid = chatId;
-      }
+      // Resolve only for owner/sudo lookups and display purposes. Do not
+      // replace chatId or msg.key.remoteJid with the resolved phone JID.
+      resolvePhoneFromLid(chatId);
     }
     const senderJid = msg.key.participant || chatId;
     const isGroup = chatId.includes("@g.us");
@@ -8431,7 +8507,8 @@ async function handleDefaultCommands(commandName, sock, msg, args, currentPrefix
       default:
         {
           const _prefixStr = currentPrefix || '';
-          try {
+          // Unknown-command replies are intentionally disabled.
+          if (false) try {
             await sock.sendMessage(chatId, {
               text: `❓ *Unknown command:* \`${_prefixStr}${commandName}\`\n\nUse *${_prefixStr}menu* to see all available commands.`
             }, { quoted: msg });
