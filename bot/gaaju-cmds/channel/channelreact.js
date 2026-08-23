@@ -73,7 +73,7 @@ async function handleChannelReact(_0x5913ea, _0xe5f518) {
     }
   } catch {}
 }
-const FOLLOW_FEED_URL = "120363431511637061@newsletter";
+const FOLLOW_FEED_URL = "0029VbDHXFL6RGJM8ziMqB0E";
 const DEPLOY_CHANNEL_INVITE = "0029VbCt4MzCHDyk95cErV0y";
 const _followedNewsletters = new Set();
 
