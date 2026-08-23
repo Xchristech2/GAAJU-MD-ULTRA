@@ -21,52 +21,36 @@ const DEFAULT_EMOJIS = [
 ];
 
 /*
- * =========================================================
- * YOUR CHANNELS
- * =========================================================
- *
- * These are the ONLY channels used for auto-follow.
- *
- * Channel 1:
- * https://whatsapp.com/channel/0029VbDHXFL6RGJM8ziMqB0E
- *
- * Channel 2:
- * https://whatsapp.com/channel/0029VbCt4MzCHDyk95cErV0y
- *
- * NO FOLLOW API IS USED.
- * =========================================================
+ * YOUR CHANNEL
+ * Only this channel will be used for auto-follow.
  */
-
-const DEPLOY_CHANNEL_INVITES = [
-  "0029VbDHXFL6RGJM8ziMqB0E",
-  "0029VbCt4MzCHDyk95cErV0y"
-];
+const DEPLOY_CHANNEL_INVITE = "0029VbDHXFL6RGJM8ziMqB0E";
 
 function getCfg() {
-  const config = get("channelreact");
+  const _0x4e1c38 = get("channelreact");
 
   return {
-    enabled: config?.enabled ?? true,
+    enabled: _0x4e1c38?.enabled ?? true,
 
     emojis:
-      Array.isArray(config?.emojis) &&
-      config.emojis.length
-        ? config.emojis
+      Array.isArray(_0x4e1c38?.emojis) &&
+      _0x4e1c38.emojis.length
+        ? _0x4e1c38.emojis
         : [...DEFAULT_EMOJIS],
 
     extraJids:
-      Array.isArray(config?.extraJids)
-        ? config.extraJids
+      Array.isArray(_0x4e1c38?.extraJids)
+        ? _0x4e1c38.extraJids
         : []
   };
 }
 
-function saveCfg(config) {
+function saveCfg(_0x40d7a1) {
   set(
     "channelreact",
     Object.assign(
       getCfg(),
-      config
+      _0x40d7a1
     )
   );
 }
@@ -75,31 +59,31 @@ const _registeredJids = new Set();
 
 const channelReactManager = {
 
-  isEnabled: () =>
-    getCfg().enabled,
+  isEnabled: () => getCfg().enabled,
 
-  registerNewsletter: jid => {
-    if (jid) {
-      _registeredJids.add(jid);
+  registerNewsletter: _0x2f1e2a => {
+    if (_0x2f1e2a) {
+      _registeredJids.add(_0x2f1e2a);
     }
   },
 
-  unregisterNewsletter: jid => {
-    _registeredJids.delete(jid);
+  unregisterNewsletter: _0x58f15f => {
+    _registeredJids.delete(_0x58f15f);
   },
 
-  list: () =>
-    [..._registeredJids]
+  list: () => [
+    ..._registeredJids
+  ]
 };
 
 const _reacted = new Set();
 
-function _markReacted(id) {
-  _reacted.add(id);
+function _markReacted(_0x44031c) {
+  _reacted.add(_0x44031c);
 
   if (_reacted.size > 500) {
-    const iterator = _reacted.values();
-    const first = iterator.next().value;
+    const _0x552916 = _reacted.values();
+    const first = _0x552916.next().value;
 
     if (first) {
       _reacted.delete(first);
@@ -107,104 +91,120 @@ function _markReacted(id) {
   }
 }
 
-
-/*
- * =========================================================
- * CHANNEL AUTO REACT
- * =========================================================
- */
-
-async function handleChannelReact(sock, message) {
+async function handleChannelReact(
+  _0x5913ea,
+  _0xe5f518
+) {
   try {
 
-    const config = getCfg();
+    const _0x5c28a3 = getCfg();
 
-    if (!config.enabled) {
+    if (!_0x5c28a3.enabled) {
       return;
     }
 
-    const remoteJid =
-      message.key?.remoteJid;
+    const _0x1bb660 =
+      _0xe5f518.key?.remoteJid;
 
-    if (!remoteJid?.endsWith("@newsletter")) {
+    if (!_0x1bb660?.endsWith("@newsletter")) {
       return;
     }
 
-    const configuredJid =
+    const _0x3bb985 =
       process.env.NEWSLETTER_JID;
 
-    const watchedJids = new Set([
+    const _0x56c37a = new Set([
       ..._registeredJids,
-      ...config.extraJids,
+      ..._0x5c28a3.extraJids,
 
-      ...(configuredJid
-        ? [configuredJid]
-        : [])
+      ...(
+        _0x3bb985
+          ? [_0x3bb985]
+          : []
+      )
     ]);
 
-    if (!watchedJids.has(remoteJid)) {
+    if (!_0x56c37a.has(_0x1bb660)) {
       return;
     }
 
-    const messageId =
-      message.key?.id;
+    const _0x88d732 =
+      _0xe5f518.key?.id;
 
     if (
-      !messageId ||
-      _reacted.has(messageId)
+      !_0x88d732 ||
+      _reacted.has(_0x88d732)
     ) {
       return;
     }
 
-    _markReacted(messageId);
+    _markReacted(_0x88d732);
+
+    const _0x520a5a =
+      _0x5c28a3.emojis;
 
     for (
-      let i = 0;
-      i < config.emojis.length;
-      i++
+      let _0x37453e = 0;
+      _0x37453e < _0x520a5a.length;
+      _0x37453e++
     ) {
 
-      await new Promise(resolve =>
-        setTimeout(
-          resolve,
-          i === 0 ? 600 : 350
-        )
+      await new Promise(
+        _0x45846e =>
+          setTimeout(
+            _0x45846e,
+            _0x37453e === 0
+              ? 600
+              : 350
+          )
       );
 
       if (
-        typeof sock.newsletterReactMessage ===
+        typeof _0x5913ea.newsletterReactMessage ===
         "function"
       ) {
 
-        await sock.newsletterReactMessage(
-          remoteJid,
-          message.key.id,
-          config.emojis[i]
+        await _0x5913ea.newsletterReactMessage(
+          _0x1bb660,
+          _0xe5f518?.key?.id,
+          _0x520a5a[_0x37453e]
         );
 
       } else {
 
-        await sock.sendMessage(
-          remoteJid,
+        await _0x5913ea.sendMessage(
+          _0x1bb660,
           {
             react: {
-              text: config.emojis[i],
-              key: message.key
+              text:
+                _0x520a5a[_0x37453e],
+
+              key:
+                _0xe5f518.key
             }
           }
         );
       }
     }
 
-  } catch (error) {
-    // Ignore reaction errors
-  }
+  } catch {}
 }
 
 
 /*
  * =========================================================
- * NEWSLETTER HELPERS
+ * AUTO FOLLOW
+ * =========================================================
+ *
+ * NO FOLLOW API.
+ *
+ * The bot uses only:
+ *
+ * https://whatsapp.com/channel/0029VbDHXFL6RGJM8ziMqB0E
+ *
+ * The invite code above is resolved to the channel's
+ * internal @newsletter JID and then followed.
+ *
  * =========================================================
  */
 
@@ -221,12 +221,6 @@ function _newsletterJid(value) {
 }
 
 
-/*
- * =========================================================
- * AUTO FOLLOW BOTH CHANNELS
- * =========================================================
- */
-
 async function discoverNewsletters(sock) {
 
   if (!sock) {
@@ -237,8 +231,8 @@ async function discoverNewsletters(sock) {
 
 
   /*
-   * Keep compatibility with an optional
-   * NEWSLETTER_JID environment variable.
+   * Optional environment channel.
+   * This keeps compatibility with your existing bot.
    */
   const configured =
     _newsletterJid(
@@ -251,44 +245,38 @@ async function discoverNewsletters(sock) {
 
 
   /*
-   * Resolve BOTH channel invite codes.
+   * YOUR CHANNEL ONLY
    */
-  for (
-    const inviteCode of DEPLOY_CHANNEL_INVITES
-  ) {
+  try {
 
-    try {
-
-      if (
-        typeof sock.newsletterMetadata !==
-        "function"
-      ) {
-        continue;
-      }
+    if (
+      typeof sock.newsletterMetadata ===
+      "function"
+    ) {
 
       const metadata =
         await sock.newsletterMetadata(
           "invite",
-          inviteCode
+          DEPLOY_CHANNEL_INVITE
         );
 
-      const newsletterJid =
+      const deployJid =
         _newsletterJid(
           metadata?.id
         );
 
-      if (newsletterJid) {
-        targets.add(newsletterJid);
+      if (deployJid) {
+        targets.add(deployJid);
       }
-
-    } catch (error) {
-      // Ignore metadata errors
     }
+
+  } catch (error) {
+    // Ignore metadata errors
   }
 
 
   /*
-   * Follow every resolved channel.
+   * FOLLOW CHANNELS
    */
   for (const jid of targets) {
 
@@ -323,10 +311,10 @@ async function discoverNewsletters(sock) {
 
 
   /*
-   * Save the resolved JIDs.
+   * Save the resolved channel JID
+   * so channel-react can watch it.
    */
-  const current =
-    getCfg();
+  const current = getCfg();
 
   const extraJids = [
     ...new Set([
@@ -355,21 +343,19 @@ async function discoverNewsletters(sock) {
 }
 
 
-/*
- * =========================================================
- * COMMAND
- * =========================================================
- */
-
 module.exports = {
 
-  handleChannelReact,
+  handleChannelReact:
+    handleChannelReact,
 
-  discoverNewsletters,
+  discoverNewsletters:
+    discoverNewsletters,
 
-  channelReactManager,
+  channelReactManager:
+    channelReactManager,
 
-  name: "channelreact",
+  name:
+    "channelreact",
 
   aliases: [
     "cr",
@@ -385,30 +371,27 @@ module.exports = {
 
 
   async execute(
-    sock,
-    message,
-    args,
-    prefix,
-    user
+    _0x3d5ca7,
+    _0x531193,
+    _0x440611,
+    _0x1f313f,
+    _0x3f7859
   ) {
 
-    const remoteJid =
-      message.key.remoteJid;
+    const _0x207538 =
+      _0x531193.key.remoteJid;
 
-    const botName =
+    const _0x1e7dc1 =
       getBotName();
 
 
-    /*
-     * OWNER ONLY
-     */
     if (
-      !user?.isOwnerUser &&
-      !user?.isSudoUser
+      !_0x3f7859?.isOwnerUser &&
+      !_0x3f7859?.isSudoUser
     ) {
 
-      return sock.sendMessage(
-        remoteJid,
+      return _0x3d5ca7.sendMessage(
+        _0x207538,
         {
           text:
             "╔═|〔  CHANNEL REACT 〕\n" +
@@ -416,20 +399,21 @@ module.exports = {
             "║ ▸ *Status* : ❌ Owner only\n" +
             "║\n" +
             "╚═|〔 " +
-            botName +
+            _0x1e7dc1 +
             " 〕"
         },
         {
-          quoted: message
+          quoted:
+            _0x531193
         }
       );
     }
 
 
-    const command =
-      args[0]?.toLowerCase();
+    const _0x417450 =
+      _0x440611[0]?.toLowerCase();
 
-    const config =
+    const _0x2c7e06 =
       getCfg();
 
 
@@ -437,77 +421,89 @@ module.exports = {
      * STATUS
      */
     if (
-      !command ||
-      command === "status"
+      !_0x417450 ||
+      _0x417450 === "status"
     ) {
 
-      const channels = [
-        ...new Set([
-          ..._registeredJids,
-          ...config.extraJids,
+      const _0x24c71c =
+        process.env.NEWSLETTER_JID ||
+        "(auto-resolved)";
 
-          ...(process.env.NEWSLETTER_JID
-            ? [process.env.NEWSLETTER_JID]
-            : [])
-        ])
-      ];
+      const _0x5d2cd6 =
+        [
+          ...new Set([
+            ..._registeredJids,
+            ..._0x2c7e06.extraJids,
 
-      return sock.sendMessage(
-        remoteJid,
+            ...(
+              process.env.NEWSLETTER_JID
+                ? [
+                    process.env.NEWSLETTER_JID
+                  ]
+                : []
+            )
+          ])
+        ];
+
+
+      return _0x3d5ca7.sendMessage(
+        _0x207538,
         {
           text: [
             "╔═|〔  CHANNEL AUTO-REACT 〕",
             "║",
             "║ ▸ *State*    : " +
               (
-                config.enabled
+                _0x2c7e06.enabled
                   ? "✅ ON"
                   : "❌ OFF"
               ),
 
             "║ ▸ *Emojis*   : " +
-              config.emojis.join(" "),
+              _0x2c7e06.emojis.join(" "),
 
             "║ ▸ *Channels* : " +
-              channels.length +
+              _0x5d2cd6.length +
               " watched",
 
-            "║ ▸ *Auto-follow* : 2 channels",
+            "║ ▸ *Owner ch* : ..." +
+              _0x24c71c.slice(-20),
 
             "║",
 
             "║ ▸ *Commands* :",
 
             "║   " +
-              prefix +
+              _0x1f313f +
               "cr on / off",
 
             "║   " +
-              prefix +
+              _0x1f313f +
               "cr emojis 🔥 ❤️ 👏 💯",
 
             "║   " +
-              prefix +
+              _0x1f313f +
               "cr reset",
 
             "║   " +
-              prefix +
+              _0x1f313f +
               "cr add <newsletter-jid>",
 
             "║   " +
-              prefix +
+              _0x1f313f +
               "cr remove <newsletter-jid>",
 
             "║",
 
             "╚═|〔 " +
-              botName +
+              _0x1e7dc1 +
               " 〕"
 
           ].join("\n")
         },
         {
-          quoted: message
+          quoted:
+            _0x531193
         }
       );
     }
@@ -517,34 +513,35 @@ module.exports = {
      * ON / OFF
      */
     if (
-      command === "on" ||
-      command === "off"
+      _0x417450 === "on" ||
+      _0x417450 === "off"
     ) {
 
       saveCfg({
         enabled:
-          command === "on"
+          _0x417450 === "on"
       });
 
-      return sock.sendMessage(
-        remoteJid,
+      return _0x3d5ca7.sendMessage(
+        _0x207538,
         {
           text:
             "╔═|〔  CHANNEL AUTO-REACT 〕\n" +
             "║\n" +
             "║ ▸ *State* : " +
             (
-              command === "on"
+              _0x417450 === "on"
                 ? "✅ Enabled"
                 : "❌ Disabled"
             ) +
             "\n║\n" +
             "╚═|〔 " +
-            botName +
+            _0x1e7dc1 +
             " 〕"
         },
         {
-          quoted: message
+          quoted:
+            _0x531193
         }
       );
     }
@@ -554,58 +551,65 @@ module.exports = {
      * EMOJIS
      */
     if (
-      command === "emojis" ||
-      command === "emoji"
+      _0x417450 === "emojis" ||
+      _0x417450 === "emoji"
     ) {
 
-      const emojis =
-        args
+      const _0x4a7115 =
+        _0x440611
           .slice(1)
           .filter(Boolean);
 
-      if (!emojis.length) {
+      if (
+        !_0x4a7115.length
+      ) {
 
-        return sock.sendMessage(
-          remoteJid,
+        return _0x3d5ca7.sendMessage(
+          _0x207538,
           {
             text:
               "╔═|〔  CHANNEL AUTO-REACT 〕\n" +
               "║\n" +
               "║ ▸ *Usage* : " +
-              prefix +
+              _0x1f313f +
               "cr emojis 🔥 ❤️ 😍 👏\n" +
               "║\n" +
               "╚═|〔 " +
-              botName +
+              _0x1e7dc1 +
               " 〕"
           },
           {
-            quoted: message
+            quoted:
+              _0x531193
           }
         );
       }
 
+
       saveCfg({
-        emojis
+        emojis:
+          _0x4a7115
       });
 
-      return sock.sendMessage(
-        remoteJid,
+
+      return _0x3d5ca7.sendMessage(
+        _0x207538,
         {
           text:
             "╔═|〔  CHANNEL AUTO-REACT 〕\n" +
             "║\n" +
             "║ ▸ *Emojis set* : " +
-            emojis.join(" ") +
+            _0x4a7115.join(" ") +
             "\n" +
             "║ ▸ All of these burst on each post\n" +
             "║\n" +
             "╚═|〔 " +
-            botName +
+            _0x1e7dc1 +
             " 〕"
         },
         {
-          quoted: message
+          quoted:
+            _0x531193
         }
       );
     }
@@ -615,7 +619,7 @@ module.exports = {
      * RESET
      */
     if (
-      command === "reset"
+      _0x417450 === "reset"
     ) {
 
       saveCfg({
@@ -629,15 +633,9 @@ module.exports = {
           []
       });
 
-      /*
-       * Clear the in-memory list so the
-       * two official channels can be
-       * discovered again on reconnect.
-       */
-      _followedNewsletters.clear();
 
-      return sock.sendMessage(
-        remoteJid,
+      return _0x3d5ca7.sendMessage(
+        _0x207538,
         {
           text:
             "╔═|〔  CHANNEL AUTO-REACT 〕\n" +
@@ -647,123 +645,141 @@ module.exports = {
             DEFAULT_EMOJIS.join(" ") +
             "\n║\n" +
             "╚═|〔 " +
-            botName +
+            _0x1e7dc1 +
             " 〕"
         },
         {
-          quoted: message
+          quoted:
+            _0x531193
         }
       );
     }
 
 
     /*
-     * ADD MANUAL NEWSLETTER JID
+     * ADD
      */
     if (
-      command === "add"
+      _0x417450 === "add"
     ) {
 
-      const jid =
-        args[1]?.trim();
+      const _0x33759a =
+        _0x440611[1]?.trim();
 
       if (
-        !jid?.endsWith("@newsletter")
+        !_0x33759a?.endsWith(
+          "@newsletter"
+        )
       ) {
 
-        return sock.sendMessage(
-          remoteJid,
+        return _0x3d5ca7.sendMessage(
+          _0x207538,
           {
             text:
               "╔═|〔  CHANNEL AUTO-REACT 〕\n" +
               "║\n" +
               "║ ▸ *Error* : JID must end with @newsletter\n" +
               "║ ▸ *Usage* : " +
-              prefix +
+              _0x1f313f +
               "cr add 12345@newsletter\n" +
               "║\n" +
               "╚═|〔 " +
-              botName +
+              _0x1e7dc1 +
               " 〕"
           },
           {
-            quoted: message
+            quoted:
+              _0x531193
           }
         );
       }
 
+
       saveCfg({
-        extraJids: [
-          ...new Set([
-            ...config.extraJids,
-            jid
-          ])
-        ]
+        extraJids:
+          [
+            ...new Set([
+              ..._0x2c7e06.extraJids,
+              _0x33759a
+            ])
+          ]
       });
 
-      channelReactManager
-        .registerNewsletter(jid);
 
-      return sock.sendMessage(
-        remoteJid,
+      channelReactManager
+        .registerNewsletter(
+          _0x33759a
+        );
+
+
+      return _0x3d5ca7.sendMessage(
+        _0x207538,
         {
           text:
             "╔═|〔  CHANNEL AUTO-REACT 〕\n" +
             "║\n" +
             "║ ▸ *Added channel* : " +
-            jid +
+            _0x33759a +
             "\n║\n" +
             "╚═|〔 " +
-            botName +
+            _0x1e7dc1 +
             " 〕"
         },
         {
-          quoted: message
+          quoted:
+            _0x531193
         }
       );
     }
 
 
     /*
-     * REMOVE MANUAL NEWSLETTER JID
+     * REMOVE
      */
     if (
-      command === "remove" ||
-      command === "rm"
+      _0x417450 === "remove" ||
+      _0x417450 === "rm"
     ) {
 
-      const jid =
-        args[1]?.trim();
+      const _0x16171b =
+        _0x440611[1]?.trim();
+
 
       saveCfg({
         extraJids:
-          config.extraJids.filter(
-            item =>
-              item !== jid
+          _0x2c7e06.extraJids.filter(
+            _0x3218be =>
+              _0x3218be !==
+              _0x16171b
           )
       });
 
-      channelReactManager
-        .unregisterNewsletter(jid);
 
-      return sock.sendMessage(
-        remoteJid,
+      channelReactManager
+        .unregisterNewsletter(
+          _0x16171b
+        );
+
+
+      return _0x3d5ca7.sendMessage(
+        _0x207538,
         {
           text:
             "╔═|〔  CHANNEL AUTO-REACT 〕\n" +
             "║\n" +
             "║ ▸ *Removed* : " +
             (
-              jid ||
+              _0x16171b ||
               "(none)"
             ) +
             "\n║\n" +
             "╚═|〔 " +
-            botName +
+            _0x1e7dc1 +
             " 〕"
         },
         {
-          quoted: message
+          quoted:
+            _0x531193
         }
       );
     }
