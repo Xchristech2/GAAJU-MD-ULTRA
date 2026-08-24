@@ -9,9 +9,12 @@ const cfg = require('../../config');
 const CMDS_DIR = path.join(__dirname, '..');
 
 // Default menu image
-const DEFAULT_LOGO_PATH = path.join(__dirname, '../../../assets/xd-logo.jpg');
+const DEFAULT_LOGO_PATH = path.join(
+    __dirname,
+    '../../../assets/xd-logo.jpg'
+);
 
-// Custom image set with .setmenuimage
+// Custom menu image
 const CUSTOM_MENU_IMAGE = path.join(
     __dirname,
     '../../../assets/menu-image.jpg'
@@ -210,7 +213,6 @@ function getUsage() {
 
     return {
         text: `${usedMB.toFixed(1)} MB of ${totalGB.toFixed(2)} GB`,
-
         percent: Math.min(
             100,
             (usedMB / (totalGB * 1024)) * 100
@@ -276,7 +278,7 @@ module.exports = {
 
         const usage = getUsage();
 
-        // READ MORE SYSTEM
+        // READ MORE
         const readMore =
             String.fromCharCode(8206).repeat(4000);
 
@@ -284,55 +286,19 @@ module.exports = {
 
         // ================= HEADER =================
 
-        lines.push(
-            `┏━━❐✧ ${botName} ✧❐`
-        );
+        lines.push(`┏━━❐✧ ${botName} ✧❐`);
+        lines.push(`┃✦ Prefix: [${p}]`);
+        lines.push(`┃✦ Owner: ${owner}`);
+        lines.push(`┃✦ Mode: ${mode}`);
+        lines.push(`┃✦ Platform: ${getPlatform()}`);
+        lines.push(`┃✦ Speed: ${getSpeed(msg)}`);
+        lines.push(`┃✦ Uptime: ${getUptime()}`);
+        lines.push(`┃✦ Version: ${BOT_VERSION}`);
+        lines.push(`┃✦ Usage: ${usage.text}`);
+        lines.push(`┃✦ RAM: ${getBar(usage.percent)}`);
+        lines.push(`┃✦ Commands: ${totalCmds}`);
+        lines.push(`┗━━❐`);
 
-        lines.push(
-            `┃✦ Prefix: [${p}]`
-        );
-
-        lines.push(
-            `┃✦ Owner: ${owner}`
-        );
-
-        lines.push(
-            `┃✦ Mode: ${mode}`
-        );
-
-        lines.push(
-            `┃✦ Platform: ${getPlatform()}`
-        );
-
-        lines.push(
-            `┃✦ Speed: ${getSpeed(msg)}`
-        );
-
-        lines.push(
-            `┃✦ Uptime: ${getUptime()}`
-        );
-
-        lines.push(
-            `┃✦ Version: ${BOT_VERSION}`
-        );
-
-        lines.push(
-            `┃✦ Usage: ${usage.text}`
-        );
-
-        lines.push(
-            `┃✦ RAM: ${getBar(usage.percent)}`
-        );
-
-        lines.push(
-            `┃✦ Commands: ${totalCmds}`
-        );
-
-        lines.push(
-            `┗━━❐`
-        );
-
-        // READ MORE
         lines.push(readMore);
 
         const mid1 =
@@ -344,10 +310,7 @@ module.exports = {
         // ================= PART 1 =================
 
         for (let i = 0; i < mid1; i++) {
-            const {
-                cat,
-                cmdNames
-            } = catData[i];
+            const { cat, cmdNames } = catData[i];
 
             const label =
                 CATEGORY_LABELS[cat] ||
@@ -358,26 +321,18 @@ module.exports = {
             );
 
             for (const cmd of cmdNames) {
-                lines.push(
-                    `┃✦ ${p}${cmd}`
-                );
+                lines.push(`┃✦ ${p}${cmd}`);
             }
 
-            lines.push(
-                `┗━━❐`
-            );
+            lines.push(`┗━━❐`);
         }
 
-        // READ MORE 1
         lines.push(readMore);
 
         // ================= PART 2 =================
 
         for (let i = mid1; i < mid2; i++) {
-            const {
-                cat,
-                cmdNames
-            } = catData[i];
+            const { cat, cmdNames } = catData[i];
 
             const label =
                 CATEGORY_LABELS[cat] ||
@@ -388,26 +343,18 @@ module.exports = {
             );
 
             for (const cmd of cmdNames) {
-                lines.push(
-                    `┃✦ ${p}${cmd}`
-                );
+                lines.push(`┃✦ ${p}${cmd}`);
             }
 
-            lines.push(
-                `┗━━❐`
-            );
+            lines.push(`┗━━❐`);
         }
 
-        // READ MORE 2
         lines.push(readMore);
 
         // ================= PART 3 =================
 
         for (let i = mid2; i < catData.length; i++) {
-            const {
-                cat,
-                cmdNames
-            } = catData[i];
+            const { cat, cmdNames } = catData[i];
 
             const label =
                 CATEGORY_LABELS[cat] ||
@@ -418,34 +365,22 @@ module.exports = {
             );
 
             for (const cmd of cmdNames) {
-                lines.push(
-                    `┃✦ ${p}${cmd}`
-                );
+                lines.push(`┃✦ ${p}${cmd}`);
             }
 
-            lines.push(
-                `┗━━❐`
-            );
+            lines.push(`┗━━❐`);
         }
 
-        // FINAL READ MORE
         lines.push(readMore);
 
         // ================= FOOTER =================
 
         lines.push('');
         lines.push('');
+        lines.push(` ${botName}`);
+        lines.push('> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ');
 
-        lines.push(
-            ` ${botName}`
-        );
-
-        lines.push(
-            '> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ'
-        );
-
-        const caption =
-            lines.join('\n');
+        const caption = lines.join('\n');
 
         const msgOptions = {
             quoted: msg
@@ -456,25 +391,25 @@ module.exports = {
         msgOptions.contextInfo = {
             externalAdReply: {
                 title: botName,
-
                 body: '📢 View Channel',
-
                 sourceUrl: CHANNEL_URL,
-
                 mediaType: 1,
-
                 renderLargerThumbnail: false,
-
                 showAdAttribution: true,
             }
         };
 
         try {
-
-            // =================================================
-            // USE CUSTOM MENU IMAGE IF IT EXISTS
-            // OTHERWISE USE ORIGINAL LOGO
-            // =================================================
+            /*
+             * If menu-image.jpg exists:
+             *     use the custom image.
+             *
+             * If it does not exist:
+             *     use xd-logo.jpg.
+             *
+             * This means .delmenuimage automatically
+             * restores the original menu image.
+             */
 
             const imagePath =
                 fs.existsSync(CUSTOM_MENU_IMAGE)
@@ -488,9 +423,7 @@ module.exports = {
                 chatId,
                 {
                     image: img,
-
-                    caption,
-
+                    caption: caption,
                     mimetype: 'image/jpeg',
                 },
                 msgOptions
@@ -503,7 +436,7 @@ module.exports = {
                 error
             );
 
-            // FALLBACK TO TEXT MENU
+            // Text fallback
             await sock.sendMessage(
                 chatId,
                 {
