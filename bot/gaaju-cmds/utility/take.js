@@ -8,278 +8,17 @@ const {
     getBotName
 } = require('../../lib/botname');
 
-const {
-    execFile
-} = require('child_process');
-
-const {
-    promisify
-} = require('util');
-
 const sharp = require('sharp');
-const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
+const { execFile } = require('child_process');
+const { promisify } = require('util');
 
-const execFileAsync =
-    promisify(execFile);
-
-/*
-|--------------------------------------------------------------------------
-| EXIF
-|--------------------------------------------------------------------------
-*/
-
-function buildExifChunk(packName, author) {
-    const metadata = JSON.stringify({
-        'sticker-pack-id':
-            crypto.randomBytes(8).toString('hex'),
-
-        'sticker-pack-name':
-            packName,
-
-        'sticker-pack-publisher':
-            author,
-
-        'android-app-store-link':
-            '',
-
-        'ios-app-store-link':
-            ''
-    });
-
-    const payload =
-        Buffer.from(metadata, 'utf8');
-
-    const headerSize = 32;
-
-    const exif =
-        Buffer.alloc(
-            headerSize + payload.length
-        );
-
-    exif.write(
-        'Exif\0\0',
-        0,
-        'ascii'
-    );
-
-    exif.writeUInt16LE(
-        18761,
-        6
-    );
-
-    exif.writeUInt16LE(
-        42,
-        8
-    );
-
-    exif.writeUInt32LE(
-        8,
-        10
-    );
-
-    exif.writeUInt16LE(
-        1,
-        14
-    );
-
-    exif.writeUInt16LE(
-        270,
-        16
-    );
-
-    exif.writeUInt16LE(
-        2,
-        18
-    );
-
-    exif.writeUInt32LE(
-        payload.length,
-        20
-    );
-
-    exif.writeUInt32LE(
-        headerSize - 6,
-        24
-    );
-
-    exif.writeUInt32LE(
-        0,
-        28
-    );
-
-    payload.copy(
-        exif,
-        headerSize
-    );
-
-    const chunk =
-        Buffer.alloc(
-            8 + exif.length
-        );
-
-    chunk.write(
-        'EXIF',
-        0,
-        'ascii'
-    );
-
-    chunk.writeUInt32LE(
-        exif.length,
-        4
-    );
-
-    exif.copy(
-        chunk,
-        8
-    );
-
-    return chunk;
-}
-
-/*
-|--------------------------------------------------------------------------
-| INJECT EXIF INTO WEBP
-|--------------------------------------------------------------------------
-*/
-
-function injectExifToWebp(
-    webpBuffer,
-    packName,
-    author
-) {
-    if (
-        webpBuffer
-            .slice(0, 4)
-            .toString('ascii') !== 'RIFF'
-    ) {
-        throw new Error(
-            'Invalid WebP file'
-        );
-    }
-
-    if (
-        webpBuffer
-            .slice(8, 12)
-            .toString('ascii') !== 'WEBP'
-    ) {
-        throw new Error(
-            'Invalid WebP file'
-        );
-    }
-
-    const body =
-        webpBuffer.slice(12);
-
-    const chunks = [];
-
-    let offset = 0;
-
-    while (
-        offset + 8 <= body.length
-    ) {
-        const type =
-            body
-                .slice(
-                    offset,
-                    offset + 4
-                )
-                .toString('ascii');
-
-        const size =
-            body.readUInt32LE(
-                offset + 4
-            );
-
-        const padded =
-            size % 2;
-
-        const end =
-            offset +
-            8 +
-            size +
-            padded;
-
-        if (end > body.length) {
-            break;
-        }
-
-        /*
-         * Remove old EXIF metadata.
-         */
-        if (type !== 'EXIF') {
-            chunks.push(
-                body.slice(
-                    offset,
-                    end
-                )
-            );
-        }
-
-        offset = end;
-    }
-
-    chunks.push(
-        buildExifChunk(
-            packName,
-            author
-        )
-    );
-
-    const newBody =
-        Buffer.concat(chunks);
-
-    const header =
-        Buffer.alloc(12);
-
-    header.write(
-        'RIFF',
-        0,
-        'ascii'
-    );
-
-    header.writeUInt32LE(
-        4 + newBody.length,
-        4
-    );
-
-    header.write(
-        'WEBP',
-        8,
-        'ascii'
-    );
-
-    return Buffer.concat([
-        header,
-        newBody
-    ]);
-}
-
-/*
-|--------------------------------------------------------------------------
-| GET REPLIED MESSAGE
-|--------------------------------------------------------------------------
-*/
-
-function getQuotedMessage(msg) {
-    return (
-        msg.message
-            ?.extendedTextMessage
-            ?.contextInfo
-            ?.quotedMessage
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| TAKE COMMAND
-|--------------------------------------------------------------------------
-*/
+const execFileAsync = promisify(execFile);
 
 module.exports = {
-
     name: 'take',
 
     aliases: [
@@ -290,10 +29,9 @@ module.exports = {
     ],
 
     description:
-        'Convert replied media to a sticker with custom pack information',
+        'Create a sticker from a replied sticker, image, video or supported document',
 
-    category:
-        'utility',
+    category: 'utility',
 
     async execute(
         sock,
@@ -313,8 +51,11 @@ module.exports = {
         try {
 
             /*
-             * Reaction
-             */
+            |--------------------------------------------------------------------------
+            | REACT
+            |--------------------------------------------------------------------------
+            */
+
             try {
                 await sock.sendMessage(
                     chatId,
@@ -328,16 +69,15 @@ module.exports = {
             } catch {}
 
             /*
-             * Pack name and author
-             *
-             * Example:
-             *
-             * .take GAAJU | Chris
-             */
+            |--------------------------------------------------------------------------
+            | PACK NAME / AUTHOR
+            |--------------------------------------------------------------------------
+            */
+
             const input =
                 Array.isArray(args)
                     ? args.join(' ').trim()
-                    : '';
+                    : String(args || '').trim();
 
             let packName =
                 botName;
@@ -350,49 +90,55 @@ module.exports = {
                 const parts =
                     input
                         .split('|')
-                        .map(
-                            x => x.trim()
-                        );
+                        .map(x => x.trim());
 
                 packName =
-                    parts[0] ||
-                    botName;
+                    parts[0] || botName;
 
                 author =
-                    parts[1] ||
+                    parts.slice(1).join('|').trim() ||
                     botName;
 
             } else if (input) {
 
                 packName =
                     input;
-
             }
 
             /*
-             * Get quoted message.
-             */
-            const quoted =
-                getQuotedMessage(msg);
+            |--------------------------------------------------------------------------
+            | GET QUOTED MESSAGE
+            |--------------------------------------------------------------------------
+            */
 
-            if (!quoted) {
+            const context =
+                msg.message
+                    ?.extendedTextMessage
+                    ?.contextInfo;
+
+            const quotedMessage =
+                context?.quotedMessage;
+
+            if (!quotedMessage) {
+
                 return await sock.sendMessage(
                     chatId,
                     {
                         text:
-                            `╔═|〔 🎨 TAKE STICKER 〕\n` +
-                            `║\n` +
-                            `║ ▸ Reply to a:\n` +
-                            `║   • Sticker\n` +
-                            `║   • Image\n` +
-                            `║   • Video\n` +
-                            `║   • Document\n` +
-                            `║\n` +
-                            `║ ▸ Usage:\n` +
-                            `║   ${p}take\n` +
-                            `║   ${p}take MyPack | Author\n` +
-                            `║\n` +
-                            `╚═|〔 ${botName} 〕`
+`┏━━❐ 🎨 TAKE ❐
+┃
+┃✦ Reply to a sticker
+┃✦ Reply to an image
+┃✦ Reply to a video
+┃✦ Reply to a supported document
+┃
+┃✦ Usage:
+┃  ${p}take
+┃
+┃✦ Custom pack:
+┃  ${p}take My Pack | Author
+┃
+┗━━❐`
                     },
                     {
                         quoted: msg
@@ -401,36 +147,53 @@ module.exports = {
             }
 
             /*
-             * Detect media.
-             */
+            |--------------------------------------------------------------------------
+            | DETECT MEDIA
+            |--------------------------------------------------------------------------
+            */
+
             const sticker =
-                quoted.stickerMessage;
+                quotedMessage.stickerMessage;
 
             const image =
-                quoted.imageMessage;
+                quotedMessage.imageMessage;
 
             const video =
-                quoted.videoMessage;
+                quotedMessage.videoMessage;
 
             const document =
-                quoted.documentMessage;
+                quotedMessage.documentMessage;
 
-            if (
-                !sticker &&
-                !image &&
-                !video &&
-                !document
-            ) {
+            let mediaType =
+                null;
+
+            if (sticker) {
+                mediaType = 'sticker';
+            } else if (image) {
+                mediaType = 'image';
+            } else if (video) {
+                mediaType = 'video';
+            } else if (document) {
+                mediaType = 'document';
+            }
+
+            if (!mediaType) {
+
                 return await sock.sendMessage(
                     chatId,
                     {
                         text:
-                            `❌ The replied message does not contain supported media.\n\n` +
-                            `Supported:\n` +
-                            `• Sticker\n` +
-                            `• Image\n` +
-                            `• Video\n` +
-                            `• Document`
+`┏━━❐ 🎨 TAKE ❐
+┃
+┃✦ ❌ Unsupported media
+┃
+┃Reply to:
+┃✦ Sticker
+┃✦ Image
+┃✦ Video
+┃✦ Image/video document
+┃
+┗━━❐`
                     },
                     {
                         quoted: msg
@@ -439,74 +202,33 @@ module.exports = {
             }
 
             /*
-             * Temporary files.
-             */
-            const tempDir =
-                os.tmpdir();
+            |--------------------------------------------------------------------------
+            | DOWNLOAD MEDIA
+            |--------------------------------------------------------------------------
+            */
 
-            const id =
-                `${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+            const quotedKey = {
+                remoteJid: chatId,
+                id: context.stanzaId,
+                participant: context.participant,
+                fromMe: false
+            };
 
-            const inputFile =
-                path.join(
-                    tempDir,
-                    `take_${id}`
-                );
+            const downloadableMessage = {
+                key: quotedKey,
+                message: quotedMessage
+            };
 
-            const outputFile =
-                path.join(
-                    tempDir,
-                    `take_${id}.webp`
-                );
-
-            let inputBuffer;
+            let buffer;
 
             try {
 
-                /*
-                 * Create a message object that
-                 * downloadMediaMessage can understand.
-                 */
-                const mediaMessage = {
-                    key: {
-                        remoteJid:
-                            chatId,
-
-                        id:
-                            msg.message
-                                ?.extendedTextMessage
-                                ?.contextInfo
-                                ?.stanzaId,
-
-                        participant:
-                            msg.message
-                                ?.extendedTextMessage
-                                ?.contextInfo
-                                ?.participant,
-
-                        fromMe:
-                            false
-                    },
-
-                    message:
-                        quoted
-                };
-
-                inputBuffer =
+                buffer =
                     await downloadMediaMessage(
-                        mediaMessage,
+                        downloadableMessage,
                         'buffer',
                         {}
                     );
-
-                if (
-                    !inputBuffer ||
-                    !inputBuffer.length
-                ) {
-                    throw new Error(
-                        'Unable to download the replied media'
-                    );
-                }
 
             } catch (downloadError) {
 
@@ -515,32 +237,99 @@ module.exports = {
                     downloadError
                 );
 
-                throw new Error(
-                    'Could not download the replied media'
+                return await sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+`┏━━❐ 🎨 TAKE ❐
+┃
+┃✦ ❌ Download failed
+┃
+┃✦ The quoted media could not
+┃  be downloaded.
+┃
+┗━━❐`
+                    },
+                    {
+                        quoted: msg
+                    }
                 );
             }
 
-            let webpBuffer;
+            if (
+                !buffer ||
+                !Buffer.isBuffer(buffer) ||
+                buffer.length === 0
+            ) {
 
-            /*
-             * Existing sticker
-             */
-            if (sticker) {
-
-                webpBuffer =
-                    inputBuffer;
-
+                return await sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+`┏━━❐ 🎨 TAKE ❐
+┃
+┃✦ ❌ Empty media
+┃
+┃✦ I couldn't read the
+┃  replied file.
+┃
+┗━━❐`
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
             }
 
             /*
-             * Image
-             */
-            else if (image) {
+            |--------------------------------------------------------------------------
+            | TEMP FILES
+            |--------------------------------------------------------------------------
+            */
 
-                webpBuffer =
-                    await sharp(
-                        inputBuffer
-                    )
+            const id =
+                `${Date.now()}_${crypto
+                    .randomBytes(4)
+                    .toString('hex')}`;
+
+            const inputPath =
+                path.join(
+                    os.tmpdir(),
+                    `gaaju_take_${id}_input`
+                );
+
+            const outputPath =
+                path.join(
+                    os.tmpdir(),
+                    `gaaju_take_${id}.webp`
+                );
+
+            fs.writeFileSync(
+                inputPath,
+                buffer
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE STICKER
+            |--------------------------------------------------------------------------
+            */
+
+            try {
+
+                /*
+                | STICKER
+                */
+
+                if (mediaType === 'sticker') {
+
+                    /*
+                     * Validate the sticker first.
+                     * If it is already valid WebP,
+                     * re-encode it through Sharp.
+                     */
+
+                    await sharp(buffer)
                         .resize(
                             512,
                             512,
@@ -555,26 +344,101 @@ module.exports = {
                             }
                         )
                         .webp({
+                            quality: 90,
                             lossless: true
                         })
-                        .toBuffer();
+                        .toFile(outputPath);
+                }
 
-            }
+                /*
+                | IMAGE
+                */
 
-            /*
-             * Document
-             *
-             * If the document contains an image,
-             * Sharp will process it.
-             */
-            else if (document) {
+                else if (mediaType === 'image') {
 
-                try {
-
-                    webpBuffer =
-                        await sharp(
-                            inputBuffer
+                    await sharp(buffer)
+                        .rotate()
+                        .resize(
+                            512,
+                            512,
+                            {
+                                fit: 'contain',
+                                background: {
+                                    r: 0,
+                                    g: 0,
+                                    b: 0,
+                                    alpha: 0
+                                }
+                            }
                         )
+                        .webp({
+                            quality: 90
+                        })
+                        .toFile(outputPath);
+                }
+
+                /*
+                | VIDEO
+                */
+
+                else if (mediaType === 'video') {
+
+                    await execFileAsync(
+                        'ffmpeg',
+                        [
+                            '-y',
+                            '-i',
+                            inputPath,
+
+                            '-vf',
+                            'scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=black@0,fps=15',
+
+                            '-t',
+                            '8',
+
+                            '-an',
+
+                            '-c:v',
+                            'libwebp',
+
+                            '-lossless',
+                            '0',
+
+                            '-q:v',
+                            '70',
+
+                            '-loop',
+                            '0',
+
+                            outputPath
+                        ],
+                        {
+                            timeout: 60000
+                        }
+                    );
+                }
+
+                /*
+                | DOCUMENT
+                */
+
+                else if (mediaType === 'document') {
+
+                    const mimetype =
+                        String(
+                            document.mimetype || ''
+                        ).toLowerCase();
+
+                    /*
+                     * Image document
+                     */
+
+                    if (
+                        mimetype.startsWith('image/')
+                    ) {
+
+                        await sharp(buffer)
+                            .rotate()
                             .resize(
                                 512,
                                 512,
@@ -589,135 +453,161 @@ module.exports = {
                                 }
                             )
                             .webp({
-                                lossless: true
+                                quality: 90
                             })
-                            .toBuffer();
+                            .toFile(outputPath);
 
-                } catch {
+                    }
 
-                    throw new Error(
-                        'The document must contain an image that Sharp can process.'
-                    );
+                    /*
+                     * Video document
+                     */
 
+                    else if (
+                        mimetype.startsWith('video/')
+                    ) {
+
+                        await execFileAsync(
+                            'ffmpeg',
+                            [
+                                '-y',
+                                '-i',
+                                inputPath,
+
+                                '-vf',
+                                'scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=black@0,fps=15',
+
+                                '-t',
+                                '8',
+
+                                '-an',
+
+                                '-c:v',
+                                'libwebp',
+
+                                '-q:v',
+                                '70',
+
+                                '-loop',
+                                '0',
+
+                                outputPath
+                            ],
+                            {
+                                timeout: 60000
+                            }
+                        );
+
+                    } else {
+
+                        throw new Error(
+                            'This document is not an image or video.'
+                        );
+                    }
                 }
 
-            }
+                /*
+                |--------------------------------------------------------------------------
+                | VERIFY OUTPUT
+                |--------------------------------------------------------------------------
+                */
 
-            /*
-             * Video
-             */
-            else if (video) {
+                if (
+                    !fs.existsSync(outputPath)
+                ) {
+                    throw new Error(
+                        'Sticker conversion produced no file.'
+                    );
+                }
 
-                const videoFile =
-                    `${inputFile}.mp4`;
+                const stickerBuffer =
+                    fs.readFileSync(
+                        outputPath
+                    );
 
-                fs.writeFileSync(
-                    videoFile,
-                    inputBuffer
+                if (
+                    !stickerBuffer ||
+                    stickerBuffer.length < 100
+                ) {
+                    throw new Error(
+                        'Generated sticker is invalid or empty.'
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | SEND STICKER
+                |--------------------------------------------------------------------------
+                */
+
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        sticker: stickerBuffer,
+
+                        /*
+                         * These are standard sticker
+                         * metadata fields supported by
+                         * Baileys-style implementations.
+                         */
+                        packname: packName,
+                        author: author
+                    },
+                    {
+                        quoted: msg
+                    }
                 );
+
+                /*
+                |--------------------------------------------------------------------------
+                | SUCCESS
+                |--------------------------------------------------------------------------
+                */
+
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+`┏━━❐ 🎨 TAKE ❐
+┃
+┃✦ Pack: ${packName}
+┃✦ Author: ${author}
+┃✦ Type: ${mediaType}
+┃✦ Status: ✅ Done
+┃
+┃✦ Powered by
+┃  ${botName}
+┗━━❐`
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
+
+            } finally {
+
+                /*
+                |--------------------------------------------------------------------------
+                | CLEAN TEMP FILES
+                |--------------------------------------------------------------------------
+                */
 
                 try {
+                    if (
+                        fs.existsSync(inputPath)
+                    ) {
+                        fs.unlinkSync(inputPath);
+                    }
+                } catch {}
 
-                    await execFileAsync(
-                        'ffmpeg',
-                        [
-                            '-y',
-
-                            '-i',
-                            videoFile,
-
-                            '-vf',
-                            'scale=512:512:force_original_aspect_ratio=decrease,' +
-                            'pad=512:512:(ow-iw)/2:(oh-ih)/2,' +
-                            'fps=15',
-
-                            '-t',
-                            '10',
-
-                            '-an',
-
-                            '-loop',
-                            '0',
-
-                            '-preset',
-                            'default',
-
-                            outputFile
-                        ],
-                        {
-                            timeout: 30000
-                        }
-                    );
-
-                    webpBuffer =
-                        fs.readFileSync(
-                            outputFile
-                        );
-
-                } finally {
-
-                    try {
-                        fs.unlinkSync(
-                            videoFile
-                        );
-                    } catch {}
-
-                }
-
+                try {
+                    if (
+                        fs.existsSync(outputPath)
+                    ) {
+                        fs.unlinkSync(outputPath);
+                    }
+                } catch {}
             }
-
-            if (
-                !webpBuffer ||
-                !webpBuffer.length
-            ) {
-                throw new Error(
-                    'Could not convert the media into a sticker'
-                );
-            }
-
-            /*
-             * Add sticker metadata.
-             */
-            const finalSticker =
-                injectExifToWebp(
-                    webpBuffer,
-                    packName,
-                    author
-                );
-
-            /*
-             * Send sticker.
-             */
-            await sock.sendMessage(
-                chatId,
-                {
-                    sticker:
-                        finalSticker
-                },
-                {
-                    quoted: msg
-                }
-            );
-
-            /*
-             * Success message.
-             */
-            await sock.sendMessage(
-                chatId,
-                {
-                    text:
-                        `╔═|〔 🎨 TAKE STICKER 〕\n` +
-                        `║\n` +
-                        `║ ▸ *Pack*   : ${packName}\n` +
-                        `║ ▸ *Author* : ${author}\n` +
-                        `║ ▸ *Status* : ✅ Done\n` +
-                        `║\n` +
-                        `╚═|〔 ${botName} 〕`
-                },
-                {
-                    quoted: msg
-                }
-            );
 
         } catch (error) {
 
@@ -730,46 +620,23 @@ module.exports = {
                 chatId,
                 {
                     text:
-                        `╔═|〔 🎨 TAKE STICKER 〕\n` +
-                        `║\n` +
-                        `║ ▸ *Status* : ❌ Failed\n` +
-                        `║ ▸ *Reason* : ${error?.message || 'Unknown error'}\n` +
-                        `║\n` +
-                        `╚═|〔 ${botName} 〕`
+`┏━━❐ 🎨 TAKE ❐
+┃
+┃✦ Status: ❌ Failed
+┃
+┃✦ Reason:
+┃  ${error?.message || 'Unknown error'}
+┃
+┃✦ Try replying to an image,
+┃  video or sticker and use:
+┃  ${p}take
+┃
+┗━━❐`
                 },
                 {
                     quoted: msg
                 }
             );
-
-        } finally {
-
-            /*
-             * Cleanup temporary output.
-             */
-            try {
-                if (
-                    fs.existsSync(
-                        outputFile
-                    )
-                ) {
-                    fs.unlinkSync(
-                        outputFile
-                    );
-                }
-            } catch {}
-
-            try {
-                if (
-                    fs.existsSync(
-                        inputFile
-                    )
-                ) {
-                    fs.unlinkSync(
-                        inputFile
-                    );
-                }
-            } catch {}
         }
     }
 };
