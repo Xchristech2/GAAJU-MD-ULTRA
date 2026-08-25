@@ -144,6 +144,15 @@ function getCategoryData() {
                 );
             }
 
+            // ================= GROUP =================
+
+            if (cat === 'group') {
+                addCommandOnce(
+                    cmdNames,
+                    'join'
+                );
+            }
+
             if (!cmdNames.length) continue;
 
             totalCmds += cmdNames.length;
@@ -294,6 +303,15 @@ function getCategoryData() {
             addCommandOnce(
                 names,
                 'support'
+            );
+        }
+
+        // ================= GROUP =================
+
+        if (cat === 'group') {
+            addCommandOnce(
+                names,
+                'join'
             );
         }
 
