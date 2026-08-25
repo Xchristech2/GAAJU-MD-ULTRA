@@ -101,10 +101,14 @@ function getCategoryData() {
                 ...new Set(liveRegistry.get(cat) || [])
             ];
 
-            // Add .block under OWNER
+            // Add .block and .unblock under OWNER
             if (cat === 'owner') {
                 if (!cmdNames.includes('block')) {
                     cmdNames.push('block');
+                }
+
+                if (!cmdNames.includes('unblock')) {
+                    cmdNames.push('unblock');
                 }
             }
 
@@ -188,10 +192,14 @@ function getCategoryData() {
             }
         } catch {}
 
-        // Add .block under OWNER
+        // Add .block and .unblock under OWNER
         if (cat === 'owner') {
             if (!names.includes('block')) {
                 names.push('block');
+            }
+
+            if (!names.includes('unblock')) {
+                names.push('unblock');
             }
         }
 
