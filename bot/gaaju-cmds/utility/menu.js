@@ -3,24 +3,22 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-
 const { getBotName } = require('../../lib/botname');
 const cfg = require('../../config');
 
 const CMDS_DIR = path.join(__dirname, '..');
 
+// Default menu image
 const DEFAULT_LOGO_PATH = path.join(
     __dirname,
     '../../../assets/xd-logo.jpg'
 );
 
+// Custom menu image from .setmenuimage
 const CUSTOM_MENU_IMAGE = path.join(
     __dirname,
     '../../../assets/menu-image.jpg'
 );
-
-const CHANNEL_URL =
-    'https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z';
 
 let BOT_VERSION = 'v1.2.0';
 
@@ -81,7 +79,7 @@ const CATEGORY_ORDER = [
 
 /*
 |--------------------------------------------------------------------------
-| GET COMMANDS FROM FILES
+| GET COMMANDS FROM CATEGORY
 |--------------------------------------------------------------------------
 */
 
@@ -139,28 +137,34 @@ function getCommandsFromCategory(category) {
 
 /*
 |--------------------------------------------------------------------------
-| FORCE SUPPORT COMMAND
+| FORCE SUPPORT + BOTRULES
 |--------------------------------------------------------------------------
-|
-| This makes sure support appears in Utility even when the
-| command registry doesn't register it correctly.
-|
 */
 
-function addSupportCommand(names) {
-    const supportPath = path.join(
-        CMDS_DIR,
-        'utility',
-        'support.js'
-    );
+function addUtilityCommands(names) {
 
-    if (
-        fs.existsSync(supportPath) &&
-        !names.some(
-            x => String(x).toLowerCase() === 'support'
-        )
-    ) {
-        names.push('support');
+    const requiredCommands = [
+        'support',
+        'botrules'
+    ];
+
+    for (const command of requiredCommands) {
+
+        const commandPath = path.join(
+            CMDS_DIR,
+            'utility',
+            `${command}.js`
+        );
+
+        if (
+            fs.existsSync(commandPath) &&
+            !names.some(
+                x =>
+                    String(x).toLowerCase() === command
+            )
+        ) {
+            names.push(command);
+        }
     }
 
     return names;
@@ -173,25 +177,31 @@ function addSupportCommand(names) {
 */
 
 function getCategoryData() {
+
     const liveRegistry =
         globalThis._botCommandCategories;
 
     const categoryMap = new Map();
 
     /*
-     * First use the live command registry.
+     * Get commands from live registry
      */
     if (
         liveRegistry &&
         typeof liveRegistry.entries === 'function'
     ) {
-        for (const [cat, commands] of liveRegistry.entries()) {
+        for (
+            const [cat, commands]
+            of liveRegistry.entries()
+        ) {
+
             categoryMap.set(
                 cat,
                 [
                     ...new Set(
-                        (commands || []).map(x =>
-                            String(x).toLowerCase()
+                        (commands || []).map(
+                            x =>
+                                String(x).toLowerCase()
                         )
                     )
                 ]
@@ -200,26 +210,33 @@ function getCategoryData() {
     }
 
     /*
-     * Add categories discovered directly from folders.
-     * This also makes the menu work when the registry is incomplete.
+     * Scan command folders too.
+     * This prevents commands from disappearing
+     * when the live registry is incomplete.
      */
     let folders = [];
 
     try {
+
         folders = fs
             .readdirSync(CMDS_DIR)
             .filter(item => {
+
                 try {
                     return fs.statSync(
                         path.join(CMDS_DIR, item)
                     ).isDirectory();
+
                 } catch {
                     return false;
                 }
+
             });
+
     } catch {}
 
     for (const category of folders) {
+
         const existing =
             categoryMap.get(category) || [];
 
@@ -238,23 +255,27 @@ function getCategoryData() {
     }
 
     /*
-     * FORCE UTILITY CATEGORY
+     * FORCE SUPPORT + BOTRULES INTO UTILITY
      */
     let utilityCommands =
         categoryMap.get('utility') || [];
 
     utilityCommands =
-        addSupportCommand(utilityCommands);
+        addUtilityCommands(
+            utilityCommands
+        );
 
     categoryMap.set(
         'utility',
         [
-            ...new Set(utilityCommands)
+            ...new Set(
+                utilityCommands
+            )
         ]
     );
 
     /*
-     * Order categories.
+     * Order categories
      */
     const allCats = [
         ...categoryMap.keys()
@@ -262,13 +283,14 @@ function getCategoryData() {
 
     const ordered = [
         ...CATEGORY_ORDER.filter(
-            cat => allCats.includes(cat)
+            cat =>
+                allCats.includes(cat)
         ),
-        ...allCats
-            .filter(
-                cat => !CATEGORY_ORDER.includes(cat)
-            )
-            .sort()
+
+        ...allCats.filter(
+            cat =>
+                !CATEGORY_ORDER.includes(cat)
+        ).sort()
     ];
 
     const catData = [];
@@ -276,6 +298,7 @@ function getCategoryData() {
     let totalCmds = 0;
 
     for (const cat of ordered) {
+
         const cmdNames = [
             ...new Set(
                 categoryMap.get(cat) || []
@@ -286,7 +309,8 @@ function getCategoryData() {
             continue;
         }
 
-        totalCmds += cmdNames.length;
+        totalCmds +=
+            cmdNames.length;
 
         catData.push({
             cat,
@@ -307,6 +331,7 @@ function getCategoryData() {
 */
 
 function getPlatform() {
+
     if (process.env.DYNO) {
         return 'Heroku';
     }
@@ -329,11 +354,16 @@ function getPlatform() {
 */
 
 function getUptime() {
+
     const seconds =
-        Math.floor(process.uptime());
+        Math.floor(
+            process.uptime()
+        );
 
     const hours =
-        Math.floor(seconds / 3600);
+        Math.floor(
+            seconds / 3600
+        );
 
     const minutes =
         Math.floor(
@@ -353,6 +383,7 @@ function getUptime() {
 */
 
 function getUsage() {
+
     const usedMB =
         process.memoryUsage().rss /
         1024 /
@@ -367,12 +398,14 @@ function getUsage() {
     const percent =
         Math.min(
             100,
-            (usedMB /
-                (totalGB * 1024)) *
-                100
+            (
+                usedMB /
+                (totalGB * 1024)
+            ) * 100
         );
 
     return {
+
         text:
             `${usedMB.toFixed(1)} MB of ${totalGB.toFixed(2)} GB`,
 
@@ -387,8 +420,16 @@ function getUsage() {
 */
 
 function getSpeed(msg) {
-    if (msg && msg._botReceivedAt) {
-        return `${Date.now() - msg._botReceivedAt}ms`;
+
+    if (
+        msg &&
+        msg._botReceivedAt
+    ) {
+
+        return `${
+            Date.now() -
+            msg._botReceivedAt
+        }ms`;
     }
 
     return 'N/A';
@@ -401,11 +442,13 @@ function getSpeed(msg) {
 */
 
 function getBar(percent) {
+
     const total = 10;
 
     const filled =
         Math.round(
-            (percent / 100) * total
+            (percent / 100) *
+            total
         );
 
     return `[${'█'.repeat(filled)}${'░'.repeat(
@@ -425,6 +468,7 @@ function buildCategory(
     commands,
     prefix
 ) {
+
     const label =
         CATEGORY_LABELS[category] ||
         `📁 ${String(category).toUpperCase()}`;
@@ -434,6 +478,7 @@ function buildCategory(
     );
 
     for (const command of commands) {
+
         lines.push(
             `┃✦ ${prefix}${command}`
         );
@@ -451,6 +496,7 @@ function buildCategory(
 */
 
 module.exports = {
+
     name: 'menu',
 
     aliases: [
@@ -472,263 +518,10 @@ module.exports = {
         prefix,
         ctx
     ) {
+
         try {
+
             const chatId =
                 msg.key.remoteJid;
 
-            const botName =
-                getBotName();
-
-            const p =
-                prefix ||
-                cfg.PREFIX ||
-                '.';
-
-            const owner =
-                cfg.OWNER_NUMBER
-                    ? `+${cfg.OWNER_NUMBER}`
-                    : (
-                        cfg.OWNER_NAME ||
-                        'GAAJU'
-                    );
-
-            const mode =
-                (
-                    cfg.MODE ||
-                    'public'
-                ).toUpperCase();
-
-            const {
-                catData,
-                totalCmds
-            } = getCategoryData();
-
-            const usage =
-                getUsage();
-
-            /*
-             * READ MORE
-             */
-            const readMore =
-                String.fromCharCode(8206)
-                    .repeat(4000);
-
-            const lines = [];
-
-            /*
-             * HEADER
-             */
-            lines.push(
-                `┏━━❐✧ ${botName} ✧❐`
-            );
-
-            lines.push(
-                `┃✦ Prefix: [${p}]`
-            );
-
-            lines.push(
-                `┃✦ Owner: ${owner}`
-            );
-
-            lines.push(
-                `┃✦ Mode: ${mode}`
-            );
-
-            lines.push(
-                `┃✦ Platform: ${getPlatform()}`
-            );
-
-            lines.push(
-                `┃✦ Speed: ${getSpeed(msg)}`
-            );
-
-            lines.push(
-                `┃✦ Uptime: ${getUptime()}`
-            );
-
-            lines.push(
-                `┃✦ Version: ${BOT_VERSION}`
-            );
-
-            lines.push(
-                `┃✦ Usage: ${usage.text}`
-            );
-
-            lines.push(
-                `┃✦ RAM: ${getBar(
-                    usage.percent
-                )}`
-            );
-
-            lines.push(
-                `┃✦ Commands: ${totalCmds}`
-            );
-
-            lines.push(
-                `┗━━❐`
-            );
-
-            lines.push(
-                readMore
-            );
-
-            /*
-             * CATEGORIES
-             */
-            for (const {
-                cat,
-                cmdNames
-            } of catData) {
-                buildCategory(
-                    lines,
-                    cat,
-                    cmdNames,
-                    p
-                );
-            }
-
-            /*
-             * FOOTER
-             */
-            lines.push(
-                `\n┏━━❐ ✦ INFORMATION ✦ ❐`
-            );
-
-            lines.push(
-                `┃✦ ${p}menu`
-            );
-
-            lines.push(
-                `┃✦ ${p}support`
-            );
-
-            lines.push(
-                `┃✦ ${p}owner`
-            );
-
-            lines.push(
-                `┗━━❐`
-            );
-
-            /*
-             * FINAL MENU TEXT
-             */
-            const menuText =
-                lines.join('\n');
-
-            /*
-             * SELECT IMAGE
-             */
-            let imagePath =
-                DEFAULT_LOGO_PATH;
-
-            if (
-                fs.existsSync(
-                    CUSTOM_MENU_IMAGE
-                )
-            ) {
-                imagePath =
-                    CUSTOM_MENU_IMAGE;
-            }
-
-            /*
-             * SEND MENU
-             */
-            if (
-                imagePath &&
-                fs.existsSync(imagePath)
-            ) {
-                try {
-                    await sock.sendMessage(
-                        chatId,
-                        {
-                            image: {
-                                url: imagePath
-                            },
-
-                            caption: menuText,
-
-                            contextInfo: {
-                                externalAdReply: {
-                                    title:
-                                        `${botName} ${BOT_VERSION}`,
-
-                                    body:
-                                        'Multi Device WhatsApp Bot',
-
-                                    thumbnailUrl:
-                                        CHANNEL_URL,
-
-                                    sourceUrl:
-                                        CHANNEL_URL,
-
-                                    mediaType: 1,
-
-                                    renderLargerThumbnail:
-                                        true
-                                }
-                            }
-                        },
-                        {
-                            quoted: msg
-                        }
-                    );
-
-                    return;
-                } catch (imageError) {
-                    console.log(
-                        '[MENU IMAGE ERROR]',
-                        imageError?.message ||
-                            imageError
-                    );
-                }
-            }
-
-            /*
-             * FALLBACK TEXT MENU
-             */
-            await sock.sendMessage(
-                chatId,
-                {
-                    text: menuText,
-
-                    contextInfo: {
-                        externalAdReply: {
-                            title:
-                                `${botName} ${BOT_VERSION}`,
-
-                            body:
-                                'Multi Device WhatsApp Bot',
-
-                            sourceUrl:
-                                CHANNEL_URL,
-
-                            mediaType: 1
-                        }
-                    }
-                },
-                {
-                    quoted: msg
-                }
-            );
-        } catch (error) {
-            console.error(
-                '[MENU ERROR]',
-                error
-            );
-
-            try {
-                await sock.sendMessage(
-                    msg.key.remoteJid,
-                    {
-                        text:
-                            `❌ Menu error:\n${error.message}`
-                    },
-                    {
-                        quoted: msg
-                    }
-                );
-            } catch {}
-        }
-    }
-};
+            const botName
