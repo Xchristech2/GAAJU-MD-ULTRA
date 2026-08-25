@@ -101,9 +101,14 @@ function getCategoryData() {
                 ...new Set(liveRegistry.get(cat) || [])
             ];
 
-            if (!cmdNames.length) continue;
+            // Add .block under OWNER
+            if (cat === 'owner') {
+                if (!cmdNames.includes('block')) {
+                    cmdNames.push('block');
+                }
+            }
 
-            // Add only the two requested commands to utility
+            // Add only the two utility commands
             if (cat === 'utility') {
                 if (!cmdNames.includes('botrules')) {
                     cmdNames.push('botrules');
@@ -113,6 +118,8 @@ function getCategoryData() {
                     cmdNames.push('support');
                 }
             }
+
+            if (!cmdNames.length) continue;
 
             totalCmds += cmdNames.length;
 
@@ -181,7 +188,14 @@ function getCategoryData() {
             }
         } catch {}
 
-        // Add only the two requested commands to utility
+        // Add .block under OWNER
+        if (cat === 'owner') {
+            if (!names.includes('block')) {
+                names.push('block');
+            }
+        }
+
+        // Add only the two utility commands
         if (cat === 'utility') {
             if (!names.includes('botrules')) {
                 names.push('botrules');
