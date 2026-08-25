@@ -153,6 +153,16 @@ function getCategoryData() {
                 );
             }
 
+            // ================= CHANNEL =================
+            // Added only: idch
+
+            if (cat === 'channel') {
+                addCommandOnce(
+                    cmdNames,
+                    'idch'
+                );
+            }
+
             if (!cmdNames.length) continue;
 
             totalCmds += cmdNames.length;
@@ -312,6 +322,16 @@ function getCategoryData() {
             addCommandOnce(
                 names,
                 'join'
+            );
+        }
+
+        // ================= CHANNEL =================
+        // Added only: idch
+
+        if (cat === 'channel') {
+            addCommandOnce(
+                names,
+                'idch'
             );
         }
 
