@@ -14,11 +14,14 @@ const DEFAULT_LOGO_PATH = path.join(
     '../../../assets/xd-logo.jpg'
 );
 
-// Custom menu image from .setmenuimage
+// Custom menu image
 const CUSTOM_MENU_IMAGE = path.join(
     __dirname,
     '../../../assets/menu-image.jpg'
 );
+
+const CHANNEL_URL =
+    'https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z';
 
 let BOT_VERSION = 'v1.2.0';
 
@@ -53,7 +56,7 @@ const CATEGORY_LABELS = {
     spiritual: '🕊️ SPIRITUAL',
     sports: '⚽ SPORTS',
     stalker: '🔍 STALKER',
-    utility: '🔧 UTILITY'
+    utility: '🔧 UTILITY',
 };
 
 const CATEGORY_ORDER = [
@@ -77,244 +80,125 @@ const CATEGORY_ORDER = [
     'games'
 ];
 
-/*
-|--------------------------------------------------------------------------
-| GET COMMANDS FROM CATEGORY
-|--------------------------------------------------------------------------
-*/
-
-function getCommandsFromCategory(category) {
-    const categoryPath = path.join(
-        CMDS_DIR,
-        category
-    );
-
-    const names = [];
-
-    if (!fs.existsSync(categoryPath)) {
-        return names;
-    }
-
-    let files = [];
-
-    try {
-        files = fs
-            .readdirSync(categoryPath)
-            .filter(file => file.endsWith('.js'));
-    } catch {
-        return names;
-    }
-
-    for (const file of files) {
-        try {
-            const filePath = path.join(
-                categoryPath,
-                file
-            );
-
-            const mod = require(filePath);
-
-            const raw = mod.default || mod;
-
-            const list = Array.isArray(raw)
-                ? raw
-                : raw?.name
-                    ? [raw]
-                    : [];
-
-            for (const cmd of list) {
-                if (cmd?.name) {
-                    names.push(
-                        String(cmd.name).toLowerCase()
-                    );
-                }
-            }
-        } catch {}
-    }
-
-    return names;
-}
-
-/*
-|--------------------------------------------------------------------------
-| FORCE SUPPORT + BOTRULES
-|--------------------------------------------------------------------------
-*/
-
-function addUtilityCommands(names) {
-
-    const requiredCommands = [
-        'support',
-        'botrules'
-    ];
-
-    for (const command of requiredCommands) {
-
-        const commandPath = path.join(
-            CMDS_DIR,
-            'utility',
-            `${command}.js`
-        );
-
-        if (
-            fs.existsSync(commandPath) &&
-            !names.some(
-                x =>
-                    String(x).toLowerCase() === command
-            )
-        ) {
-            names.push(command);
-        }
-    }
-
-    return names;
-}
-
-/*
-|--------------------------------------------------------------------------
-| CATEGORY DATA
-|--------------------------------------------------------------------------
-*/
-
 function getCategoryData() {
+    const liveRegistry = globalThis._botCommandCategories;
 
-    const liveRegistry =
-        globalThis._botCommandCategories;
+    if (liveRegistry && liveRegistry.size > 0) {
+        const allCats = [...liveRegistry.keys()];
 
-    const categoryMap = new Map();
-
-    /*
-     * Get commands from live registry
-     */
-    if (
-        liveRegistry &&
-        typeof liveRegistry.entries === 'function'
-    ) {
-        for (
-            const [cat, commands]
-            of liveRegistry.entries()
-        ) {
-
-            categoryMap.set(
-                cat,
-                [
-                    ...new Set(
-                        (commands || []).map(
-                            x =>
-                                String(x).toLowerCase()
-                        )
-                    )
-                ]
-            );
-        }
-    }
-
-    /*
-     * Scan command folders too.
-     * This prevents commands from disappearing
-     * when the live registry is incomplete.
-     */
-    let folders = [];
-
-    try {
-
-        folders = fs
-            .readdirSync(CMDS_DIR)
-            .filter(item => {
-
-                try {
-                    return fs.statSync(
-                        path.join(CMDS_DIR, item)
-                    ).isDirectory();
-
-                } catch {
-                    return false;
-                }
-
-            });
-
-    } catch {}
-
-    for (const category of folders) {
-
-        const existing =
-            categoryMap.get(category) || [];
-
-        const discovered =
-            getCommandsFromCategory(category);
-
-        categoryMap.set(
-            category,
-            [
-                ...new Set([
-                    ...existing,
-                    ...discovered
-                ])
-            ]
-        );
-    }
-
-    /*
-     * FORCE SUPPORT + BOTRULES INTO UTILITY
-     */
-    let utilityCommands =
-        categoryMap.get('utility') || [];
-
-    utilityCommands =
-        addUtilityCommands(
-            utilityCommands
-        );
-
-    categoryMap.set(
-        'utility',
-        [
-            ...new Set(
-                utilityCommands
-            )
-        ]
-    );
-
-    /*
-     * Order categories
-     */
-    const allCats = [
-        ...categoryMap.keys()
-    ];
-
-    const ordered = [
-        ...CATEGORY_ORDER.filter(
-            cat =>
-                allCats.includes(cat)
-        ),
-
-        ...allCats.filter(
-            cat =>
-                !CATEGORY_ORDER.includes(cat)
-        ).sort()
-    ];
-
-    const catData = [];
-
-    let totalCmds = 0;
-
-    for (const cat of ordered) {
-
-        const cmdNames = [
-            ...new Set(
-                categoryMap.get(cat) || []
-            )
+        const ordered = [
+            ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
+            ...allCats
+                .filter(c => !CATEGORY_ORDER.includes(c))
+                .sort()
         ];
 
-        if (!cmdNames.length) {
-            continue;
+        const catData = [];
+        let totalCmds = 0;
+
+        for (const cat of ordered) {
+            const cmdNames = [
+                ...new Set(liveRegistry.get(cat) || [])
+            ];
+
+            if (!cmdNames.length) continue;
+
+            // Add only the two requested commands to utility
+            if (cat === 'utility') {
+                if (!cmdNames.includes('botrules')) {
+                    cmdNames.push('botrules');
+                }
+
+                if (!cmdNames.includes('support')) {
+                    cmdNames.push('support');
+                }
+            }
+
+            totalCmds += cmdNames.length;
+
+            catData.push({
+                cat,
+                cmdNames
+            });
         }
 
-        totalCmds +=
-            cmdNames.length;
+        return {
+            catData,
+            totalCmds
+        };
+    }
+
+    const allCats = fs
+        .readdirSync(CMDS_DIR)
+        .filter(item => {
+            try {
+                return fs.statSync(
+                    path.join(CMDS_DIR, item)
+                ).isDirectory();
+            } catch {
+                return false;
+            }
+        });
+
+    const ordered = [
+        ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
+        ...allCats
+            .filter(c => !CATEGORY_ORDER.includes(c))
+            .sort()
+    ];
+
+    let totalCmds = 0;
+    const catData = [];
+
+    for (const cat of ordered) {
+        const names = [];
+
+        try {
+            const files = fs
+                .readdirSync(path.join(CMDS_DIR, cat))
+                .filter(f => f.endsWith('.js'));
+
+            for (const file of files) {
+                try {
+                    const mod = require(
+                        path.join(CMDS_DIR, cat, file)
+                    );
+
+                    const raw = mod.default || mod;
+
+                    const list = Array.isArray(raw)
+                        ? raw
+                        : raw?.name
+                            ? [raw]
+                            : [];
+
+                    for (const cmd of list) {
+                        if (cmd?.name) {
+                            names.push(cmd.name);
+                        }
+                    }
+                } catch {}
+            }
+        } catch {}
+
+        // Add only the two requested commands to utility
+        if (cat === 'utility') {
+            if (!names.includes('botrules')) {
+                names.push('botrules');
+            }
+
+            if (!names.includes('support')) {
+                names.push('support');
+            }
+        }
+
+        if (!names.length) continue;
+
+        totalCmds += names.length;
 
         catData.push({
             cat,
-            cmdNames
+            cmdNames: names
         });
     }
 
@@ -324,179 +208,61 @@ function getCategoryData() {
     };
 }
 
-/*
-|--------------------------------------------------------------------------
-| PLATFORM
-|--------------------------------------------------------------------------
-*/
-
 function getPlatform() {
-
-    if (process.env.DYNO) {
-        return 'Heroku';
-    }
-
-    if (process.env.RAILWAY_ENVIRONMENT) {
-        return 'Railway';
-    }
-
-    if (process.env.RENDER) {
-        return 'Render';
-    }
+    if (process.env.DYNO) return 'Heroku';
+    if (process.env.RAILWAY_ENVIRONMENT) return 'Railway';
+    if (process.env.RENDER) return 'Render';
 
     return 'VPS';
 }
 
-/*
-|--------------------------------------------------------------------------
-| UPTIME
-|--------------------------------------------------------------------------
-*/
-
 function getUptime() {
+    const s = Math.floor(process.uptime());
 
-    const seconds =
-        Math.floor(
-            process.uptime()
-        );
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
 
-    const hours =
-        Math.floor(
-            seconds / 3600
-        );
-
-    const minutes =
-        Math.floor(
-            (seconds % 3600) / 60
-        );
-
-    const secs =
-        seconds % 60;
-
-    return `${hours}h ${minutes}m ${secs}s`;
+    return `${h}h ${m}m ${sec}s`;
 }
 
-/*
-|--------------------------------------------------------------------------
-| MEMORY
-|--------------------------------------------------------------------------
-*/
-
 function getUsage() {
-
     const usedMB =
-        process.memoryUsage().rss /
-        1024 /
-        1024;
+        process.memoryUsage().rss / 1024 / 1024;
 
     const totalGB =
-        os.totalmem() /
-        1024 /
-        1024 /
-        1024;
-
-    const percent =
-        Math.min(
-            100,
-            (
-                usedMB /
-                (totalGB * 1024)
-            ) * 100
-        );
+        os.totalmem() / 1024 / 1024 / 1024;
 
     return {
-
-        text:
-            `${usedMB.toFixed(1)} MB of ${totalGB.toFixed(2)} GB`,
-
-        percent
+        text: `${usedMB.toFixed(1)} MB of ${totalGB.toFixed(2)} GB`,
+        percent: Math.min(
+            100,
+            (usedMB / (totalGB * 1024)) * 100
+        )
     };
 }
 
-/*
-|--------------------------------------------------------------------------
-| SPEED
-|--------------------------------------------------------------------------
-*/
-
 function getSpeed(msg) {
-
-    if (
-        msg &&
-        msg._botReceivedAt
-    ) {
-
-        return `${
-            Date.now() -
-            msg._botReceivedAt
-        }ms`;
+    if (msg._botReceivedAt) {
+        return `${Date.now() - msg._botReceivedAt}ms`;
     }
 
     return 'N/A';
 }
 
-/*
-|--------------------------------------------------------------------------
-| RAM BAR
-|--------------------------------------------------------------------------
-*/
-
 function getBar(percent) {
-
     const total = 10;
 
-    const filled =
-        Math.round(
-            (percent / 100) *
-            total
-        );
+    const filled = Math.round(
+        (percent / 100) * total
+    );
 
     return `[${'█'.repeat(filled)}${'░'.repeat(
         total - filled
     )}] ${Math.round(percent)}%`;
 }
 
-/*
-|--------------------------------------------------------------------------
-| BUILD CATEGORY
-|--------------------------------------------------------------------------
-*/
-
-function buildCategory(
-    lines,
-    category,
-    commands,
-    prefix
-) {
-
-    const label =
-        CATEGORY_LABELS[category] ||
-        `📁 ${String(category).toUpperCase()}`;
-
-    lines.push(
-        `\n┏━━❐ ${label} ❐`
-    );
-
-    for (const command of commands) {
-
-        lines.push(
-            `┃✦ ${prefix}${command}`
-        );
-    }
-
-    lines.push(
-        `┗━━❐`
-    );
-}
-
-/*
-|--------------------------------------------------------------------------
-| MENU COMMAND
-|--------------------------------------------------------------------------
-*/
-
 module.exports = {
-
     name: 'menu',
 
     aliases: [
@@ -506,22 +272,200 @@ module.exports = {
         'list'
     ],
 
-    description:
-        'Show all available bot commands',
+    description: 'Show all available bot commands',
 
     category: 'utility',
 
-    async execute(
-        sock,
-        msg,
-        args,
-        prefix,
-        ctx
-    ) {
+    async execute(sock, msg, args, prefix, ctx) {
+        const chatId = msg.key.remoteJid;
+
+        const botName = getBotName();
+
+        const p =
+            prefix ||
+            cfg.PREFIX ||
+            '.';
+
+        const owner = cfg.OWNER_NUMBER
+            ? `+${cfg.OWNER_NUMBER}`
+            : (cfg.OWNER_NAME || 'GAAJU');
+
+        const mode =
+            (cfg.MODE || 'public').toUpperCase();
+
+        const {
+            catData,
+            totalCmds
+        } = getCategoryData();
+
+        const usage = getUsage();
+
+        // READ MORE
+        const readMore =
+            String.fromCharCode(8206).repeat(4000);
+
+        const lines = [];
+
+        // ================= HEADER =================
+
+        lines.push(`┏━━❐✧ ${botName} ✧❐`);
+        lines.push(`┃✦ Prefix: [${p}]`);
+        lines.push(`┃✦ Owner: ${owner}`);
+        lines.push(`┃✦ Mode: ${mode}`);
+        lines.push(`┃✦ Platform: ${getPlatform()}`);
+        lines.push(`┃✦ Speed: ${getSpeed(msg)}`);
+        lines.push(`┃✦ Uptime: ${getUptime()}`);
+        lines.push(`┃✦ Version: ${BOT_VERSION}`);
+        lines.push(`┃✦ Usage: ${usage.text}`);
+        lines.push(`┃✦ RAM: ${getBar(usage.percent)}`);
+        lines.push(`┃✦ Commands: ${totalCmds}`);
+        lines.push(`┗━━❐`);
+
+        lines.push(readMore);
+
+        const mid1 =
+            Math.floor(catData.length / 3);
+
+        const mid2 =
+            Math.floor(catData.length * 2 / 3);
+
+        // ================= PART 1 =================
+
+        for (let i = 0; i < mid1; i++) {
+            const { cat, cmdNames } = catData[i];
+
+            const label =
+                CATEGORY_LABELS[cat] ||
+                `📁 ${cat.toUpperCase()}`;
+
+            lines.push(
+                `\n┏━━❐ ${label} ❐`
+            );
+
+            for (const cmd of cmdNames) {
+                lines.push(`┃✦ ${p}${cmd}`);
+            }
+
+            lines.push(`┗━━❐`);
+        }
+
+        lines.push(readMore);
+
+        // ================= PART 2 =================
+
+        for (let i = mid1; i < mid2; i++) {
+            const { cat, cmdNames } = catData[i];
+
+            const label =
+                CATEGORY_LABELS[cat] ||
+                `📁 ${cat.toUpperCase()}`;
+
+            lines.push(
+                `\n┏━━❐ ${label} ❐`
+            );
+
+            for (const cmd of cmdNames) {
+                lines.push(`┃✦ ${p}${cmd}`);
+            }
+
+            lines.push(`┗━━❐`);
+        }
+
+        lines.push(readMore);
+
+        // ================= PART 3 =================
+
+        for (let i = mid2; i < catData.length; i++) {
+            const { cat, cmdNames } = catData[i];
+
+            const label =
+                CATEGORY_LABELS[cat] ||
+                `📁 ${cat.toUpperCase()}`;
+
+            lines.push(
+                `\n┏━━❐ ${label} ❐`
+            );
+
+            for (const cmd of cmdNames) {
+                lines.push(`┃✦ ${p}${cmd}`);
+            }
+
+            lines.push(`┗━━❐`);
+        }
+
+        lines.push(readMore);
+
+        // ================= FOOTER =================
+
+        lines.push('');
+        lines.push('');
+        lines.push(` ${botName}`);
+        lines.push('> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ');
+
+        const caption = lines.join('\n');
+
+        const msgOptions = {
+            quoted: msg
+        };
+
+        // ================= CHANNEL =================
+
+        msgOptions.contextInfo = {
+            externalAdReply: {
+                title: botName,
+                body: '📢 View Channel',
+                sourceUrl: CHANNEL_URL,
+                mediaType: 1,
+                renderLargerThumbnail: false,
+                showAdAttribution: true,
+            }
+        };
 
         try {
+            /*
+             * If menu-image.jpg exists:
+             *     use the custom image.
+             *
+             * If it does not exist:
+             *     use xd-logo.jpg.
+             *
+             * This means .delmenuimage automatically
+             * restores the original menu image.
+             */
 
-            const chatId =
-                msg.key.remoteJid;
+            const imagePath =
+                fs.existsSync(CUSTOM_MENU_IMAGE)
+                    ? CUSTOM_MENU_IMAGE
+                    : DEFAULT_LOGO_PATH;
 
-            const botName
+            const img =
+                fs.readFileSync(imagePath);
+
+            await sock.sendMessage(
+                chatId,
+                {
+                    image: img,
+                    caption: caption,
+                    mimetype: 'image/jpeg',
+                },
+                msgOptions
+            );
+
+        } catch (error) {
+
+            console.error(
+                '[MENU IMAGE ERROR]',
+                error
+            );
+
+            // Text fallback
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: caption
+                },
+                msgOptions
+            );
+        }
+    },
+};
