@@ -1,30 +1,40 @@
 'use strict';
 
 /*
-|--------------------------------------------------------------------------
-| GAAJU-MD ULTRA
-| BLOCK COMMAND
-|--------------------------------------------------------------------------
-|
-| DM:
-|   .block
-|
-| Group:
-|   .block @user
-|   OR reply to a user's message with .block
-|
-|--------------------------------------------------------------------------
-*/
+ * GAAJU-MD ULTRA
+ * Command: .block
+ *
+ * Usage:
+ * .block 2348012345678
+ *
+ * Or reply to someone's message:
+ * .block
+ */
 
 const cfg = require('../../config');
 
-function normalizeNumber(jid) {
-    if (!jid) return null;
+function cleanNumber(number) {
+    return String(number || '')
+        .replace(/[^0-9]/g, '');
+}
+
+function getJidFromNumber(number) {
+    const clean = cleanNumber(number);
+
+    if (!clean) return null;
+
+    return `${clean}@s.whatsapp.net`;
+}
+
+function getSenderNumber(msg) {
+    const jid =
+        msg?.key?.participant ||
+        msg?.key?.remoteJid ||
+        '';
 
     return String(jid)
-        .split(':')[0]
         .split('@')[0]
-        .replace(/\D/g, '');
+        .replace(/[^0-9]/g, '');
 }
 
 function getOwnerNumbers() {
@@ -32,22 +42,30 @@ function getOwnerNumbers() {
 
     if (cfg.OWNER_NUMBER) {
         owners.push(
-            normalizeNumber(cfg.OWNER_NUMBER)
+            cleanNumber(cfg.OWNER_NUMBER)
         );
     }
 
     if (Array.isArray(cfg.OWNER_NUMBERS)) {
         for (const number of cfg.OWNER_NUMBERS) {
             owners.push(
-                normalizeNumber(number)
+                cleanNumber(number)
             );
         }
     }
 
-    if (Array.isArray(cfg.OWNER)) {
-        for (const number of cfg.OWNER) {
+    if (Array.isArray(cfg.SUDO)) {
+        for (const number of cfg.SUDO) {
             owners.push(
-                normalizeNumber(number)
+                cleanNumber(number)
+            );
+        }
+    }
+
+    if (Array.isArray(cfg.SUDOS)) {
+        for (const number of cfg.SUDOS) {
+            owners.push(
+                cleanNumber(number)
             );
         }
     }
@@ -61,92 +79,48 @@ function getOwnerNumbers() {
 
 function isOwner(msg) {
     const sender =
-        msg?.key?.participant ||
-        msg?.key?.remoteJid;
+        getSenderNumber(msg);
 
-    const senderNumber =
-        normalizeNumber(sender);
+    const owners =
+        getOwnerNumbers();
 
-    if (!senderNumber) {
-        return false;
-    }
-
-    return getOwnerNumbers().includes(
-        senderNumber
-    );
+    return owners.includes(sender);
 }
 
-function getTarget(msg) {
-    const remoteJid =
-        msg?.key?.remoteJid;
-
-    /*
-     * PRIVATE CHAT
-     *
-     * .block
-     *
-     * Blocks the person whose DM
-     * the command was sent in.
-     */
-    if (
-        remoteJid &&
-        remoteJid.endsWith(
-            '@s.whatsapp.net'
-        )
-    ) {
-        return remoteJid;
-    }
-
-    /*
-     * GROUP CHAT
-     *
-     * First check replied message.
-     */
+function getQuotedUser(msg) {
     const context =
-        msg?.message
-            ?.extendedTextMessage
+        msg?.message?.extendedTextMessage
             ?.contextInfo;
 
+    if (!context) return null;
+
+    const participant =
+        context.participant;
+
     if (
-        context?.participant &&
-        context.participant.endsWith(
+        participant &&
+        participant.endsWith(
             '@s.whatsapp.net'
         )
     ) {
-        return context.participant;
-    }
-
-    /*
-     * GROUP CHAT
-     *
-     * Then check @mention.
-     */
-    if (
-        Array.isArray(
-            context?.mentionedJid
-        ) &&
-        context.mentionedJid.length
-    ) {
-        return context.mentionedJid[0];
+        return participant;
     }
 
     return null;
 }
 
 module.exports = {
-
     name: 'block',
 
     aliases: [
-        'blockuser'
+        'blockuser',
+        'banuser'
     ],
 
     description:
         'Block a WhatsApp user',
 
     category: 'owner',
-
-    ownerOnly: true,
 
     async execute(
         sock,
@@ -155,19 +129,14 @@ module.exports = {
         prefix,
         ctx
     ) {
-
-        const chatId =
-            msg.key.remoteJid;
-
         try {
 
             /*
              * OWNER CHECK
              */
             if (!isOwner(msg)) {
-
-                await sock.sendMessage(
-                    chatId,
+                return await sock.sendMessage(
+                    msg.key.remoteJid,
                     {
                         text:
                             '❌ Only the bot owner can use this command.'
@@ -176,140 +145,114 @@ module.exports = {
                         quoted: msg
                     }
                 );
-
-                return;
             }
 
             /*
              * GET TARGET
+             *
+             * Priority:
+             * 1. Number after .block
+             * 2. Replied user's WhatsApp JID
              */
-            const target =
-                getTarget(msg);
+            let targetJid = null;
 
-            if (!target) {
-
-                const p =
-                    prefix ||
-                    cfg.PREFIX ||
-                    '.';
-
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        text:
-                            `❌ *No user found.*\n\n` +
-                            `📱 DM:\n` +
-                            `${p}block\n\n` +
-                            `👥 Group:\n` +
-                            `${p}block @user\n\n` +
-                            `Or reply to a user's message with:\n` +
-                            `${p}block`
-                    },
-                    {
-                        quoted: msg
-                    }
-                );
-
-                return;
+            if (
+                args &&
+                args.length > 0
+            ) {
+                targetJid =
+                    getJidFromNumber(
+                        args[0]
+                    );
             }
 
-            const targetNumber =
-                normalizeNumber(target);
-
-            if (!targetNumber) {
-
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        text:
-                            '❌ Invalid WhatsApp user.'
-                    },
-                    {
-                        quoted: msg
-                    }
-                );
-
-                return;
+            if (!targetJid) {
+                targetJid =
+                    getQuotedUser(msg);
             }
 
             /*
-             * PREVENT BLOCKING THE BOT ITSELF
+             * NO TARGET
              */
-            const botNumber =
-                normalizeNumber(
-                    sock.user?.id
-                );
-
-            if (
-                botNumber &&
-                targetNumber === botNumber
-            ) {
-
-                await sock.sendMessage(
-                    chatId,
+            if (!targetJid) {
+                return await sock.sendMessage(
+                    msg.key.remoteJid,
                     {
                         text:
-                            '❌ I cannot block myself.'
+                            `❌ Please provide a WhatsApp number.\n\n` +
+                            `Example:\n` +
+                            `${prefix || '.'}block 2348012345678\n\n` +
+                            `Or reply to someone's message with:\n` +
+                            `${prefix || '.'}block`
                     },
                     {
                         quoted: msg
                     }
                 );
+            }
 
-                return;
+            /*
+             * DON'T ALLOW BLOCKING THE BOT ITSELF
+             */
+            if (
+                targetJid === sock.user?.id
+            ) {
+                return await sock.sendMessage(
+                    msg.key.remoteJid,
+                    {
+                        text:
+                            '❌ You cannot block the bot itself.'
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
             }
 
             /*
              * BLOCK USER
              */
             await sock.updateBlockStatus(
-                target,
+                targetJid,
                 'block'
             );
 
-            /*
-             * SUCCESS
-             */
+            const number =
+                targetJid
+                    .split('@')[0];
+
             await sock.sendMessage(
-                chatId,
+                msg.key.remoteJid,
                 {
                     text:
-                        `🚫 *USER BLOCKED*\n\n` +
-                        `👤 Number: +${targetNumber}\n` +
-                        `✅ Status: Blocked\n\n` +
-                        `> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ`
+                        `✅ *USER BLOCKED*\n\n` +
+                        `👤 Number: +${number}\n` +
+                        `🚫 Status: Blocked\n\n` +
+                        `Powered by GAAJU-MD ULTRA`
                 },
                 {
                     quoted: msg
                 }
             );
 
-            console.log(
-                `[BLOCK] +${targetNumber} blocked`
-            );
-
         } catch (error) {
 
             console.error(
-                '[BLOCK ERROR]',
+                '[BLOCK COMMAND ERROR]',
                 error
             );
 
-            try {
-
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        text:
-                            `❌ *Failed to block user.*\n\n` +
-                            `${error.message}`
-                    },
-                    {
-                        quoted: msg
-                    }
-                );
-
-            } catch {}
+            await sock.sendMessage(
+                msg.key.remoteJid,
+                {
+                    text:
+                        `❌ Failed to block the user.\n\n` +
+                        `Error: ${error?.message || error}`
+                },
+                {
+                    quoted: msg
+                }
+            );
         }
     }
 };
