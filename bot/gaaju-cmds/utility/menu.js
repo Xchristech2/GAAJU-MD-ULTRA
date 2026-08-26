@@ -142,6 +142,11 @@ function getCategoryData() {
                     cmdNames,
                     'support'
                 );
+
+                addCommandOnce(
+                    cmdNames,
+                    'deployed'
+                );
             }
 
             // ================= GROUP =================
@@ -317,6 +322,11 @@ function getCategoryData() {
             addCommandOnce(
                 names,
                 'support'
+            );
+
+            addCommandOnce(
+                names,
+                'deployed'
             );
         }
 
@@ -675,7 +685,7 @@ module.exports = {
                     cat,
                     cmdNames
                 } =
-                catData[i];
+                    catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
