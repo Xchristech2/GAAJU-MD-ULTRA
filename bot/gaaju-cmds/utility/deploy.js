@@ -4,8 +4,11 @@ const { getBotName } = require('../../lib/botname');
 
 /*
 |--------------------------------------------------------------------------
-| ✏️ EDIT THESE 3 LINKS
+| 🚀 GAAJU-MD ULTRA DEPLOYMENT LINKS
 |--------------------------------------------------------------------------
+|
+| You can change these 3 links whenever you want.
+|
 */
 
 const REPO_URL =
@@ -20,7 +23,7 @@ const TUTORIAL_URL =
 
 /*
 |--------------------------------------------------------------------------
-| DEPLOY COMMAND
+| 🚀 DEPLOY COMMAND
 |--------------------------------------------------------------------------
 */
 
@@ -56,97 +59,121 @@ module.exports = {
         const p =
             prefix || '.';
 
+        /*
+        |--------------------------------------------------------------------------
+        | REACTION
+        |--------------------------------------------------------------------------
+        */
+
         try {
-
-            /*
-             * REACTION
-             */
-            try {
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        react: {
-                            text: '🚀',
-                            key: msg.key
-                        }
-                    }
-                );
-            } catch {}
-
-
-            /*
-             * DEPLOYMENT GUIDE
-             */
-            const text =
-
-`┏━━❐ 🚀 ${botName} ❐
-┃✦ DEPLOYMENT GUIDE
-┗━━❐
-
-┏━━❐ 📦 STEP 1 — REPOSITORY ❐
-┃✦ Open the official repository
-┃✦ Fork the repository to your
-┃  own GitHub account
-┃✦ After forking, use YOUR fork
-┃  for deployment
-┗━━❐
-
-┏━━❐ 🔗 REPOSITORY ❐
-┃✦ ${https://github.com/Xchristech2/GAAJU-MD-ULTRA}
-┗━━❐
-
-┏━━❐ 🔑 STEP 2 — SESSION ID ❐
-┃✦ Open the Session ID website
-┃✦ Pair your WhatsApp account
-┃✦ Generate your Session ID
-┃✦ Copy the complete Session ID
-┃✦ Keep your Session ID private
-┗━━❐
-
-┏━━❐ 🔗 SESSION ID ❐
-┃✦ ${https://gaaju-ultra-pair-ljtv.onrender.com}
-┗━━❐
-
-┏━━❐ ⚙️ STEP 3 — DEPLOY ❐
-┃✦ Open your hosting panel
-┃✦ Create a new service
-┃✦ Connect your GitHub account
-┃✦ Select your forked repository
-┃✦ Select the correct branch
-┃✦ Add the required environment
-┃  variables
-┃✦ Add your SESSION_ID
-┃✦ Save your settings
-┃✦ Start / Deploy the bot
-┗━━❐
-
-┏━━❐ 🎥 STEP 4 — VIDEO ❐
-┃✦ Watch the complete tutorial
-┃✦ Follow the steps shown in
-┃  the video
-┗━━❐
-
-┏━━❐ 🔗 TUTORIAL ❐
-┃✦ ${https://youtu.be/jHYSN3vUJec}
-┗━━❐
-
-┏━━❐ ⚠️ IMPORTANT ❐
-┃✦ Never share your Session ID
-┃✦ Use your own fork when deploying
-┃✦ Make sure all required variables
-┃  are correctly configured
-┗━━❐
-
-┏━━❐ ✦ INFORMATION ✦ ❐
-┃✦ Command: ${p}deploy
-┃✦ Aliases: ${p}howtodeploy
-┃✦ ${botName}
-┗━━❐`;
 
             await sock.sendMessage(
                 chatId,
                 {
-                    text
+                    react: {
+                        text: '🚀',
+                        key: msg.key
+                    }
+                }
+            );
+
+        } catch {}
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | DEPLOYMENT GUIDE
+        |--------------------------------------------------------------------------
+        */
+
+        const text =
+`┏━━❐ 🚀 ${botName} ❐
+┃✦ DEPLOYMENT GUIDE
+┗━━❐
+
+┏━━❐ 📦 STEP 1 — FORK REPOSITORY ❐
+┃✦ Open the GAAJU-MD ULTRA repo
+┃✦ Login to your GitHub account
+┃✦ Tap the Fork button
+┃✦ Choose your GitHub account
+┃✦ Wait for the fork to finish
+┃✦ Use your own fork for deployment
+┗━━❐
+
+┏━━❐ 🔗 REPOSITORY ❐
+┃✦ ${REPO_URL}
+┗━━❐
+
+┏━━❐ 🔑 STEP 2 — GET SESSION ID ❐
+┃✦ Open the Session ID website
+┃✦ Enter your WhatsApp number
+┃✦ Pair your WhatsApp account
+┃✦ Generate your Session ID
+┃✦ Copy the complete Session ID
+┃✦ Keep your Session ID PRIVATE
+┗━━❐
+
+┏━━❐ 🔗 SESSION ID ❐
+┃✦ ${SESSION_URL}
+┗━━❐
+
+┏━━❐ ⚙️ STEP 3 — DEPLOY BOT ❐
+┃✦ Open your hosting panel
+┃✦ Create a new service
+┃✦ Connect your GitHub account
+┃✦ Select your forked repository
+┃✦ Select the main branch
+┃✦ Add the required environment
+┃  variables
+┃✦ Add your SESSION_ID
+┃✦ Save the settings
+┃✦ Start / Deploy the bot
+┗━━❐
+
+┏━━❐ 🎥 STEP 4 — VIDEO TUTORIAL ❐
+┃✦ Watch the deployment tutorial
+┃✦ Follow each step in the video
+┃✦ Make sure your Session ID
+┃  is correctly configured
+┗━━❐
+
+┏━━❐ 🔗 TUTORIAL ❐
+┃✦ ${TUTORIAL_URL}
+┗━━❐
+
+┏━━❐ ⚠️ IMPORTANT ❐
+┃✦ Never share your Session ID
+┃✦ Never post your Session ID publicly
+┃✦ Deploy from your own fork
+┃✦ Use the main branch
+┃✦ Make sure your environment
+┃  variables are correct
+┗━━❐
+
+┏━━❐ ✦ COMMAND INFORMATION ✦ ❐
+┃✦ ${p}deploy
+┃✦ ${p}howtodeploy
+┃✦ ${p}deployment
+┃✦ ${p}deployguide
+┗━━❐
+
+┏━━❐ ✦ ${botName} ✦ ❐
+┃✦ Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ
+┗━━❐`;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEND MESSAGE
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: text
                 },
                 {
                     quoted: msg
@@ -160,19 +187,24 @@ module.exports = {
                 error
             );
 
-            await sock.sendMessage(
-                chatId,
-                {
-                    text:
+            try {
+
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        text:
 `┏━━❐ 🚀 DEPLOY ❐
-┃✦ Status: ❌ Failed
-┃✦ Reason: ${error?.message || error}
+┃✦ Status : ❌ Failed
+┃✦ Reason : ${error?.message || error}
 ┗━━❐`
-                },
-                {
-                    quoted: msg
-                }
-            );
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
+
+            } catch {}
+
         }
     }
 };
