@@ -2,7 +2,7 @@
 
 const { getBotName } = require('../../lib/botname');
 
-const API_URL = 'https://apis.davidcyril.name.ng/hdvideo';
+const API_URL = 'https://apis.davidcyril.name.ng/download/yt';
 const MAX_SIZE = 60 * 1024 * 1024;
 
 function getDownloadUrl(result) {
