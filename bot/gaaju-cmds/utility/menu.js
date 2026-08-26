@@ -145,7 +145,7 @@ function getCategoryData() {
 
                 addCommandOnce(
                     cmdNames,
-                    'deployed'
+                    'deploy'
                 );
             }
 
@@ -326,7 +326,7 @@ function getCategoryData() {
 
             addCommandOnce(
                 names,
-                'deployed'
+                'deploy'
             );
         }
 
@@ -685,7 +685,7 @@ module.exports = {
                     cat,
                     cmdNames
                 } =
-                    catData[i];
+                catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
