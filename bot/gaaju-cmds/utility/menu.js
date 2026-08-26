@@ -135,6 +135,11 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'idch');
             }
 
+            // DOWNLOAD
+            if (cat === 'download') {
+                addCommandOnce(cmdNames, 'video');
+            }
+
             if (!cmdNames.length) continue;
 
             totalCmds += cmdNames.length;
@@ -277,6 +282,11 @@ function getCategoryData() {
             addCommandOnce(names, 'idch');
         }
 
+        // DOWNLOAD
+        if (cat === 'download') {
+            addCommandOnce(names, 'video');
+        }
+
         if (!names.length) continue;
 
         totalCmds += names.length;
@@ -324,7 +334,6 @@ function getUptime() {
 
     return `${h}h ${m}m ${sec}s`;
 }
-
 
 /*
 |--------------------------------------------------------------------------
