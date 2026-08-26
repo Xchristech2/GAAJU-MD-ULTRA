@@ -39,7 +39,9 @@ function loadWarns() {
 function saveWarns(data) {
   fs.mkdirSync(
     path.dirname(WARN_FILE),
-    { recursive: true }
+    {
+      recursive: true
+    }
   );
 
   fs.writeFileSync(
@@ -52,7 +54,9 @@ function getKey(groupId, userId) {
   return (
     groupId +
     "::" +
-    userId.split("@")[0].split(":")[0]
+    userId
+      .split("@")[0]
+      .split(":")[0]
   );
 }
 
@@ -62,13 +66,19 @@ function getKey(groupId, userId) {
 |--------------------------------------------------------------------------
 */
 
-function box(title, content, botName) {
+function formatMessage(
+  title,
+  lines,
+  botName
+) {
   return [
     `┏━━❐ ${title} ❐`,
     `┃`,
-    ...content.map(line => `┃✦ ${line}`),
+    ...lines.map(
+      line => `┃✦ ${line}`
+    ),
     `┃`,
-    `┗━━❐ ${botName} ❐`
+    `┗━━❐ ${botName}`
   ].join("\n");
 }
 
@@ -94,7 +104,7 @@ module.exports = [
     ],
 
     description:
-      "Warn a group member — auto-kick at 3 warns",
+      "Warn a group member — auto-kick at 3 warns (sudo/admin only)",
 
     category: "group",
 
@@ -114,6 +124,12 @@ module.exports = [
 
       const p =
         prefix || ".";
+
+      /*
+      |--------------------------------------------------------------------------
+      | REACTION
+      |--------------------------------------------------------------------------
+      */
 
       try {
         await sock.sendMessage(
@@ -138,7 +154,7 @@ module.exports = [
         return sock.sendMessage(
           chatId,
           {
-            text: box(
+            text: formatMessage(
               "⚠️ WARN",
               [
                 "Status: ❌ Group only",
@@ -173,7 +189,7 @@ module.exports = [
         return sock.sendMessage(
           chatId,
           {
-            text: box(
+            text: formatMessage(
               "⚠️ WARN",
               [
                 "Status: ❌ Permission denied",
@@ -205,11 +221,11 @@ module.exports = [
         return sock.sendMessage(
           chatId,
           {
-            text: box(
+            text: formatMessage(
               "⚠️ WARN",
               [
                 `Usage: ${p}warn @user [reason]`,
-                "You can also reply to the user's message."
+                "Reply to the user's message or mention the user."
               ],
               botName
             )
@@ -237,7 +253,7 @@ module.exports = [
 
       /*
       |--------------------------------------------------------------------------
-      | USER DISPLAY
+      | DISPLAY NAME
       |--------------------------------------------------------------------------
       */
 
@@ -250,11 +266,11 @@ module.exports = [
 
       /*
       |--------------------------------------------------------------------------
-      | SAVE WARNING
+      | LOAD WARNINGS
       |--------------------------------------------------------------------------
       */
 
-      const warns =
+      const warnings =
         loadWarns();
 
       const key =
@@ -263,21 +279,21 @@ module.exports = [
           target
         );
 
-      warns[key] =
-        (warns[key] || 0) + 1;
+      warnings[key] =
+        (warnings[key] || 0) + 1;
 
-      saveWarns(warns);
+      saveWarns(warnings);
 
       const count =
-        warns[key];
+        warnings[key];
 
       /*
       |--------------------------------------------------------------------------
-      | AUTO KICK
+      | AUTO KICK AT 3 WARNS
       |--------------------------------------------------------------------------
       */
 
-      let action = "";
+      let action = null;
 
       if (count >= MAX_WARNS) {
 
@@ -290,16 +306,16 @@ module.exports = [
           );
 
           action =
-            `Action: 🚫 Auto-kicked (${MAX_WARNS} warns)`;
+            `🚫 Auto-kicked (${MAX_WARNS} warns)`;
 
-          warns[key] = 0;
+          warnings[key] = 0;
 
-          saveWarns(warns);
+          saveWarns(warnings);
 
-        } catch {
+        } catch (error) {
 
           action =
-            "Action: ❌ Could not remove user";
+            "❌ Auto-kick failed";
         }
       }
 
@@ -309,22 +325,27 @@ module.exports = [
       |--------------------------------------------------------------------------
       */
 
+      const result = [
+        `User: ${display}`,
+        `Reason: ${reason}`,
+        `Warns: ${Math.min(
+          count,
+          MAX_WARNS
+        )}/${MAX_WARNS}`
+      ];
+
+      if (action) {
+        result.push(
+          `Action: ${action}`
+        );
+      }
+
       return sock.sendMessage(
         chatId,
         {
-          text: box(
+          text: formatMessage(
             "⚠️ WARN",
-            [
-              `User: ${display}`,
-              `Reason: ${reason}`,
-              `Warns: ${Math.min(
-                count,
-                MAX_WARNS
-              )}/${MAX_WARNS}`,
-              ...(action
-                ? [action]
-                : [])
-            ],
+            result,
             botName
           )
         },
@@ -371,6 +392,12 @@ module.exports = [
       const p =
         prefix || ".";
 
+      /*
+      |--------------------------------------------------------------------------
+      | REACTION
+      |--------------------------------------------------------------------------
+      */
+
       try {
         await sock.sendMessage(
           chatId,
@@ -383,12 +410,18 @@ module.exports = [
         );
       } catch {}
 
+      /*
+      |--------------------------------------------------------------------------
+      | GROUP ONLY
+      |--------------------------------------------------------------------------
+      */
+
       if (!chatId.endsWith("@g.us")) {
 
         return sock.sendMessage(
           chatId,
           {
-            text: box(
+            text: formatMessage(
               "📋 WARNS",
               [
                 "Status: ❌ Group only"
@@ -402,6 +435,12 @@ module.exports = [
         );
       }
 
+      /*
+      |--------------------------------------------------------------------------
+      | TARGET
+      |--------------------------------------------------------------------------
+      */
+
       const target =
         getTarget(
           msg,
@@ -413,11 +452,11 @@ module.exports = [
         return sock.sendMessage(
           chatId,
           {
-            text: box(
+            text: formatMessage(
               "📋 WARNS",
               [
                 `Usage: ${p}warns @user`,
-                "You can also reply to a user's message."
+                "Reply to a user's message or mention the user."
               ],
               botName
             )
@@ -428,6 +467,12 @@ module.exports = [
         );
       }
 
+      /*
+      |--------------------------------------------------------------------------
+      | DISPLAY
+      |--------------------------------------------------------------------------
+      */
+
       const display =
         await resolveDisplay(
           sock,
@@ -435,25 +480,37 @@ module.exports = [
           target
         );
 
-      const warns =
+      /*
+      |--------------------------------------------------------------------------
+      | READ WARNINGS
+      |--------------------------------------------------------------------------
+      */
+
+      const warnings =
         loadWarns();
 
       const count =
-        warns[
+        warnings[
           getKey(
             chatId,
             target
           )
         ] || 0;
 
+      /*
+      |--------------------------------------------------------------------------
+      | RESULT
+      |--------------------------------------------------------------------------
+      */
+
       return sock.sendMessage(
         chatId,
         {
-          text: box(
+          text: formatMessage(
             "📋 WARNS",
             [
               `User: ${display}`,
-              `Warnings: ${count}/${MAX_WARNS}`,
+              `Warns: ${count}/${MAX_WARNS}`,
               count >= MAX_WARNS
                 ? "Status: 🚫 Maximum reached"
                 : "Status: ✅ Active"
@@ -483,7 +540,7 @@ module.exports = [
     ],
 
     description:
-      "Reset warnings for a user",
+      "Reset warnings for a user (sudo/admin only)",
 
     category: "group",
 
@@ -504,6 +561,12 @@ module.exports = [
       const p =
         prefix || ".";
 
+      /*
+      |--------------------------------------------------------------------------
+      | REACTION
+      |--------------------------------------------------------------------------
+      */
+
       try {
         await sock.sendMessage(
           chatId,
@@ -516,12 +579,18 @@ module.exports = [
         );
       } catch {}
 
+      /*
+      |--------------------------------------------------------------------------
+      | GROUP ONLY
+      |--------------------------------------------------------------------------
+      */
+
       if (!chatId.endsWith("@g.us")) {
 
         return sock.sendMessage(
           chatId,
           {
-            text: box(
+            text: formatMessage(
               "🔄 RESET WARN",
               [
                 "Status: ❌ Group only"
@@ -534,6 +603,12 @@ module.exports = [
           }
         );
       }
+
+      /*
+      |--------------------------------------------------------------------------
+      | PERMISSION
+      |--------------------------------------------------------------------------
+      */
 
       const {
         ok
@@ -549,7 +624,7 @@ module.exports = [
         return sock.sendMessage(
           chatId,
           {
-            text: box(
+            text: formatMessage(
               "🔄 RESET WARN",
               [
                 "Status: ❌ Permission denied",
@@ -564,6 +639,12 @@ module.exports = [
         );
       }
 
+      /*
+      |--------------------------------------------------------------------------
+      | TARGET
+      |--------------------------------------------------------------------------
+      */
+
       const target =
         getTarget(
           msg,
@@ -575,11 +656,11 @@ module.exports = [
         return sock.sendMessage(
           chatId,
           {
-            text: box(
+            text: formatMessage(
               "🔄 RESET WARN",
               [
                 `Usage: ${p}resetwarn @user`,
-                "You can also reply to a user's message."
+                "Reply to a user's message or mention the user."
               ],
               botName
             )
@@ -590,6 +671,12 @@ module.exports = [
         );
       }
 
+      /*
+      |--------------------------------------------------------------------------
+      | DISPLAY
+      |--------------------------------------------------------------------------
+      */
+
       const display =
         await resolveDisplay(
           sock,
@@ -597,27 +684,40 @@ module.exports = [
           target
         );
 
-      const warns =
+      /*
+      |--------------------------------------------------------------------------
+      | RESET
+      |--------------------------------------------------------------------------
+      */
+
+      const warnings =
         loadWarns();
 
-      warns[
+      const key =
         getKey(
           chatId,
           target
-        )
-      ] = 0;
+        );
 
-      saveWarns(warns);
+      warnings[key] = 0;
+
+      saveWarns(warnings);
+
+      /*
+      |--------------------------------------------------------------------------
+      | RESULT
+      |--------------------------------------------------------------------------
+      */
 
       return sock.sendMessage(
         chatId,
         {
-          text: box(
+          text: formatMessage(
             "🔄 RESET WARN",
             [
               `User: ${display}`,
               "Status: ✅ Warnings cleared",
-              "Warnings: 0/3"
+              "Warns: 0/3"
             ],
             botName
           )
@@ -630,5 +730,3 @@ module.exports = [
   }
 
 ];
-
-No "CHANNEL_ID", no "CHANNEL_LINK", and no View Channel code is included.
