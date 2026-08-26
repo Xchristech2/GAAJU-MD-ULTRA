@@ -8,13 +8,11 @@ const cfg = require('../../config');
 
 const CMDS_DIR = path.join(__dirname, '..');
 
-// Default menu image
 const DEFAULT_LOGO_PATH = path.join(
     __dirname,
     '../../../assets/xd-logo.jpg'
 );
 
-// Custom menu image
 const CUSTOM_MENU_IMAGE = path.join(
     __dirname,
     '../../../assets/menu-image.jpg'
@@ -35,13 +33,6 @@ try {
     }
 } catch {}
 
-
-/*
-|--------------------------------------------------------------------------
-| CATEGORY LABELS
-|--------------------------------------------------------------------------
-*/
-
 const CATEGORY_LABELS = {
     ai: '🤖 AI',
     adult: '🔞 ADULT',
@@ -60,15 +51,8 @@ const CATEGORY_LABELS = {
     spiritual: '🕊️ SPIRITUAL',
     sports: '⚽ SPORTS',
     stalker: '🔍 STALKER',
-    utility: '🔧 UTILITY'
+    utility: '🔧 UTILITY',
 };
-
-
-/*
-|--------------------------------------------------------------------------
-| CATEGORY ORDER
-|--------------------------------------------------------------------------
-*/
 
 const CATEGORY_ORDER = [
     'utility',
@@ -91,228 +75,92 @@ const CATEGORY_ORDER = [
     'games'
 ];
 
-
-/*
-|--------------------------------------------------------------------------
-| ADD COMMAND ONCE
-|--------------------------------------------------------------------------
-*/
-
 function addCommandOnce(list, command) {
-
     if (!list.includes(command)) {
         list.push(command);
     }
-
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| GET CATEGORY DATA
-|--------------------------------------------------------------------------
-*/
-
 function getCategoryData() {
+    const liveRegistry = globalThis._botCommandCategories;
 
-    const liveRegistry =
-        globalThis._botCommandCategories;
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | LIVE REGISTRY
-    |--------------------------------------------------------------------------
-    */
-
-    if (
-        liveRegistry &&
-        liveRegistry.size > 0
-    ) {
-
-        const allCats =
-            [...liveRegistry.keys()];
-
+    if (liveRegistry && liveRegistry.size > 0) {
+        const allCats = [...liveRegistry.keys()];
 
         const ordered = [
-            ...CATEGORY_ORDER.filter(
-                c => allCats.includes(c)
+            ...CATEGORY_ORDER.filter(c =>
+                allCats.includes(c)
             ),
 
             ...allCats
-                .filter(
-                    c =>
-                        !CATEGORY_ORDER.includes(c)
+                .filter(c =>
+                    !CATEGORY_ORDER.includes(c)
                 )
                 .sort()
         ];
 
-
         const catData = [];
-
         let totalCmds = 0;
 
-
-        for (
-            const cat
-            of ordered
-        ) {
-
+        for (const cat of ordered) {
             const cmdNames = [
                 ...new Set(
                     liveRegistry.get(cat) || []
                 )
             ];
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | OWNER
-            |--------------------------------------------------------------------------
-            */
-
             if (cat === 'owner') {
-
-                addCommandOnce(
-                    cmdNames,
-                    'block'
-                );
-
-                addCommandOnce(
-                    cmdNames,
-                    'unblock'
-                );
-
+                addCommandOnce(cmdNames, 'block');
+                addCommandOnce(cmdNames, 'unblock');
             }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | UTILITY
-            |--------------------------------------------------------------------------
-            */
 
             if (cat === 'utility') {
-
-                addCommandOnce(
-                    cmdNames,
-                    'botrules'
-                );
-
-                addCommandOnce(
-                    cmdNames,
-                    'support'
-                );
-
-                addCommandOnce(
-                    cmdNames,
-                    'deploy'
-                );
-
-                addCommandOnce(
-                    cmdNames,
-                    'menupic'
-                );
-
+                addCommandOnce(cmdNames, 'botrules');
+                addCommandOnce(cmdNames, 'support');
+                addCommandOnce(cmdNames, 'deploy');
+                addCommandOnce(cmdNames, 'menupic');
             }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | GROUP
-            |--------------------------------------------------------------------------
-            */
 
             if (cat === 'group') {
-
-                addCommandOnce(
-                    cmdNames,
-                    'join'
-                );
-
-                addCommandOnce(
-                    cmdNames,
-                    'listonline'
-                );
-
+                addCommandOnce(cmdNames, 'join');
+                addCommandOnce(cmdNames, 'listonline');
             }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | CHANNEL
-            |--------------------------------------------------------------------------
-            */
 
             if (cat === 'channel') {
-
-                addCommandOnce(
-                    cmdNames,
-                    'idch'
-                );
-
+                addCommandOnce(cmdNames, 'idch');
             }
 
+            if (!cmdNames.length) continue;
 
-            if (!cmdNames.length) {
-                continue;
-            }
-
-
-            totalCmds +=
-                cmdNames.length;
-
+            totalCmds += cmdNames.length;
 
             catData.push({
                 cat,
                 cmdNames
             });
-
         }
-
 
         return {
             catData,
             totalCmds
         };
-
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | FILE SYSTEM FALLBACK
-    |--------------------------------------------------------------------------
-    */
 
     let allCats = [];
 
     try {
-
-        allCats =
-            fs
-                .readdirSync(CMDS_DIR)
-                .filter(item => {
-
-                    try {
-
-                        return fs.statSync(
-                            path.join(
-                                CMDS_DIR,
-                                item
-                            )
-                        ).isDirectory();
-
-                    } catch {
-
-                        return false;
-
-                    }
-
-                });
-
+        allCats = fs
+            .readdirSync(CMDS_DIR)
+            .filter(item => {
+                try {
+                    return fs.statSync(
+                        path.join(CMDS_DIR, item)
+                    ).isDirectory();
+                } catch {
+                    return false;
+                }
+            });
     } catch (error) {
-
         console.error(
             '[MENU] Failed to read commands directory:',
             error
@@ -322,78 +170,49 @@ function getCategoryData() {
             catData: [],
             totalCmds: 0
         };
-
     }
 
-
     const ordered = [
-        ...CATEGORY_ORDER.filter(
-            c => allCats.includes(c)
+        ...CATEGORY_ORDER.filter(c =>
+            allCats.includes(c)
         ),
 
         ...allCats
-            .filter(
-                c =>
-                    !CATEGORY_ORDER.includes(c)
+            .filter(c =>
+                !CATEGORY_ORDER.includes(c)
             )
             .sort()
     ];
 
-
     const catData = [];
-
     let totalCmds = 0;
 
-
-    for (
-        const cat
-        of ordered
-    ) {
-
+    for (const cat of ordered) {
         const names = [];
 
-
         try {
-
             const categoryPath =
-                path.join(
-                    CMDS_DIR,
-                    cat
-                );
-
+                path.join(CMDS_DIR, cat);
 
             const files =
-                fs
-                    .readdirSync(
-                        categoryPath
-                    )
-                    .filter(
-                        file =>
-                            file.endsWith('.js')
+                fs.readdirSync(categoryPath)
+                    .filter(file =>
+                        file.endsWith('.js')
                     );
 
-
-            for (
-                const file
-                of files
-            ) {
-
+            for (const file of files) {
                 try {
-
                     const filePath =
                         path.join(
                             categoryPath,
                             file
                         );
 
-
                     const mod =
                         require(filePath);
 
-
                     const raw =
                         mod.default || mod;
-
 
                     const list =
                         Array.isArray(raw)
@@ -402,169 +221,69 @@ function getCategoryData() {
                                 ? [raw]
                                 : [];
 
-
-                    for (
-                        const cmd
-                        of list
-                    ) {
-
+                    for (const cmd of list) {
                         if (
                             cmd &&
                             cmd.name
                         ) {
-
                             addCommandOnce(
                                 names,
                                 cmd.name
                             );
-
                         }
-
                     }
-
                 } catch (error) {
-
                     console.error(
                         `[MENU] Failed loading ${cat}/${file}:`,
                         error.message
                     );
-
                 }
-
             }
-
         } catch (error) {
-
             console.error(
                 `[MENU] Failed reading category ${cat}:`,
                 error.message
             );
-
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | OWNER
-        |--------------------------------------------------------------------------
-        */
 
         if (cat === 'owner') {
-
-            addCommandOnce(
-                names,
-                'block'
-            );
-
-            addCommandOnce(
-                names,
-                'unblock'
-            );
-
+            addCommandOnce(names, 'block');
+            addCommandOnce(names, 'unblock');
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | UTILITY
-        |--------------------------------------------------------------------------
-        */
 
         if (cat === 'utility') {
-
-            addCommandOnce(
-                names,
-                'botrules'
-            );
-
-            addCommandOnce(
-                names,
-                'support'
-            );
-
-            addCommandOnce(
-                names,
-                'deploy'
-            );
-
-            addCommandOnce(
-                names,
-                'menupic'
-            );
-
+            addCommandOnce(names, 'botrules');
+            addCommandOnce(names, 'support');
+            addCommandOnce(names, 'deploy');
+            addCommandOnce(names, 'menupic');
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | GROUP
-        |--------------------------------------------------------------------------
-        */
 
         if (cat === 'group') {
-
-            addCommandOnce(
-                names,
-                'join'
-            );
-
-            addCommandOnce(
-                names,
-                'listonline'
-            );
-
+            addCommandOnce(names, 'join');
+            addCommandOnce(names, 'listonline');
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CHANNEL
-        |--------------------------------------------------------------------------
-        */
 
         if (cat === 'channel') {
-
-            addCommandOnce(
-                names,
-                'idch'
-            );
-
+            addCommandOnce(names, 'idch');
         }
 
+        if (!names.length) continue;
 
-        if (!names.length) {
-            continue;
-        }
-
-
-        totalCmds +=
-            names.length;
-
+        totalCmds += names.length;
 
         catData.push({
             cat,
             cmdNames: names
         });
-
     }
-
 
     return {
         catData,
         totalCmds
     };
-
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| PLATFORM
-|--------------------------------------------------------------------------
-*/
-
 function getPlatform() {
-
     if (process.env.DYNO) {
         return 'Heroku';
     }
@@ -578,130 +297,84 @@ function getPlatform() {
     }
 
     return 'VPS';
-
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| UPTIME
-|--------------------------------------------------------------------------
-*/
-
 function getUptime() {
-
     const s =
-        Math.floor(
-            process.uptime()
-        );
-
+        Math.floor(process.uptime());
 
     const h =
-        Math.floor(
-            s / 3600
-        );
-
+        Math.floor(s / 3600);
 
     const m =
-        Math.floor(
-            (s % 3600) / 60
-        );
-
+        Math.floor((s % 3600) / 60);
 
     const sec =
         s % 60;
 
-
     return `${h}h ${m}m ${sec}s`;
-
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| RAM / MEMORY
+| UPDATED RAM FUNCTION
 |--------------------------------------------------------------------------
 */
 
 function getUsage() {
+    const memory =
+        process.memoryUsage();
 
     const usedMB =
-        process
-            .memoryUsage()
-            .rss /
+        memory.heapUsed /
         1024 /
         1024;
 
-
-    const totalGB =
-        os.totalmem() /
-        1024 /
+    const totalMB =
+        memory.heapTotal /
         1024 /
         1024;
 
+    const percent =
+        totalMB > 0
+            ? Math.min(
+                100,
+                Math.max(
+                    0,
+                    (usedMB / totalMB) * 100
+                )
+            )
+            : 0;
 
     return {
-
         text:
-            `${usedMB.toFixed(1)} MB of ` +
-            `${totalGB.toFixed(2)} GB`,
+            `${usedMB.toFixed(1)} MB / ` +
+            `${totalMB.toFixed(1)} MB`,
 
-        percent:
-            Math.min(
-                100,
-                (
-                    usedMB /
-                    (totalGB * 1024)
-                ) * 100
-            )
-
+        percent
     };
-
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| SPEED
-|--------------------------------------------------------------------------
-*/
-
 function getSpeed(msg) {
-
-    if (
-        msg &&
-        msg._botReceivedAt
-    ) {
-
+    if (msg && msg._botReceivedAt) {
         return (
             Date.now() -
             msg._botReceivedAt
         ) + 'ms';
-
     }
 
     return 'N/A';
-
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| RAM BAR
-|--------------------------------------------------------------------------
-*/
-
 function getBar(percent) {
-
     const total = 10;
-
 
     const filled =
         Math.round(
             (percent / 100) *
             total
         );
-
 
     return (
         '[' +
@@ -713,18 +386,9 @@ function getBar(percent) {
         Math.round(percent) +
         '%'
     );
-
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| MENU COMMAND
-|--------------------------------------------------------------------------
-*/
-
 module.exports = {
-
     name: 'menu',
 
     aliases: [
@@ -739,7 +403,6 @@ module.exports = {
 
     category: 'utility',
 
-
     async execute(
         sock,
         msg,
@@ -747,22 +410,17 @@ module.exports = {
         prefix,
         ctx
     ) {
-
         try {
-
             const chatId =
                 msg.key.remoteJid;
 
-
             const botName =
                 getBotName();
-
 
             const p =
                 prefix ||
                 cfg.PREFIX ||
                 '.';
-
 
             const owner =
                 cfg.OWNER_NUMBER
@@ -772,13 +430,11 @@ module.exports = {
                         'GAAJU'
                     );
 
-
             const mode =
                 (
                     cfg.MODE ||
                     'public'
                 ).toUpperCase();
-
 
             const {
                 catData,
@@ -786,31 +442,15 @@ module.exports = {
             } =
                 getCategoryData();
 
-
             const usage =
                 getUsage();
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | READ MORE
-            |--------------------------------------------------------------------------
-            */
 
             const readMore =
                 String.fromCharCode(
                     8206
                 ).repeat(4000);
 
-
             const lines = [];
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | HEADER
-            |--------------------------------------------------------------------------
-            */
 
             lines.push(
                 `┏━━❐✧ ${botName} ✧❐`
@@ -862,229 +502,140 @@ module.exports = {
                 `┗━━❐`
             );
 
-
-            lines.push(
-                readMore
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | SPLIT MENU INTO 3 PARTS
-            |--------------------------------------------------------------------------
-            */
+            lines.push(readMore);
 
             const mid1 =
                 Math.floor(
                     catData.length / 3
                 );
 
-
             const mid2 =
                 Math.floor(
                     catData.length * 2 / 3
                 );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | PART 1
-            |--------------------------------------------------------------------------
-            */
 
             for (
                 let i = 0;
                 i < mid1;
                 i++
             ) {
-
                 const {
                     cat,
                     cmdNames
                 } =
                     catData[i];
 
-
                 const label =
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
-
 
                 lines.push(
                     `\n┏━━❐ ${label} ❐`
                 );
 
-
                 for (
                     const cmd
                     of cmdNames
                 ) {
-
                     lines.push(
                         `┃✦ ${p}${cmd}`
                     );
-
                 }
-
 
                 lines.push(
                     `┗━━❐`
                 );
-
             }
 
-
-            lines.push(
-                readMore
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | PART 2
-            |--------------------------------------------------------------------------
-            */
+            lines.push(readMore);
 
             for (
                 let i = mid1;
                 i < mid2;
                 i++
             ) {
-
                 const {
                     cat,
                     cmdNames
                 } =
                     catData[i];
 
-
                 const label =
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
-
 
                 lines.push(
                     `\n┏━━❐ ${label} ❐`
                 );
 
-
                 for (
                     const cmd
                     of cmdNames
                 ) {
-
                     lines.push(
                         `┃✦ ${p}${cmd}`
                     );
-
                 }
-
 
                 lines.push(
                     `┗━━❐`
                 );
-
             }
 
-
-            lines.push(
-                readMore
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | PART 3
-            |--------------------------------------------------------------------------
-            */
+            lines.push(readMore);
 
             for (
                 let i = mid2;
                 i < catData.length;
                 i++
             ) {
-
                 const {
                     cat,
                     cmdNames
                 } =
                     catData[i];
 
-
                 const label =
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
-
 
                 lines.push(
                     `\n┏━━❐ ${label} ❐`
                 );
 
-
                 for (
                     const cmd
                     of cmdNames
                 ) {
-
                     lines.push(
                         `┃✦ ${p}${cmd}`
                     );
-
                 }
-
 
                 lines.push(
                     `┗━━❐`
                 );
-
             }
 
-
-            lines.push(
-                readMore
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | FOOTER
-            |--------------------------------------------------------------------------
-            */
+            lines.push(readMore);
 
             lines.push('');
             lines.push('');
-
 
             lines.push(
                 ` ${botName}`
             );
 
-
             lines.push(
                 '> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ'
             );
 
-
             const caption =
                 lines.join('\n');
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | MESSAGE OPTIONS
-            |--------------------------------------------------------------------------
-            */
 
             const msgOptions = {
                 quoted: msg
             };
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | MENU IMAGE
-            |--------------------------------------------------------------------------
-            */
 
             const imagePath =
                 fs.existsSync(
@@ -1093,24 +644,15 @@ module.exports = {
                     ? CUSTOM_MENU_IMAGE
                     : DEFAULT_LOGO_PATH;
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | SEND IMAGE MENU
-            |--------------------------------------------------------------------------
-            */
-
             if (
                 fs.existsSync(
                     imagePath
                 )
             ) {
-
                 const img =
                     fs.readFileSync(
                         imagePath
                     );
-
 
                 await sock.sendMessage(
                     chatId,
@@ -1122,17 +664,8 @@ module.exports = {
                     msgOptions
                 );
 
-
                 return;
-
             }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | TEXT FALLBACK
-            |--------------------------------------------------------------------------
-            */
 
             await sock.sendMessage(
                 chatId,
@@ -1149,9 +682,7 @@ module.exports = {
                 error
             );
 
-
             try {
-
                 await sock.sendMessage(
                     msg.key.remoteJid,
                     {
@@ -1162,11 +693,7 @@ module.exports = {
                         quoted: msg
                     }
                 );
-
             } catch {}
-
         }
-
     }
-
 };
