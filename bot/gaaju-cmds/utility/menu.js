@@ -151,10 +151,14 @@ function getCategoryData() {
                     cmdNames,
                     'join'
                 );
+
+                addCommandOnce(
+                    cmdNames,
+                    'listonline'
+                );
             }
 
             // ================= CHANNEL =================
-            // Added only: idch
 
             if (cat === 'channel') {
                 addCommandOnce(
@@ -323,10 +327,14 @@ function getCategoryData() {
                 names,
                 'join'
             );
+
+            addCommandOnce(
+                names,
+                'listonline'
+            );
         }
 
         // ================= CHANNEL =================
-        // Added only: idch
 
         if (cat === 'channel') {
             addCommandOnce(
@@ -667,7 +675,7 @@ module.exports = {
                     cat,
                     cmdNames
                 } =
-                    catData[i];
+                catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
