@@ -109,11 +109,14 @@ function getCategoryData() {
                 )
             ];
 
+            // OWNER
             if (cat === 'owner') {
                 addCommandOnce(cmdNames, 'block');
                 addCommandOnce(cmdNames, 'unblock');
+                addCommandOnce(cmdNames, 'gaaju');
             }
 
+            // UTILITY
             if (cat === 'utility') {
                 addCommandOnce(cmdNames, 'botrules');
                 addCommandOnce(cmdNames, 'support');
@@ -121,11 +124,13 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'menupic');
             }
 
+            // GROUP
             if (cat === 'group') {
                 addCommandOnce(cmdNames, 'join');
                 addCommandOnce(cmdNames, 'listonline');
             }
 
+            // CHANNEL
             if (cat === 'channel') {
                 addCommandOnce(cmdNames, 'idch');
             }
@@ -246,11 +251,14 @@ function getCategoryData() {
             );
         }
 
+        // OWNER
         if (cat === 'owner') {
             addCommandOnce(names, 'block');
             addCommandOnce(names, 'unblock');
+            addCommandOnce(names, 'gaaju');
         }
 
+        // UTILITY
         if (cat === 'utility') {
             addCommandOnce(names, 'botrules');
             addCommandOnce(names, 'support');
@@ -258,11 +266,13 @@ function getCategoryData() {
             addCommandOnce(names, 'menupic');
         }
 
+        // GROUP
         if (cat === 'group') {
             addCommandOnce(names, 'join');
             addCommandOnce(names, 'listonline');
         }
 
+        // CHANNEL
         if (cat === 'channel') {
             addCommandOnce(names, 'idch');
         }
@@ -318,7 +328,7 @@ function getUptime() {
 
 /*
 |--------------------------------------------------------------------------
-| UPDATED RAM FUNCTION
+| RAM
 |--------------------------------------------------------------------------
 */
 
@@ -452,6 +462,8 @@ module.exports = {
 
             const lines = [];
 
+            // HEADER
+
             lines.push(
                 `┏━━❐✧ ${botName} ✧❐`
             );
@@ -504,6 +516,8 @@ module.exports = {
 
             lines.push(readMore);
 
+            // SPLIT
+
             const mid1 =
                 Math.floor(
                     catData.length / 3
@@ -513,6 +527,8 @@ module.exports = {
                 Math.floor(
                     catData.length * 2 / 3
                 );
+
+            // PART 1
 
             for (
                 let i = 0;
@@ -549,6 +565,8 @@ module.exports = {
 
             lines.push(readMore);
 
+            // PART 2
+
             for (
                 let i = mid1;
                 i < mid2;
@@ -584,6 +602,8 @@ module.exports = {
 
             lines.push(readMore);
 
+            // PART 3
+
             for (
                 let i = mid2;
                 i < catData.length;
@@ -618,6 +638,8 @@ module.exports = {
             }
 
             lines.push(readMore);
+
+            // FOOTER
 
             lines.push('');
             lines.push('');
