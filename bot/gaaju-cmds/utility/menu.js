@@ -122,6 +122,7 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'support');
                 addCommandOnce(cmdNames, 'deploy');
                 addCommandOnce(cmdNames, 'menupic');
+                addCommandOnce(cmdNames, 'date');
             }
 
             // GROUP
@@ -269,6 +270,7 @@ function getCategoryData() {
             addCommandOnce(names, 'support');
             addCommandOnce(names, 'deploy');
             addCommandOnce(names, 'menupic');
+            addCommandOnce(names, 'date');
         }
 
         // GROUP
