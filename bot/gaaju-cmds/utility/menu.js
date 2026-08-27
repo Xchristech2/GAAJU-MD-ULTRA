@@ -8,11 +8,6 @@ const cfg = require('../../config');
 
 const CMDS_DIR = path.join(__dirname, '..');
 
-const DEFAULT_LOGO_PATH = path.join(
-    __dirname,
-    '../../../assets/xd-logo.jpg'
-);
-
 const CUSTOM_MENU_IMAGE = path.join(
     __dirname,
     '../../../assets/menu-image.jpg'
@@ -121,7 +116,7 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'botrules');
                 addCommandOnce(cmdNames, 'support');
                 addCommandOnce(cmdNames, 'deploy');
-                addCommandOnce(cmdNames, 'menupic');
+                addCommandOnce(cmdNames, 'menuimage');
                 addCommandOnce(cmdNames, 'date');
                 addCommandOnce(cmdNames, 'code');
             }
@@ -270,7 +265,7 @@ function getCategoryData() {
             addCommandOnce(names, 'botrules');
             addCommandOnce(names, 'support');
             addCommandOnce(names, 'deploy');
-            addCommandOnce(names, 'menupic');
+            addCommandOnce(names, 'menuimage');
             addCommandOnce(names, 'date');
             addCommandOnce(names, 'code');
         }
@@ -672,21 +667,28 @@ module.exports = {
                 quoted: msg
             };
 
-            const imagePath =
-                fs.existsSync(
-                    CUSTOM_MENU_IMAGE
-                )
-                    ? CUSTOM_MENU_IMAGE
-                    : DEFAULT_LOGO_PATH;
+            /*
+            |--------------------------------------------------------------------------
+            | MENU IMAGE
+            |--------------------------------------------------------------------------
+            |
+            | IMPORTANT:
+            | Only use the custom image when it exists.
+            | If .menuimage off was used, the image is
+            | removed/moved to backup, so the menu becomes
+            | completely TEXT ONLY.
+            |
+            */
 
             if (
                 fs.existsSync(
-                    imagePath
+                    CUSTOM_MENU_IMAGE
                 )
             ) {
+
                 const img =
                     fs.readFileSync(
-                        imagePath
+                        CUSTOM_MENU_IMAGE
                     );
 
                 await sock.sendMessage(
@@ -701,6 +703,12 @@ module.exports = {
 
                 return;
             }
+
+            /*
+            |--------------------------------------------------------------------------
+            | TEXT-ONLY MENU
+            |--------------------------------------------------------------------------
+            */
 
             await sock.sendMessage(
                 chatId,
