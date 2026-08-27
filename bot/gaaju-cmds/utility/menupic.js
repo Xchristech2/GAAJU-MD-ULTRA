@@ -21,21 +21,6 @@ const CUSTOM_MENU_IMAGE = path.join(
     'menu-image.jpg'
 );
 
-const DEFAULT_MENU_IMAGE = path.join(
-    ASSETS_DIR,
-    'xd-logo.jpg'
-);
-
-/*
-|--------------------------------------------------------------------------
-| BACKUP FILE
-|--------------------------------------------------------------------------
-|
-| When the custom menu image is removed, it is moved here.
-| This allows .menupic restore to bring it back.
-|
-*/
-
 const BACKUP_MENU_IMAGE = path.join(
     ASSETS_DIR,
     'menu-image.backup.jpg'
@@ -70,16 +55,12 @@ async function send(sock, chatId, text, msg) {
 
 module.exports = {
 
-    name: 'menupic',
+    name: 'menuimage',
 
-    aliases: [
-        'menuimage',
-        'menupicture',
-        'menuphoto'
-    ],
+    aliases: [],
 
     description:
-        'Manage the bot menu image',
+        'Turn the menu image on or off',
 
     category: 'utility',
 
@@ -139,16 +120,16 @@ module.exports = {
                 sock,
                 chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
-┃✦ ${p}menupic remove
-┃✦ ${p}menupic restore
-┃✦ ${p}menupic status
+`┏━━❐ 🖼️ MENU IMAGE ❐
+┃✦ ${p}menuimage off
+┃✦ ${p}menuimage on
+┃✦ ${p}menuimage status
 ┗━━❐
 
 ┏━━❐ ✦ INFORMATION ✦ ❐
-┃✦ remove  → Use normal menu image
-┃✦ restore → Restore custom image
-┃✦ status  → Check current image
+┃✦ off    → Remove menu image
+┃✦ on     → Restore menu image
+┃✦ status → Check current mode
 ┗━━❐
 
 ┏━━❐ ✦ ${botName} ✦ ❐
@@ -168,8 +149,7 @@ module.exports = {
 
         if (action === 'status') {
 
-            let status =
-                '❌ No menu image found';
+            let status;
 
             if (
                 fs.existsSync(
@@ -178,16 +158,12 @@ module.exports = {
             ) {
 
                 status =
-                    '🖼️ Custom menu image is ACTIVE';
+                    '🖼️ Menu image is ACTIVE';
 
-            } else if (
-                fs.existsSync(
-                    DEFAULT_MENU_IMAGE
-                )
-            ) {
+            } else {
 
                 status =
-                    '🖼️ Normal/default menu image is ACTIVE';
+                    '📝 Menu image is OFF — text-only menu';
 
             }
 
@@ -196,7 +172,7 @@ module.exports = {
                 sock,
                 chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
+`┏━━❐ 🖼️ MENU IMAGE ❐
 ┃✦ Status : ${status}
 ┗━━❐
 
@@ -211,21 +187,20 @@ module.exports = {
 
         /*
         |--------------------------------------------------------------------------
-        | REMOVE CUSTOM MENU IMAGE
+        | TURN IMAGE OFF
         |--------------------------------------------------------------------------
         */
 
         if (
-            action === 'remove' ||
-            action === 'delete' ||
-            action === 'off'
+            action === 'off' ||
+            action === 'remove'
         ) {
 
             try {
 
                 /*
-                 * If custom image doesn't exist,
-                 * check whether it was already backed up.
+                 * If image is already off,
+                 * do nothing.
                  */
 
                 if (
@@ -234,41 +209,16 @@ module.exports = {
                     )
                 ) {
 
-                    if (
-                        fs.existsSync(
-                            BACKUP_MENU_IMAGE
-                        )
-                    ) {
-
-                        return send(
-                            sock,
-                            chatId,
-
-`┏━━❐ 🖼️ MENU PICTURE ❐
-┃✦ Status : ℹ️ Already removed
-┃✦ Menu   : Normal image
-┗━━❐
-
-┃✦ Use ${p}menupic restore
-┃  to restore the custom image.
-
-┏━━❐ ✦ ${botName} ✦ ❐
-┃✦ Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ
-┗━━❐`,
-                            msg
-                        );
-
-                    }
-
-
                     return send(
                         sock,
                         chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
-┃✦ Status : ℹ️ No custom image
-┃✦ Menu   : Normal image
-┗━━❐`,
+`┏━━❐ 🖼️ MENU IMAGE ❐
+┃✦ Status : ℹ️ Already OFF
+┃✦ Menu   : 📝 Text only
+┗━━❐
+
+┃✦ No menu image will be used.`,
                         msg
                     );
 
@@ -276,7 +226,7 @@ module.exports = {
 
 
                 /*
-                 * Remove an old backup first.
+                 * Remove old backup first.
                  */
 
                 if (
@@ -286,16 +236,19 @@ module.exports = {
                 ) {
 
                     try {
+
                         fs.unlinkSync(
                             BACKUP_MENU_IMAGE
                         );
+
                     } catch {}
 
                 }
 
 
                 /*
-                 * Move custom image to backup.
+                 * Save the current custom
+                 * image so "on" can restore it.
                  */
 
                 fs.renameSync(
@@ -304,48 +257,22 @@ module.exports = {
                 );
 
 
-                /*
-                 * Make sure default image exists.
-                 */
-
-                if (
-                    !fs.existsSync(
-                        DEFAULT_MENU_IMAGE
-                    )
-                ) {
-
-                    return send(
-                        sock,
-                        chatId,
-
-`┏━━❐ 🖼️ MENU PICTURE ❐
-┃✦ Status : ⚠️ Removed
-┃✦ Warning: Default image not found
-┃✦ Path   : assets/xd-logo.jpg
-┗━━❐`,
-                        msg
-                    );
-
-                }
-
-
                 return send(
                     sock,
                     chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
-┃✦ Status : ✅ Removed
-┃✦ Menu   : Normal image
-┃✦ Backup : ✅ Saved
+`┏━━❐ 🖼️ MENU IMAGE ❐
+┃✦ Status : ✅ OFF
+┃✦ Image  : ❌ Removed
+┃✦ Menu   : 📝 Text only
 ┗━━❐
 
-┃✦ Your menu will now use
-┃  the normal profile image.
+┃✦ The menu will no longer
+┃  show any image or old logo.
 
-┏━━❐ ✦ INFORMATION ✦ ❐
-┃✦ Restore with:
-┃✦ ${p}menupic restore
-┗━━❐
+┏━━❐ ✦ RESTORE ✦ ❐
+┃✦ Use ${p}menuimage on
+┃  to restore the image.
 
 ┏━━❐ ✦ ${botName} ✦ ❐
 ┃✦ Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ
@@ -356,7 +283,7 @@ module.exports = {
             } catch (error) {
 
                 console.error(
-                    '[MENUPIC REMOVE ERROR]',
+                    '[MENUIMAGE OFF ERROR]',
                     error
                 );
 
@@ -364,7 +291,7 @@ module.exports = {
                     sock,
                     chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
+`┏━━❐ 🖼️ MENU IMAGE ❐
 ┃✦ Status : ❌ Failed
 ┃✦ Reason : ${error?.message || error}
 ┗━━❐`,
@@ -378,20 +305,19 @@ module.exports = {
 
         /*
         |--------------------------------------------------------------------------
-        | RESTORE CUSTOM MENU IMAGE
+        | TURN IMAGE ON
         |--------------------------------------------------------------------------
         */
 
         if (
-            action === 'restore' ||
             action === 'on' ||
-            action === 'back'
+            action === 'restore'
         ) {
 
             try {
 
                 /*
-                 * Custom image is already active.
+                 * Image is already active.
                  */
 
                 if (
@@ -404,9 +330,9 @@ module.exports = {
                         sock,
                         chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
-┃✦ Status : ℹ️ Already active
-┃✦ Menu   : Custom image
+`┏━━❐ 🖼️ MENU IMAGE ❐
+┃✦ Status : ℹ️ Already ON
+┃✦ Menu   : 🖼️ Image
 ┗━━❐`,
                         msg
                     );
@@ -415,7 +341,7 @@ module.exports = {
 
 
                 /*
-                 * No backup available.
+                 * Check for saved image.
                  */
 
                 if (
@@ -428,14 +354,15 @@ module.exports = {
                         sock,
                         chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
+`┏━━❐ 🖼️ MENU IMAGE ❐
 ┃✦ Status : ❌ Cannot restore
-┃✦ Reason : No backup image found
+┃✦ Reason : No saved menu image
 ┗━━❐
 
-┃✦ If you previously used
-┃  .setmenuimage, upload/set
-┃  the custom image again.`,
+┃✦ Set/upload the menu image
+┃  again before using:
+
+┃✦ ${p}menuimage on`,
                         msg
                     );
 
@@ -443,7 +370,7 @@ module.exports = {
 
 
                 /*
-                 * Restore backup.
+                 * Restore image.
                  */
 
                 fs.renameSync(
@@ -456,9 +383,10 @@ module.exports = {
                     sock,
                     chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
-┃✦ Status : ✅ Restored
-┃✦ Menu   : Custom image
+`┏━━❐ 🖼️ MENU IMAGE ❐
+┃✦ Status : ✅ ON
+┃✦ Image  : 🖼️ Restored
+┃✦ Menu   : Image enabled
 ┗━━❐
 
 ┃✦ Your custom menu image
@@ -473,7 +401,7 @@ module.exports = {
             } catch (error) {
 
                 console.error(
-                    '[MENUPIC RESTORE ERROR]',
+                    '[MENUIMAGE ON ERROR]',
                     error
                 );
 
@@ -481,7 +409,7 @@ module.exports = {
                     sock,
                     chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
+`┏━━❐ 🖼️ MENU IMAGE ❐
 ┃✦ Status : ❌ Failed
 ┃✦ Reason : ${error?.message || error}
 ┗━━❐`,
@@ -503,14 +431,14 @@ module.exports = {
             sock,
             chatId,
 
-`┏━━❐ 🖼️ MENU PICTURE ❐
+`┏━━❐ 🖼️ MENU IMAGE ❐
 ┃✦ Unknown option : ${action}
 ┗━━❐
 
 ┏━━❐ ✦ AVAILABLE ✦ ❐
-┃✦ ${p}menupic remove
-┃✦ ${p}menupic restore
-┃✦ ${p}menupic status
+┃✦ ${p}menuimage off
+┃✦ ${p}menuimage on
+┃✦ ${p}menuimage status
 ┗━━❐`,
             msg
         );
