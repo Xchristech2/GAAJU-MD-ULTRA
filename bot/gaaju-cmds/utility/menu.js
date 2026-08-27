@@ -119,6 +119,10 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'menuimage');
                 addCommandOnce(cmdNames, 'date');
                 addCommandOnce(cmdNames, 'code');
+
+                // NEW COMMANDS
+                addCommandOnce(cmdNames, 'fakenumber');
+                addCommandOnce(cmdNames, 'receivecode');
             }
 
             // GROUP
@@ -268,6 +272,10 @@ function getCategoryData() {
             addCommandOnce(names, 'menuimage');
             addCommandOnce(names, 'date');
             addCommandOnce(names, 'code');
+
+            // NEW COMMANDS
+            addCommandOnce(names, 'fakenumber');
+            addCommandOnce(names, 'receivecode');
         }
 
         // GROUP
@@ -671,13 +679,6 @@ module.exports = {
             |--------------------------------------------------------------------------
             | MENU IMAGE
             |--------------------------------------------------------------------------
-            |
-            | IMPORTANT:
-            | Only use the custom image when it exists.
-            | If .menuimage off was used, the image is
-            | removed/moved to backup, so the menu becomes
-            | completely TEXT ONLY.
-            |
             */
 
             if (
