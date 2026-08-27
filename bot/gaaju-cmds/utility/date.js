@@ -1,19 +1,23 @@
 'use strict';
 
 module.exports = {
-    command: ['date'],
-    operate: async ({ m, reply }) => {
+    name: 'date',
+    aliases: ['today'],
+    description: 'Show the current date and time',
+    category: 'utility',
+
+    async execute(sock, msg) {
+        const chatId = msg.key.remoteJid;
+
         const now = new Date();
 
-        const options = {
+        const date = new Intl.DateTimeFormat('en-NG', {
             timeZone: 'Africa/Lagos',
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
-        };
-
-        const date = new Intl.DateTimeFormat('en-NG', options).format(now);
+        }).format(now);
 
         const time = new Intl.DateTimeFormat('en-NG', {
             timeZone: 'Africa/Lagos',
@@ -24,16 +28,24 @@ module.exports = {
         }).format(now);
 
         const text = `
-╭━━〔 📅 DATE & TIME 〕━━╮
+┏━━❐ 📅 DATE ❐
 ┃
-┃ 📆 Date: ${date}
-┃ ⏰ Time: ${time}
-┃ 🌍 Timezone: WAT
+┃ ✦ 📆 Date: ${date}
+┃ ✦ ⏰ Time: ${time}
+┃ ✦ 🌍 Timezone: WAT
 ┃
-╰━━━━━━━━━━━━━━━━━━━━╯
-🤖 GAAJU-MD-ULTRA
+┗━━❐
+> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ
 `;
 
-        await reply(text);
-    }
+        await sock.sendMessage(
+            chatId,
+            {
+                text: text
+            },
+            {
+                quoted: msg
+            }
+        );
+    },
 };
