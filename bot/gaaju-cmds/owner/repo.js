@@ -1,173 +1,373 @@
-const https = require("https");
-const { getBotName } = require("../../lib/botname");
+'use strict';
 
-const OWN_REPO = "Xchristech2/GAAJU-MD-ULTRA";
-const OWN_BRANCH = "main";
+const https = require('https');
+const { getBotName } = require('../../lib/botname');
 
-const YOUTUBE_DEPLOY = "https://youtu.be/jHYSN3vUJec?si=nimF4UmjSz-Mz2fV";
-const SESSION_ID = "https://gaaju-ultra-pair-ljtv.onrender.com";
-const WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z";
+const OWN_REPO = 'Xchristech2/GAAJU-MD-ULTRA';
+const OWN_BRANCH = 'main';
+
+const YOUTUBE_DEPLOY =
+    'https://youtu.be/jHYSN3vUJec?si=nimF4UmjSz-Mz2fV';
+
+const SESSION_ID =
+    'https://gaaju-ultra-pair-ljtv.onrender.com';
+
+const WHATSAPP_CHANNEL =
+    'https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z';
+
+/*
+ * ==============================
+ * GITHUB REQUEST
+ * ==============================
+ */
 
 function ghGet(path) {
     return new Promise((resolve, reject) => {
-        https.get("https://api.github.com" + path, {
-            headers: {
-                "User-Agent": "GAAJU-XMD-Bot",
-                "Accept": "application/vnd.github+json"
-            }
-        }, res => {
-            let data = "";
 
-            res.on("data", chunk => data += chunk);
-
-            res.on("end", () => {
-                try {
-                    resolve({
-                        status: res.statusCode,
-                        data: JSON.parse(data)
-                    });
-                } catch {
-                    reject(new Error("GitHub response error"));
+        const request = https.get(
+            'https://api.github.com' + path,
+            {
+                headers: {
+                    'User-Agent': 'GAAJU-XMD-Bot',
+                    'Accept': 'application/vnd.github+json'
                 }
-            });
-        }).on("error", reject);
+            },
+            res => {
+
+                let data = '';
+
+                res.on('data', chunk => {
+                    data += chunk;
+                });
+
+                res.on('end', () => {
+
+                    try {
+
+                        resolve({
+                            status: res.statusCode,
+                            data: JSON.parse(data)
+                        });
+
+                    } catch {
+
+                        reject(
+                            new Error(
+                                'Invalid GitHub response.'
+                            )
+                        );
+                    }
+                });
+            }
+        );
+
+        request.on('error', reject);
     });
 }
 
+/*
+ * ==============================
+ * REPOSITORY PARSER
+ * ==============================
+ */
+
 function parseRepo(input) {
-    if (!input) return OWN_REPO;
+
+    if (!input) {
+        return OWN_REPO;
+    }
 
     const match = input.match(
         /github\.com\/([^\/\s]+\/[^\/\s?#]+)/i
     );
 
     if (match) {
-        return match[1].replace(/\.git$/, "");
+
+        return match[1]
+            .replace(/\.git$/, '');
     }
 
-    if (/^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i.test(input)) {
+    if (
+        /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i
+            .test(input)
+    ) {
         return input;
     }
 
     return null;
 }
 
+/*
+ * ==============================
+ * NUMBER FORMAT
+ * ==============================
+ */
+
 function num(value) {
-    if (value == null) return "N/A";
+
+    if (value == null) {
+        return 'N/A';
+    }
+
     return Number(value).toLocaleString();
 }
 
-function trunc(text, length = 60) {
-    if (!text) return "N/A";
+/*
+ * ==============================
+ * TEXT TRIMMER
+ * ==============================
+ */
+
+function trunc(text, length = 70) {
+
+    if (!text) {
+        return 'N/A';
+    }
 
     text = String(text);
 
-    return text.length > length
-        ? text.substring(0, length) + "..."
-        : text;
+    if (text.length <= length) {
+        return text;
+    }
+
+    return text.substring(0, length) + '...';
 }
 
+/*
+ * ==============================
+ * VISIBILITY
+ * ==============================
+ */
+
+function getVisibility(data) {
+
+    if (data.visibility === 'public') {
+        return '🔓 Public';
+    }
+
+    return '🔒 Private';
+}
+
+/*
+ * ==============================
+ * LANGUAGE ICON
+ * ==============================
+ */
+
+function getLanguage(language) {
+
+    if (!language) {
+        return '💻 Unknown';
+    }
+
+    const icons = {
+        JavaScript: '🟨',
+        TypeScript: '🔷',
+        Python: '🐍',
+        Java: '☕',
+        PHP: '🐘',
+        C: '🔵',
+        'C++': '🔷',
+        'C#': '🟣',
+        HTML: '🌐',
+        CSS: '🎨'
+    };
+
+    return `${icons[language] || '💻'} ${language}`;
+}
+
+/*
+ * ==============================
+ * COMMAND
+ * ==============================
+ */
+
 module.exports = {
-    name: "repo",
+
+    name: 'repo',
 
     aliases: [
-        "botrepo",
-        "repository",
-        "gitinfo",
-        "repostats"
+        'botrepo',
+        'repository',
+        'gitinfo',
+        'repostats'
     ],
 
-    description: "Show GitHub repository information",
-    category: "owner",
+    description:
+        'Display detailed GitHub repository information',
 
-    async execute(sock, msg, args, cmdName, prefix) {
+    category: 'owner',
 
-        const jid = msg.key.remoteJid;
-        const botName = getBotName();
+    async execute(
+        sock,
+        msg,
+        args,
+        cmdName,
+        prefix
+    ) {
 
-        const input = args[0] || null;
-        const repo = parseRepo(input);
+        const jid =
+            msg.key.remoteJid;
+
+        const botName =
+            getBotName();
+
+        const p =
+            prefix || '.';
+
+        const input =
+            args[0] || null;
+
+        const repo =
+            parseRepo(input);
+
+        /*
+         * ==============================
+         * INVALID REPOSITORY
+         * ==============================
+         */
 
         if (input && !repo) {
+
+            const text = `┏━━❐✧ ${botName} ✧❐
+┃
+┃ ⚠️ Invalid repository
+┃
+┃ ✦ Usage:
+┃   ${p}repo owner/repository
+┃
+┃ ✦ Example:
+┃   ${p}repo Xchristech2/GAAJU-MD-ULTRA
+┃
+┗━━❐`;
+
             return sock.sendMessage(
                 jid,
                 {
-                    text: `╭━━〔 ⚠️ REPO 〕━━╮
-┃
-┃ ✦ Usage: ${prefix}repo owner/repo
-┃ ✦ Example:
-┃   ${prefix}repo Xchristech2/GAAJU-MD-ULTRA
-┃
-╰━━━━━━━━━━━━━━━╯
-⚡ ${botName}`,
+                    text,
                     contextInfo: {
                         forwardingScore: 999,
                         isForwarded: true,
                         forwardedNewsletterMessageInfo: {
-                            newsletterJid: "120363406588763460@newsletter",
-                            newsletterName: "GAAJU-MD",
+                            newsletterJid:
+                                '120363406588763460@newsletter',
+                            newsletterName:
+                                'GAAJU-MD-ULTRA',
                             serverMessageId: -1
                         }
                     }
                 },
-                { quoted: msg }
+                {
+                    quoted: msg
+                }
             );
         }
 
         try {
 
-            await sock.sendMessage(jid, {
-                react: {
-                    text: "📂",
-                    key: msg.key
-                }
-            });
+            /*
+             * ==============================
+             * REACTION
+             * ==============================
+             */
 
-            const [repoRes, branchRes] = await Promise.all([
-                ghGet("/repos/" + repo),
-                ghGet("/repos/" + repo + "/branches")
+            await sock.sendMessage(
+                jid,
+                {
+                    react: {
+                        text: '📦',
+                        key: msg.key
+                    }
+                }
+            );
+
+            /*
+             * ==============================
+             * FETCH DATA
+             * ==============================
+             */
+
+            const [
+                repoRes,
+                branchRes
+            ] = await Promise.all([
+
+                ghGet(
+                    '/repos/' + repo
+                ),
+
+                ghGet(
+                    '/repos/' +
+                    repo +
+                    '/branches'
+                )
             ]);
 
             if (repoRes.status !== 200) {
+
                 throw new Error(
-                    "Repository not found or is private."
+                    'Repository not found or is private.'
                 );
             }
 
-            const data = repoRes.data;
+            const data =
+                repoRes.data;
+
+            /*
+             * ==============================
+             * BASIC INFORMATION
+             * ==============================
+             */
 
             const owner =
-                data.owner?.login || "N/A";
+                data.owner?.login ||
+                'N/A';
 
             const repository =
-                data.name || "N/A";
+                data.name ||
+                'N/A';
 
             const description =
                 trunc(
                     data.description ||
-                    "No description available.",
-                    65
+                    'No description available.',
+                    75
                 );
 
             const language =
-                data.language || "N/A";
+                getLanguage(
+                    data.language
+                );
 
             const license =
                 data.license?.spdx_id ||
                 data.license?.name ||
-                "N/A";
+                'None';
 
             const visibility =
-                data.visibility === "public"
-                    ? "🔓 Public"
-                    : "🔒 Private";
+                getVisibility(data);
 
-            let branch = OWN_BRANCH;
+            /*
+             * ==============================
+             * BRANCH
+             * ==============================
+             */
 
-            if (Array.isArray(branchRes.data)) {
+            let branch =
+                data.default_branch ||
+                OWN_BRANCH;
+
+            if (
+                Array.isArray(
+                    branchRes.data
+                )
+            ) {
+
                 const mainBranch =
                     branchRes.data.find(
-                        b => b.name === data.default_branch
+                        b =>
+                            b.name ===
+                            data.default_branch
                     );
 
                 branch =
@@ -176,100 +376,179 @@ module.exports = {
                     OWN_BRANCH;
             }
 
+            /*
+             * ==============================
+             * STATISTICS
+             * ==============================
+             */
+
             const stars =
-                num(data.stargazers_count);
+                num(
+                    data.stargazers_count
+                );
 
             const forks =
-                num(data.forks_count);
+                num(
+                    data.forks_count
+                );
 
             const watchers =
-                num(data.subscribers_count);
+                num(
+                    data.subscribers_count
+                );
 
             const issues =
-                num(data.open_issues_count);
+                num(
+                    data.open_issues_count
+                );
 
             const size =
                 data.size != null
-                    ? `${(data.size / 1024).toFixed(2)} MB`
-                    : "N/A";
+                    ? `${(
+                        data.size / 1024
+                    ).toFixed(2)} MB`
+                    : 'N/A';
 
-            const ownLinks =
-                repo === OWN_REPO
-                    ? `
-┃ 🔑 Pairing  : ${SESSION_ID}
-┃ 🎬 Deploy   : ${YOUTUBE_DEPLOY}
-┃ 📢 Channel  : ${WHATSAPP_CHANNEL}`
-                    : "";
+            /*
+             * ==============================
+             * OWN REPOSITORY LINKS
+             * ==============================
+             */
 
-            const text = `╭━━━〔 📦 REPOSITORY 〕━━━╮
+            let ownLinks = '';
+
+            if (repo === OWN_REPO) {
+
+                ownLinks = `
+
+┏━━❐✧ BOT RESOURCES ✧❐
 ┃
-┃ 📁 Name      : ${repository}
-┃ 👤 Owner     : ${owner}
-┃ 📝 About     : ${description}
-┃ 💻 Language  : ${language}
-┃ 📜 License   : ${license}
-┃ 🌿 Branch    : ${branch}
-┃ ${visibility}
+┃ 🔑 Pairing
+┃ ${SESSION_ID}
 ┃
-╰━━━━━━━━━━━━━━━━━━━━╯
+┃ 🎬 Deployment Guide
+┃ ${YOUTUBE_DEPLOY}
+┃
+┃ 📢 WhatsApp Channel
+┃ ${WHATSAPP_CHANNEL}
+┃
+┗━━❐`;
+            }
 
-╭━━━〔 📊 STATISTICS 〕━━━╮
+            /*
+             * ==============================
+             * FINAL REPOSITORY CARD
+             * ==============================
+             */
+
+            const text = `┏━━❐✧ ${botName} ✧❐
+┃
+┃ 📦 REPOSITORY
+┃
+┃ ✦ Name      : ${repository}
+┃ ✦ Owner     : ${owner}
+┃ ✦ About     : ${description}
+┃ ✦ Language  : ${language}
+┃ ✦ License   : ${license}
+┃ ✦ Branch    : ${branch}
+┃ ✦ Status    : ${visibility}
+┃
+┗━━❐
+
+┏━━❐✧ PROJECT STATISTICS ✧❐
 ┃
 ┃ ⭐ Stars     : ${stars}
 ┃ 🍴 Forks     : ${forks}
 ┃ 👁️ Watchers  : ${watchers}
-┃ 💾 Size      : ${size}
 ┃ 🐛 Issues    : ${issues}
+┃ 💾 Size      : ${size}
 ┃
-╰━━━━━━━━━━━━━━━━━━━━╯
+┗━━❐
 
-╭━━━〔 🔗 LINKS 〕━━━╮
+┏━━❐✧ SOURCE ✧❐
 ┃
-┃ 🔗 Repo      : ${data.html_url}${ownLinks}
+┃ 🔗 Repository
+┃ ${data.html_url}
 ┃
-╰━━━━━━━━━━━━━━━━╯
-⚡ Powered by ${botName}`;
+┗━━❐${ownLinks}
+
+┏━━❐✧ DEVELOPER ✧❐
+┃
+┃ 🤖 ${botName}
+┃ ⚡ Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ
+┃
+┗━━❐`;
+
+            /*
+             * ==============================
+             * SEND
+             * ==============================
+             */
 
             await sock.sendMessage(
                 jid,
-                { 
+                {
                     text,
                     contextInfo: {
                         forwardingScore: 999,
                         isForwarded: true,
                         forwardedNewsletterMessageInfo: {
-                            newsletterJid: "120363406588763460@newsletter",
-                            newsletterName: "GAAJU-MD-ULTRA",
+                            newsletterJid:
+                                '120363406588763460@newsletter',
+                            newsletterName:
+                                'GAAJU-MD-ULTRA',
                             serverMessageId: -1
                         }
                     }
                 },
-                { quoted: msg }
+                {
+                    quoted: msg
+                }
             );
 
         } catch (error) {
 
+            console.error(
+                '[REPO ERROR]',
+                error
+            );
+
+            /*
+             * ==============================
+             * ERROR MESSAGE
+             * ==============================
+             */
+
             await sock.sendMessage(
                 jid,
                 {
-                    text: `╭━━━〔 ❌ REPO ERROR 〕━━━╮
+                    text: `┏━━❐✧ ${botName} ✧❐
+┃
+┃ ❌ REPOSITORY ERROR
 ┃
 ┃ ✦ Status : Failed
 ┃ ✦ Reason : ${error.message}
 ┃
-╰━━━━━━━━━━━━━━━━╯
-⚡ Powered by ${botName}`,
+┃ Please try again later.
+┃
+┗━━❐
+
+⚡ Powered by GAAJU-MD ULTRA`,
                     contextInfo: {
                         forwardingScore: 999,
                         isForwarded: true,
                         forwardedNewsletterMessageInfo: {
-                            newsletterJid: "120363406588763460@newsletter",
-                            newsletterName: "GAAJU-MD-ULTRA",
+                            newsletterJid:
+                                '120363406588763460@newsletter',
+                            newsletterName:
+                                'GAAJU-MD-ULTRA',
                             serverMessageId: -1
                         }
                     }
                 },
-                { quoted: msg }
+                {
+                    quoted: msg
+                }
             );
         }
     }
