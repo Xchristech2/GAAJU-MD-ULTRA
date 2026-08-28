@@ -2,201 +2,71 @@
 
 const { getBotName } = require('../../lib/botname');
 
-/*
-|--------------------------------------------------------------------------
-| GAAJU-MD-ULTRA — FAKE NUMBER
-|--------------------------------------------------------------------------
-| Generates fictional/test phone numbers for bot testing.
-| These numbers are not connected to SMS services.
-|--------------------------------------------------------------------------
-*/
+const sessions = new Map();
 
 const COUNTRIES = {
-    nigeria: {
-        name: 'Nigeria',
-        flag: '🇳🇬',
-        code: '+234',
-        numbers: [
-            '803 555 0147',
-            '806 555 0182',
-            '809 555 0136',
-            '810 555 0194'
-        ]
-    },
-
-    usa: {
-        name: 'United States',
-        flag: '🇺🇸',
-        code: '+1',
-        numbers: [
-            '202-555-0104',
-            '202-555-0118',
-            '202-555-0136',
-            '202-555-0172'
-        ]
-    },
-
-    uk: {
-        name: 'United Kingdom',
-        flag: '🇬🇧',
-        code: '+44',
-        numbers: [
-            '20 7946 0123',
-            '20 7946 0184',
-            '20 7946 0197'
-        ]
-    },
-
-    canada: {
-        name: 'Canada',
-        flag: '🇨🇦',
-        code: '+1',
-        numbers: [
-            '416-555-0108',
-            '416-555-0132',
-            '416-555-0176'
-        ]
-    },
-
-    india: {
-        name: 'India',
-        flag: '🇮🇳',
-        code: '+91',
-        numbers: [
-            '98 5555 0147',
-            '98 5555 0182',
-            '98 5555 0136'
-        ]
-    },
-
-    germany: {
-        name: 'Germany',
-        flag: '🇩🇪',
-        code: '+49',
-        numbers: [
-            '30 555 0147',
-            '30 555 0182',
-            '30 555 0136'
-        ]
-    },
-
-    france: {
-        name: 'France',
-        flag: '🇫🇷',
-        code: '+33',
-        numbers: [
-            '1 55 55 01 47',
-            '1 55 55 01 82',
-            '1 55 55 01 36'
-        ]
-    },
-
-    southafrica: {
-        name: 'South Africa',
-        flag: '🇿🇦',
-        code: '+27',
-        numbers: [
-            '10 555 0147',
-            '10 555 0182',
-            '10 555 0136'
-        ]
-    },
-
-    australia: {
-        name: 'Australia',
-        flag: '🇦🇺',
-        code: '+61',
-        numbers: [
-            '2 5550 0147',
-            '2 5550 0182',
-            '2 5550 0136'
-        ]
-    },
-
-    brazil: {
-        name: 'Brazil',
-        flag: '🇧🇷',
-        code: '+55',
-        numbers: [
-            '11 5555 0147',
-            '11 5555 0182',
-            '11 5555 0136'
-        ]
-    },
-
-    japan: {
-        name: 'Japan',
-        flag: '🇯🇵',
-        code: '+81',
-        numbers: [
-            '3 5550 0147',
-            '3 5550 0182',
-            '3 5550 0136'
-        ]
-    },
-
-    mexico: {
-        name: 'Mexico',
-        flag: '🇲🇽',
-        code: '+52',
-        numbers: [
-            '55 5555 0147',
-            '55 5555 0182',
-            '55 5555 0136'
-        ]
-    }
+    '+234': 'Nigeria',
+    '+1': 'USA/Canada',
+    '+44': 'United Kingdom',
+    '+91': 'India',
+    '+27': 'South Africa',
+    '+33': 'France',
+    '+49': 'Germany',
+    '+39': 'Italy',
+    '+34': 'Spain',
+    '+55': 'Brazil',
+    '+52': 'Mexico',
+    '+81': 'Japan',
+    '+82': 'South Korea',
+    '+971': 'UAE',
+    '+61': 'Australia'
 };
 
+function randomDigits(length) {
+    let result = '';
 
-/*
-|--------------------------------------------------------------------------
-| RANDOM HELPERS
-|--------------------------------------------------------------------------
-*/
+    for (let i = 0; i < length; i++) {
+        result += Math.floor(Math.random() * 10);
+    }
 
-function randomItem(array) {
-    return array[
-        Math.floor(
-            Math.random() * array.length
-        )
-    ];
+    return result;
 }
 
+function generateNumber(countryCode) {
+    if (countryCode === '+234') {
+        return '+234' + randomDigits(10);
+    }
 
-/*
-|--------------------------------------------------------------------------
-| COUNTRY LIST
-|--------------------------------------------------------------------------
-*/
+    if (countryCode === '+1') {
+        return '+1' + randomDigits(10);
+    }
 
-function countryList() {
+    if (countryCode === '+44') {
+        return '+44' + randomDigits(10);
+    }
 
-    return Object.values(COUNTRIES)
-        .map(country =>
-            `${country.flag} ${country.name}`
-        )
-        .join('\n┃✦ ');
+    if (countryCode === '+91') {
+        return '+91' + randomDigits(10);
+    }
+
+    return countryCode + randomDigits(10);
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| COMMAND
-|--------------------------------------------------------------------------
-*/
+function generateCode() {
+    return randomDigits(6);
+}
 
 module.exports = {
-
     name: 'fakenumber',
 
     aliases: [
-        'fake',
-        'testnumber',
-        'randomnumber'
+        'tempnumber',
+        'virtualnumber',
+        'number'
     ],
 
     description:
-        'Generate a fictional test phone number',
+        'Generate a fictional number for command testing',
 
     category: 'utility',
 
@@ -207,7 +77,7 @@ module.exports = {
         prefix
     ) {
 
-        const chatId =
+        const jid =
             msg.key.remoteJid;
 
         const botName =
@@ -216,156 +86,84 @@ module.exports = {
         const p =
             prefix || '.';
 
-        /*
-        |--------------------------------------------------------------------------
-        | REACTION
-        |--------------------------------------------------------------------------
-        */
+        const country =
+            String(args?.[0] || '+234')
+                .trim();
 
-        try {
-
-            await sock.sendMessage(
-                chatId,
-                {
-                    react: {
-                        text: '📱',
-                        key: msg.key
-                    }
-                }
-            );
-
-        } catch {}
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | HELP / NO COUNTRY
-        |--------------------------------------------------------------------------
-        */
-
-        if (!args?.[0]) {
+        if (!COUNTRIES[country]) {
 
             return sock.sendMessage(
-                chatId,
+                jid,
                 {
                     text:
 `┏━━❐ 📱 FAKE NUMBER ❐
 ┃
-┃✦ Usage:
-┃✦ ${p}fakenumber country
+┃ ❌ Unknown country code
 ┃
-┏━━❐ 🌍 COUNTRIES ❐
-┃
-┃✦ ${countryList()}
-┃
-┗━━❐
-
-┃✦ Example:
-┃✦ ${p}fakenumber usa
-┃✦ ${p}fakenumber nigeria
-┃✦ ${p}fakenumber uk
-
-⚡ ${botName}`
-                },
-                {
-                    quoted: msg
-                }
-            );
-
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | FIND COUNTRY
-        |--------------------------------------------------------------------------
-        */
-
-        const input =
-            String(args[0])
-                .toLowerCase()
-                .replace(/[\s_-]/g, '');
-
-        const country =
-            COUNTRIES[input];
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | UNKNOWN COUNTRY
-        |--------------------------------------------------------------------------
-        */
-
-        if (!country) {
-
-            return sock.sendMessage(
-                chatId,
-                {
-                    text:
-`┏━━❐ ⚠️ FAKE NUMBER ❐
-┃
-┃✦ Country not found.
-┃
-┃✦ Use:
-┃✦ ${p}fakenumber
-┃
-┃✦ Available countries:
-┃✦ ${countryList()}
+┃ Available examples:
+┃ ✦ ${p}fakenumber +234
+┃ ✦ ${p}fakenumber +1
+┃ ✦ ${p}fakenumber +44
+┃ ✦ ${p}fakenumber +91
+┃ ✦ ${p}fakenumber +27
 ┃
 ┗━━❐
-
 ⚡ ${botName}`
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
-
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | GENERATE NUMBER
-        |--------------------------------------------------------------------------
-        */
 
         const number =
-            randomItem(
-                country.numbers
-            );
+            generateNumber(country);
 
+        const code =
+            generateCode();
 
-        /*
-        |--------------------------------------------------------------------------
-        | RESPONSE
-        |--------------------------------------------------------------------------
-        */
-
-        const text =
-`╭━━━〔 📱 FAKE NUMBER 〕━━━╮
-┃
-┃ 🌍 Country : ${country.name} ${country.flag}
-┃ 📞 Number  : ${country.code} ${number}
-┃
-┃ 🧪 Status  : TEST NUMBER
-┃ 🔄 Service : GAAJU-MD-ULTRA
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯
-
-⚡ Powered by ${botName}`;
-
-
-        return sock.sendMessage(
-            chatId,
+        sessions.set(
+            number,
             {
-                text
-            },
-            {
-                quoted: msg
+                number,
+                country: COUNTRIES[country],
+                code,
+                createdAt: Date.now()
             }
         );
 
-    }
+        return sock.sendMessage(
+            jid,
+            {
+                text:
+`╭━━━〔 📱 VIRTUAL NUMBER 〕━━━╮
+┃
+┃ 🌍 Country : ${COUNTRIES[country]}
+┃ ☎️ Number  : ${number}
+┃
+┃ 🔐 Test Code : ${code}
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯
 
+╭━━━〔 📖 HOW TO TEST 〕━━━╮
+┃
+┃ Use:
+┃ ${p}receivecode ${number}
+┃
+┃ The command will return the
+┃ demo code connected to this
+┃ generated number.
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯
+
+⚠️ DEMO MODE
+This is a fictional number/code
+for testing the bot command only.
+It does not receive real SMS.
+
+⚡ ${botName}`
+            },
+            { quoted: msg }
+        );
+    },
+
+    sessions
 };
