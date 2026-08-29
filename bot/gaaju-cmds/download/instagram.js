@@ -1,91 +1,151 @@
-const {
-  casperGet,
-  keithTry,
-  extractUrl,
-  dlBuffer
-} = require("../../lib/keithapi");
-const {
-  getBotName
-} = require("../../lib/botname");
+'use strict';
+
+const { getBotName } = require('../../lib/botname');
+
+const API_BASE = 'https://apix.wolvarex.com';
+const API_KEY = 'wxa_f_837e27c4fc';
+
 module.exports = {
-  name: "ig",
-  aliases: ["insta", "instagram", "instadl"],
-  description: "Download Instagram post/reel/story",
-  category: "download",
-  async execute(_0x1fa52f, _0x489bc3, _0x3567b5, _0x6f82b6, _0x2aa3e2) {
-    const _0x1bedb9 = _0x489bc3.key.remoteJid;
-    const _0x2e5680 = getBotName();
-    const _0x3861b3 = _0x3567b5[0];
-    if (!_0x3861b3) {
-      return _0x1fa52f.sendMessage(_0x1bedb9, {
-        text: "╔═|〔  INSTAGRAM 〕\n║\n║ ▸ *Usage* : " + _0x6f82b6 + "ig <url>\n║\n╚═|〔 " + _0x2e5680 + " 〕"
-      }, {
-        quoted: _0x489bc3
-      });
-    }
-    try {
-      let _0x5a9ede;
-      let _0x3dfb1f;
-      try {
-        const _0x3ec485 = await casperGet("/api/downloader/ig", {
-          url: _0x3861b3
-        });
-        if (_0x3ec485.success) {
-          _0x5a9ede = _0x3ec485.download_url || _0x3ec485.all_media?.[0]?.url;
-          if (_0x5a9ede) {
-            _0x3dfb1f = _0x5a9ede.includes(".mp4") || _0x3ec485.type === "video";
-          }
+    name: 'ig',
+
+    aliases: [
+        'insta',
+        'instagram',
+        'instadl'
+    ],
+
+    description: 'Download Instagram posts and reels',
+
+    category: 'download',
+
+    async execute(sock, msg, args, prefix) {
+        const chatId = msg.key.remoteJid;
+        const botName = getBotName();
+
+        const url = args[0];
+
+        if (!url) {
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+`┏━━❐ 📸 INSTAGRAM ❐
+┃
+┃✦ Usage: ${prefix}ig <Instagram URL>
+┃
+┃✦ Example:
+┃✦ ${prefix}ig https://www.instagram.com/reel/xxxxx/
+┃
+┗━━❐ ${botName} ❐`
+                },
+                { quoted: msg }
+            );
         }
-      } catch {}
-      if (!_0x5a9ede) {
+
+        if (!/instagram\.com/i.test(url)) {
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+`┏━━❐ 📸 INSTAGRAM ❐
+┃
+┃✦ Please send a valid
+┃  Instagram post/reel URL.
+┃
+┗━━❐ ${botName} ❐`
+                },
+                { quoted: msg }
+            );
+        }
+
         try {
-          const _0x55c923 = await casperGet("/api/downloader/reelsvideo", {
-            url: _0x3861b3
-          });
-          if (_0x55c923.success) {
-            if (_0x55c923.videos?.length) {
-              _0x5a9ede = _0x55c923.videos[0]?.url || _0x55c923.videos[0]?.download_url;
-              _0x3dfb1f = true;
-            } else if (_0x55c923.images?.length) {
-              _0x5a9ede = _0x55c923.images[0]?.url || _0x55c923.images[0];
-              _0x3dfb1f = false;
+            const endpoint =
+                `${API_BASE}/api/download/instagram/igram` +
+                `?url=${encodeURIComponent(url)}` +
+                `&key=${encodeURIComponent(API_KEY)}`;
+
+            const response = await fetch(endpoint);
+
+            if (!response.ok) {
+                throw new Error(`API HTTP ${response.status}`);
             }
-          }
-        } catch {}
-      }
-      if (!_0x5a9ede) {
-        const _0x2c40d8 = await keithTry(["/download/instadl", "/download/instaposts"], {
-          url: _0x3861b3
-        });
-        _0x5a9ede = extractUrl(_0x2c40d8.result);
-        if (!_0x5a9ede) {
-          throw new Error("No download URL found");
+
+            const data = await response.json();
+
+            if (!data || data.status !== true) {
+                throw new Error('Instagram API returned no media');
+            }
+
+            const media = Array.isArray(data.BK9)
+                ? data.BK9
+                : [];
+
+            if (!media.length) {
+                throw new Error('No downloadable media found');
+            }
+
+            // Send every media item returned by the API
+            for (const item of media) {
+                if (!item || !item.url) continue;
+
+                const mediaUrl = item.url;
+                const type = String(item.type || '').toLowerCase();
+
+                if (type === 'video') {
+                    await sock.sendMessage(
+                        chatId,
+                        {
+                            video: {
+                                url: mediaUrl
+                            },
+                            caption:
+`┏━━❐ 📸 INSTAGRAM ❐
+┃
+┃✦ Type: 📹 Video
+┃✦ Status: ✅ Success
+┃
+┗━━❐ ${botName} ❐`
+                        },
+                        { quoted: msg }
+                    );
+                }
+
+                else if (type === 'image') {
+                    await sock.sendMessage(
+                        chatId,
+                        {
+                            image: {
+                                url: mediaUrl
+                            },
+                            caption:
+`┏━━❐ 📸 INSTAGRAM ❐
+┃
+┃✦ Type: 🖼️ Image
+┃✦ Status: ✅ Success
+┃
+┗━━❐ ${botName} ❐`
+                        },
+                        { quoted: msg }
+                    );
+                }
+            }
+
+        } catch (error) {
+            console.error('[IG ERROR]', error);
+
+            await sock.sendMessage(
+                chatId,
+                {
+                    text:
+`┏━━❐ 📸 INSTAGRAM ❐
+┃
+┃✦ Status: ❌ Failed
+┃✦ Reason: ${error.message}
+┃
+┗━━❐ ${botName} ❐`
+                },
+                { quoted: msg }
+            );
         }
-        _0x3dfb1f = _0x5a9ede.includes(".mp4") || _0x5a9ede.includes("video");
-      }
-      const _0x3e5ccb = await dlBuffer(_0x5a9ede);
-      const _0x5f16e3 = "╔═|〔  INSTAGRAM 〕\n║\n║ ▸ *Type* : " + (_0x3dfb1f ? "📹 Video" : "🖼️ Image") + "\n║ ▸ *Size* : " + (_0x3e5ccb.length / 1024 / 1024).toFixed(2) + " MB\n║\n╚═|〔 " + _0x2e5680 + " 〕";
-      if (_0x3dfb1f) {
-        await _0x1fa52f.sendMessage(_0x1bedb9, {
-          video: _0x3e5ccb,
-          caption: _0x5f16e3
-        }, {
-          quoted: _0x489bc3
-        });
-      } else {
-        await _0x1fa52f.sendMessage(_0x1bedb9, {
-          image: _0x3e5ccb,
-          caption: _0x5f16e3
-        }, {
-          quoted: _0x489bc3
-        });
-      }
-    } catch (_0x580a55) {
-      await _0x1fa52f.sendMessage(_0x1bedb9, {
-        text: "╔═|〔  INSTAGRAM 〕\n║\n║ ▸ *Status* : ❌ Failed\n║ ▸ *Reason* : " + _0x580a55.message + "\n║\n╚═|〔 " + _0x2e5680 + " 〕"
-      }, {
-        quoted: _0x489bc3
-      });
     }
-  }
 };
