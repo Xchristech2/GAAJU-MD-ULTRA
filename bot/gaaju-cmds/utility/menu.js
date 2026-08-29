@@ -124,6 +124,8 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'fakenumber');
                 addCommandOnce(cmdNames, 'receivecode');
                 addCommandOnce(cmdNames, 'tagcountry');
+                addCommandOnce(cmdNames, 'muteuser');
+                addCommandOnce(cmdNames, 'unmuteuser');
             }
 
             // GROUP
@@ -278,6 +280,8 @@ function getCategoryData() {
             addCommandOnce(names, 'fakenumber');
             addCommandOnce(names, 'receivecode');
             addCommandOnce(names, 'tagcountry');
+            addCommandOnce(names, 'muteuser');
+            addCommandOnce(names, 'unmuteuser');
         }
 
         // GROUP
@@ -594,7 +598,7 @@ module.exports = {
                     cat,
                     cmdNames
                 } =
-                    catData[i];
+                catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
@@ -631,7 +635,7 @@ module.exports = {
                     cat,
                     cmdNames
                 } =
-                    catData[i];
+                catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
