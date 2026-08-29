@@ -4,348 +4,276 @@ const { getBotName } = require('../../lib/botname');
 
 /*
 |--------------------------------------------------------------------------
-| TAG COUNTRY / TAG CODE
+| TAG COUNTRY
 |--------------------------------------------------------------------------
-|
 | Usage:
+|   .tagcountry +234
+|   .tagcountry +91
+|   .tagcountry +92
+|   .tagcountry +1
 |
-| .tagcountry +234
-| .tagcountry +233
-| .tagcountry +254
-| .tagcountry +27
-| .tagcountry +91
-| .tagcountry +92
-|
-| Alias:
-|
-| .tagcode +234
-|
-| The command checks the WhatsApp group participant
-| numbers exposed by Baileys and tags matching numbers.
-|
+| The command checks the current group's real participants
+| and mentions everyone whose WhatsApp number starts with
+| the selected international country calling code.
 |--------------------------------------------------------------------------
 */
 
-
-/*
-|--------------------------------------------------------------------------
-| WORLDWIDE COUNTRY CALLING CODES
-|--------------------------------------------------------------------------
-*/
-
-const COUNTRY_CODES = {
-
-    // AFRICA
-    '+20': 'Egypt',
-    '+211': 'South Sudan',
-    '+212': 'Morocco',
-    '+213': 'Algeria',
-    '+216': 'Tunisia',
-    '+218': 'Libya',
-    '+220': 'Gambia',
-    '+221': 'Senegal',
-    '+222': 'Mauritania',
-    '+223': 'Mali',
-    '+224': 'Guinea',
-    '+225': 'Côte d’Ivoire',
-    '+226': 'Burkina Faso',
-    '+227': 'Niger',
-    '+228': 'Togo',
-    '+229': 'Benin',
-    '+230': 'Mauritius',
-    '+231': 'Liberia',
-    '+232': 'Sierra Leone',
-    '+233': 'Ghana',
-    '+234': 'Nigeria',
-    '+235': 'Chad',
-    '+236': 'Central African Republic',
-    '+237': 'Cameroon',
-    '+238': 'Cape Verde',
-    '+239': 'São Tomé and Príncipe',
-    '+240': 'Equatorial Guinea',
-    '+241': 'Gabon',
-    '+242': 'Republic of the Congo',
-    '+243': 'DR Congo',
-    '+244': 'Angola',
-    '+245': 'Guinea-Bissau',
-    '+246': 'British Indian Ocean Territory',
-    '+247': 'Ascension Island',
-    '+248': 'Seychelles',
-    '+249': 'Sudan',
-    '+250': 'Rwanda',
-    '+251': 'Ethiopia',
-    '+252': 'Somalia',
-    '+253': 'Djibouti',
-    '+254': 'Kenya',
-    '+255': 'Tanzania',
-    '+256': 'Uganda',
-    '+257': 'Burundi',
-    '+258': 'Mozambique',
-    '+260': 'Zambia',
-    '+261': 'Madagascar',
-    '+262': 'Réunion / Mayotte',
-    '+263': 'Zimbabwe',
-    '+264': 'Namibia',
-    '+265': 'Malawi',
-    '+266': 'Lesotho',
-    '+267': 'Botswana',
-    '+268': 'Eswatini',
-    '+269': 'Comoros',
-    '+27': 'South Africa',
-    '+290': 'Saint Helena',
-    '+291': 'Eritrea',
-    '+297': 'Aruba',
-    '+298': 'Faroe Islands',
-    '+299': 'Greenland',
-
-    // NORTH AMERICA / CARIBBEAN
-    '+1': 'USA / Canada / NANP',
-    '+242': 'Caribbean / regional',
-    '+246': 'Barbados',
-    '+264': 'Anguilla',
-    '+340': 'US Virgin Islands',
-    '+441': 'Bermuda',
-    '+500': 'Falkland Islands',
-    '+501': 'Belize',
-    '+502': 'Guatemala',
-    '+503': 'El Salvador',
-    '+504': 'Honduras',
-    '+505': 'Nicaragua',
-    '+506': 'Costa Rica',
-    '+507': 'Panama',
-    '+509': 'Haiti',
-    '+590': 'Guadeloupe / Saint Martin',
-    '+591': 'Bolivia',
-    '+592': 'Guyana',
-    '+593': 'Ecuador',
-    '+594': 'French Guiana',
-    '+595': 'Paraguay',
-    '+596': 'Martinique',
-    '+597': 'Suriname',
-    '+598': 'Uruguay',
-    '+599': 'Caribbean Netherlands / Curaçao',
-
-    // SOUTH AMERICA
-    '+51': 'Peru',
-    '+52': 'Mexico',
-    '+54': 'Argentina',
-    '+55': 'Brazil',
-    '+56': 'Chile',
-    '+57': 'Colombia',
-    '+58': 'Venezuela',
-
-    // EUROPE
-    '+30': 'Greece',
-    '+31': 'Netherlands',
-    '+32': 'Belgium',
-    '+33': 'France',
-    '+34': 'Spain',
-    '+36': 'Hungary',
-    '+39': 'Italy',
-    '+40': 'Romania',
-    '+41': 'Switzerland',
-    '+43': 'Austria',
-    '+44': 'United Kingdom',
-    '+45': 'Denmark',
-    '+46': 'Sweden',
-    '+47': 'Norway',
-    '+48': 'Poland',
-    '+49': 'Germany',
-    '+350': 'Gibraltar',
-    '+351': 'Portugal',
-    '+352': 'Luxembourg',
-    '+353': 'Ireland',
-    '+354': 'Iceland',
-    '+355': 'Albania',
-    '+356': 'Malta',
-    '+357': 'Cyprus',
-    '+358': 'Finland',
-    '+359': 'Bulgaria',
-    '+370': 'Lithuania',
-    '+371': 'Latvia',
-    '+372': 'Estonia',
-    '+373': 'Moldova',
-    '+374': 'Armenia',
-    '+375': 'Belarus',
-    '+376': 'Andorra',
-    '+377': 'Monaco',
-    '+378': 'San Marino',
-    '+380': 'Ukraine',
-    '+381': 'Serbia',
-    '+382': 'Montenegro',
-    '+383': 'Kosovo',
-    '+385': 'Croatia',
-    '+386': 'Slovenia',
-    '+387': 'Bosnia and Herzegovina',
-    '+389': 'North Macedonia',
-
-    // MIDDLE EAST
-    '+90': 'Turkey',
-    '+93': 'Afghanistan',
-    '+94': 'Sri Lanka',
-    '+95': 'Myanmar',
-    '+960': 'Maldives',
-    '+961': 'Lebanon',
-    '+962': 'Jordan',
-    '+963': 'Syria',
-    '+964': 'Iraq',
-    '+965': 'Kuwait',
-    '+966': 'Saudi Arabia',
-    '+967': 'Yemen',
-    '+968': 'Oman',
-    '+970': 'Palestine',
-    '+971': 'United Arab Emirates',
-    '+972': 'Israel',
-    '+973': 'Bahrain',
-    '+974': 'Qatar',
-    '+975': 'Bhutan',
-
-    // SOUTH / EAST ASIA
-    '+91': 'India',
-    '+92': 'Pakistan',
-    '+93': 'Afghanistan',
-    '+95': 'Myanmar',
-    '+98': 'Iran',
-    '+880': 'Bangladesh',
-    '+86': 'China',
-    '+81': 'Japan',
-    '+82': 'South Korea',
-    '+84': 'Vietnam',
-    '+850': 'North Korea',
-    '+852': 'Hong Kong',
-    '+853': 'Macau',
-    '+855': 'Cambodia',
-    '+856': 'Laos',
-    '+880': 'Bangladesh',
-    '+886': 'Taiwan',
-
-    // SOUTHEAST ASIA
-    '+60': 'Malaysia',
-    '+61': 'Australia',
-    '+62': 'Indonesia',
-    '+63': 'Philippines',
-    '+65': 'Singapore',
-    '+66': 'Thailand',
-    '+670': 'Timor-Leste',
-    '+673': 'Brunei',
-    '+674': 'Nauru',
-    '+675': 'Papua New Guinea',
-    '+676': 'Tonga',
-    '+677': 'Solomon Islands',
-    '+678': 'Vanuatu',
-    '+679': 'Fiji',
-    '+680': 'Palau',
-    '+681': 'Wallis and Futuna',
-    '+682': 'Cook Islands',
-    '+683': 'Niue',
-    '+685': 'Samoa',
-    '+686': 'Kiribati',
-    '+687': 'New Caledonia',
-    '+688': 'Tuvalu',
-    '+689': 'French Polynesia',
-    '+690': 'Tokelau',
-    '+691': 'Micronesia',
-    '+692': 'Marshall Islands',
-
-    // CENTRAL ASIA
-    '+7': 'Russia / Kazakhstan',
-    '+76': 'Kazakhstan',
-    '+77': 'Kazakhstan',
-    '+992': 'Tajikistan',
-    '+993': 'Turkmenistan',
-    '+994': 'Azerbaijan',
-    '+995': 'Georgia',
-    '+996': 'Kyrgyzstan',
-    '+998': 'Uzbekistan',
-
-    // PACIFIC / OCEANIA
-    '+61': 'Australia',
-    '+64': 'New Zealand',
-    '+670': 'Timor-Leste',
-    '+671': 'Guam',
-    '+672': 'Australian External Territories',
-    '+673': 'Brunei',
-    '+674': 'Nauru',
-    '+675': 'Papua New Guinea',
-    '+676': 'Tonga',
-    '+677': 'Solomon Islands',
-    '+678': 'Vanuatu',
-    '+679': 'Fiji',
-    '+680': 'Palau',
-    '+685': 'Samoa',
-    '+686': 'Kiribati',
-    '+687': 'New Caledonia',
-    '+688': 'Tuvalu',
-    '+689': 'French Polynesia',
-    '+690': 'Tokelau',
-    '+691': 'Micronesia',
-    '+692': 'Marshall Islands'
-
-};
-
-
-/*
-|--------------------------------------------------------------------------
-| NORMALIZE COUNTRY CODE
-|--------------------------------------------------------------------------
-*/
+// Worldwide international calling codes.
+// Multiple countries can share the same calling code.
+const COUNTRY_CODES = new Set([
+    '+1',
+    '+7',
+    '+20',
+    '+27',
+    '+30',
+    '+31',
+    '+32',
+    '+33',
+    '+34',
+    '+36',
+    '+39',
+    '+40',
+    '+41',
+    '+43',
+    '+44',
+    '+45',
+    '+46',
+    '+47',
+    '+48',
+    '+49',
+    '+51',
+    '+52',
+    '+53',
+    '+54',
+    '+55',
+    '+56',
+    '+57',
+    '+58',
+    '+60',
+    '+61',
+    '+62',
+    '+63',
+    '+64',
+    '+65',
+    '+66',
+    '+81',
+    '+82',
+    '+84',
+    '+86',
+    '+90',
+    '+91',
+    '+92',
+    '+93',
+    '+94',
+    '+95',
+    '+98',
+    '+211',
+    '+212',
+    '+213',
+    '+216',
+    '+218',
+    '+220',
+    '+221',
+    '+222',
+    '+223',
+    '+224',
+    '+225',
+    '+226',
+    '+227',
+    '+228',
+    '+229',
+    '+230',
+    '+231',
+    '+232',
+    '+233',
+    '+234',
+    '+235',
+    '+236',
+    '+237',
+    '+238',
+    '+239',
+    '+240',
+    '+241',
+    '+242',
+    '+243',
+    '+244',
+    '+245',
+    '+246',
+    '+248',
+    '+249',
+    '+250',
+    '+251',
+    '+252',
+    '+253',
+    '+254',
+    '+255',
+    '+256',
+    '+257',
+    '+258',
+    '+260',
+    '+261',
+    '+262',
+    '+263',
+    '+264',
+    '+265',
+    '+266',
+    '+267',
+    '+268',
+    '+269',
+    '+290',
+    '+291',
+    '+297',
+    '+298',
+    '+299',
+    '+350',
+    '+351',
+    '+352',
+    '+353',
+    '+354',
+    '+355',
+    '+356',
+    '+357',
+    '+358',
+    '+359',
+    '+370',
+    '+371',
+    '+372',
+    '+373',
+    '+374',
+    '+375',
+    '+376',
+    '+377',
+    '+378',
+    '+380',
+    '+381',
+    '+382',
+    '+383',
+    '+385',
+    '+386',
+    '+387',
+    '+389',
+    '+420',
+    '+421',
+    '+423',
+    '+500',
+    '+501',
+    '+502',
+    '+503',
+    '+504',
+    '+505',
+    '+506',
+    '+507',
+    '+508',
+    '+509',
+    '+590',
+    '+591',
+    '+592',
+    '+593',
+    '+594',
+    '+595',
+    '+596',
+    '+597',
+    '+598',
+    '+599',
+    '+670',
+    '+672',
+    '+673',
+    '+674',
+    '+675',
+    '+676',
+    '+677',
+    '+678',
+    '+679',
+    '+680',
+    '+681',
+    '+682',
+    '+683',
+    '+685',
+    '+686',
+    '+687',
+    '+688',
+    '+689',
+    '+690',
+    '+691',
+    '+692',
+    '+850',
+    '+852',
+    '+853',
+    '+855',
+    '+856',
+    '+880',
+    '+886',
+    '+960',
+    '+961',
+    '+962',
+    '+963',
+    '+964',
+    '+965',
+    '+966',
+    '+967',
+    '+968',
+    '+970',
+    '+971',
+    '+972',
+    '+973',
+    '+974',
+    '+975',
+    '+976',
+    '+977',
+    '+992',
+    '+993',
+    '+994',
+    '+995',
+    '+996',
+    '+998'
+]);
 
 function normalizeCountryCode(input) {
+    if (!input) return null;
 
-    if (!input) {
-        return null;
-    }
+    let code = String(input).trim();
 
-    let code =
-        String(input)
-            .trim()
-            .replace(/\s+/g, '');
-
+    // Allow 234 as well as +234
     if (!code.startsWith('+')) {
         code = '+' + code;
     }
 
-    if (!/^\+\d{1,4}$/.test(code)) {
-        return null;
-    }
+    // Remove spaces, hyphens and other unwanted characters
+    code = '+' + code.slice(1).replace(/\D/g, '');
 
     return code;
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| GET PARTICIPANT NUMBER
-|--------------------------------------------------------------------------
-*/
-
-function getParticipantNumber(participant) {
-
-    if (!participant) {
-        return '';
+function getNumberFromJid(jid) {
+    if (!jid || typeof jid !== 'string') {
+        return null;
     }
 
-    const jid =
-        participant.id ||
-        participant.jid ||
-        participant.phoneNumber ||
-        '';
+    /*
+     * Normal WhatsApp user JID:
+     * 234xxxxxxxxxx@s.whatsapp.net
+     *
+     * We intentionally ignore LID JIDs because they don't
+     * expose the phone number needed for country matching.
+     */
+    if (!jid.endsWith('@s.whatsapp.net')) {
+        return null;
+    }
 
-    return String(jid)
-        .split('@')[0]
-        .split(':')[0]
-        .replace(/\D/g, '');
+    return jid.split('@')[0];
 }
 
+function chunkArray(array, size) {
+    const chunks = [];
 
-/*
-|--------------------------------------------------------------------------
-| COMMAND
-|--------------------------------------------------------------------------
-*/
+    for (let i = 0; i < array.length; i += size) {
+        chunks.push(array.slice(i, i + size));
+    }
+
+    return chunks;
+}
 
 module.exports = {
-
     name: 'tagcountry',
 
     aliases: [
@@ -353,9 +281,9 @@ module.exports = {
     ],
 
     description:
-        'Tag group members by worldwide country calling code',
+        'Tag all group members matching a country calling code',
 
-    category: 'group',
+    category: 'utility',
 
     async execute(
         sock,
@@ -363,272 +291,234 @@ module.exports = {
         args,
         prefix
     ) {
-
-        const chatId =
-            msg.key.remoteJid;
-
-        const botName =
-            getBotName();
+        const jid =
+            msg?.key?.remoteJid;
 
         const p =
             prefix || '.';
 
+        const botName =
+            getBotName();
 
-        /*
-        |--------------------------------------------------------------------------
-        | GROUP CHECK
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            !chatId ||
-            !chatId.endsWith('@g.us')
-        ) {
-
+        // Must be used inside a group
+        if (!jid || !jid.endsWith('@g.us')) {
             return sock.sendMessage(
-                chatId,
+                jid,
                 {
                     text:
 `┏━━❐ 🌍 TAG COUNTRY ❐
 ┃
-┃ ❌ Group command only.
+┃ ❌ This command can only
+┃    be used inside a group.
 ┃
-┃ Use this command inside
-┃ a WhatsApp group.
-┃
-┗━━❐
-⚡ ${botName}`
-                },
-                {
-                    quoted: msg
-                }
-            );
-
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | COUNTRY CODE
-        |--------------------------------------------------------------------------
-        */
-
-        const countryCode =
-            normalizeCountryCode(
-                args?.[0]
-            );
-
-        if (!countryCode) {
-
-            return sock.sendMessage(
-                chatId,
-                {
-                    text:
-`┏━━❐ 🌍 TAG COUNTRY ❐
-┃
-┃ ❌ Invalid country code.
-┃
-┃ Examples:
-┃
+┃ Usage:
 ┃ ✦ ${p}tagcountry +234
 ┃ ✦ ${p}tagcountry +91
 ┃ ✦ ${p}tagcountry +92
-┃ ✦ ${p}tagcountry +233
-┃ ✦ ${p}tagcountry +254
-┃ ✦ ${p}tagcountry +27
-┃
-┃ 🌍 Worldwide country
-┃    codes are supported.
+┃ ✦ ${p}tagcountry +1
 ┃
 ┗━━❐
 ⚡ ${botName}`
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
-
         }
 
+        const rawCode =
+            args?.[0];
 
-        /*
-        |--------------------------------------------------------------------------
-        | RECOGNIZE COUNTRY
-        |--------------------------------------------------------------------------
-        */
-
-        const countryName =
-            COUNTRY_CODES[countryCode] ||
-            'International / supported calling code';
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | REACTION
-        |--------------------------------------------------------------------------
-        */
-
-        try {
-
-            await sock.sendMessage(
-                chatId,
+        if (!rawCode) {
+            return sock.sendMessage(
+                jid,
                 {
-                    react: {
-                        text: '🌍',
-                        key: msg.key
-                    }
-                }
+                    text:
+`┏━━❐ 🌍 TAG COUNTRY ❐
+┃
+┃ ❌ Please provide a country
+┃    calling code.
+┃
+┃ Examples:
+┃ ✦ ${p}tagcountry +234
+┃ ✦ ${p}tagcountry +91
+┃ ✦ ${p}tagcountry +92
+┃ ✦ ${p}tagcountry +27
+┃ ✦ ${p}tagcountry +1
+┃ ✦ ${p}tagcountry +44
+┃
+┗━━❐
+⚡ ${botName}`
+                },
+                { quoted: msg }
             );
+        }
 
-        } catch {}
+        const countryCode =
+            normalizeCountryCode(rawCode);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | GROUP METADATA
-        |--------------------------------------------------------------------------
-        */
+        // Only accept recognised international calling codes
+        if (
+            !countryCode ||
+            !COUNTRY_CODES.has(countryCode)
+        ) {
+            return sock.sendMessage(
+                jid,
+                {
+                    text:
+`┏━━❐ 🌍 TAG COUNTRY ❐
+┃
+┃ ❌ Invalid country code:
+┃    ${rawCode}
+┃
+┃ Example:
+┃ ✦ ${p}tagcountry +234
+┃ ✦ ${p}tagcountry +91
+┃ ✦ ${p}tagcountry +92
+┃ ✦ ${p}tagcountry +27
+┃
+┃ 🌍 Worldwide calling codes
+┃    are supported.
+┃
+┗━━❐
+⚡ ${botName}`
+                },
+                { quoted: msg }
+            );
+        }
 
         try {
-
+            // Get current group metadata
             const metadata =
-                await sock.groupMetadata(
-                    chatId
-                );
+                await sock.groupMetadata(jid);
 
             const participants =
                 metadata?.participants || [];
 
+            const prefixNumber =
+                countryCode.slice(1);
 
-            /*
-            |--------------------------------------------------------------------------
-            | MATCH COUNTRY CODE
-            |--------------------------------------------------------------------------
-            */
+            const matchingMembers = [];
 
-            const cleanCode =
-                countryCode.substring(1);
+            for (const participant of participants) {
 
-            const matched =
-                participants.filter(
-                    participant => {
+                /*
+                 * Depending on the Baileys version,
+                 * the participant can expose an id field.
+                 */
+                const participantJid =
+                    participant?.id;
 
-                        const number =
-                            getParticipantNumber(
-                                participant
-                            );
+                const number =
+                    getNumberFromJid(
+                        participantJid
+                    );
 
-                        return (
-                            number &&
-                            number.startsWith(
-                                cleanCode
-                            )
-                        );
+                if (!number) continue;
 
-                    }
-                );
+                if (
+                    number.startsWith(
+                        prefixNumber
+                    )
+                ) {
+                    matchingMembers.push(
+                        participantJid
+                    );
+                }
+            }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | NO MATCH
-            |--------------------------------------------------------------------------
-            */
-
-            if (!matched.length) {
-
+            // No matching members
+            if (!matchingMembers.length) {
                 return sock.sendMessage(
-                    chatId,
+                    jid,
                     {
                         text:
-`┏━━❐ 🌍 TAG COUNTRY ❐
-┃
-┃ 🌍 Country : ${countryName}
-┃ ☎️ Code    : ${countryCode}
-┃ 👥 Found   : 0
-┃
-┃ ❌ No matching group
-┃    members found.
-┃
-┗━━❐
-⚡ ${botName}`
-                    },
-                    {
-                        quoted: msg
-                    }
-                );
-
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | CREATE MENTIONS
-            |--------------------------------------------------------------------------
-            */
-
-            const mentions = [];
-
-            const tagged =
-                [];
-
-            for (
-                const participant
-                of matched
-            ) {
-
-                const jid =
-                    participant.id ||
-                    participant.jid;
-
-                if (!jid) {
-                    continue;
-                }
-
-                mentions.push(jid);
-
-                tagged.push(
-                    `@${jid.split('@')[0]}`
-                );
-
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | SEND RESULT
-            |--------------------------------------------------------------------------
-            */
-
-            const text =
 `╭━━━〔 🌍 TAG COUNTRY 〕━━━╮
 ┃
-┃ 🌍 Country : ${countryName}
-┃ ☎️ Code    : ${countryCode}
-┃ 👥 Found   : ${mentions.length}
+┃ 🌍 Country Code : ${countryCode}
+┃ 👥 Found        : 0
 ┃
 ╰━━━━━━━━━━━━━━━━━━━━╯
 
-${tagged.join(' ')}
+❌ No group member was found
+with the selected country code.
+
+⚡ ${botName}`
+                    },
+                    { quoted: msg }
+                );
+            }
+
+            /*
+             * WhatsApp messages can become too large when
+             * many people are mentioned. Split into groups
+             * of 50 mentions to keep the command reliable.
+             */
+            const chunks =
+                chunkArray(
+                    matchingMembers,
+                    50
+                );
+
+            for (
+                let index = 0;
+                index < chunks.length;
+                index++
+            ) {
+                const current =
+                    chunks[index];
+
+                const mentions =
+                    [...current];
+
+                const mentionText =
+                    current
+                        .map(
+                            number =>
+                                `@${number.split('@')[0]}`
+                        )
+                        .join('\n');
+
+                const header =
+                    index === 0
+                        ? `╭━━━〔 🌍 TAG COUNTRY 〕━━━╮
+┃
+┃ 🌍 Country Code : ${countryCode}
+┃ 👥 Found        : ${matchingMembers.length}
+┃
+╰━━━━━━━━━━━━━━━━━━━━╯
+
+`
+                        : '';
+
+                const footer =
+                    index === chunks.length - 1
+                        ? `
 
 ╭━━━〔 ✦ ${botName} ✦ 〕━━━╮
 ┃
-┃ ✅ Matching members
+┃ ✅ All matching members
 ┃    have been tagged.
 ┃
-╰━━━━━━━━━━━━━━━━━━━━╯`;
+╰━━━━━━━━━━━━━━━━━━━━╯`
+                        : '';
 
-            await sock.sendMessage(
-                chatId,
-                {
-                    text,
-                    mentions
-                },
-                {
-                    quoted: msg
-                }
-            );
+                await sock.sendMessage(
+                    jid,
+                    {
+                        text:
+                            header +
+                            mentionText +
+                            footer,
 
+                        mentions
+                    },
+                    {
+                        quoted:
+                            index === 0
+                                ? msg
+                                : undefined
+                    }
+                );
+            }
 
         } catch (error) {
 
@@ -638,26 +528,21 @@ ${tagged.join(' ')}
             );
 
             return sock.sendMessage(
-                chatId,
+                jid,
                 {
                     text:
-`┏━━❐ ❌ TAG COUNTRY ❐
+`┏━━❐ 🌍 TAG COUNTRY ❐
 ┃
-┃ ✦ Status : Failed
-┃ ✦ Reason : ${
-    error?.message || error
-}
+┃ ❌ Failed to read group
+┃    participants.
+┃
+┃ Please try again.
 ┃
 ┗━━❐
-⚡ Powered by ${botName}`
+⚡ ${botName}`
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
-
         }
-
     }
-
 };
