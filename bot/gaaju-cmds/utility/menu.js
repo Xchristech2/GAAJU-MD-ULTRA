@@ -120,9 +120,10 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'date');
                 addCommandOnce(cmdNames, 'code');
 
-                // NEW COMMANDS
+                // EXTRA UTILITY COMMANDS
                 addCommandOnce(cmdNames, 'fakenumber');
                 addCommandOnce(cmdNames, 'receivecode');
+                addCommandOnce(cmdNames, 'tagcountry');
             }
 
             // GROUP
@@ -273,9 +274,10 @@ function getCategoryData() {
             addCommandOnce(names, 'date');
             addCommandOnce(names, 'code');
 
-            // NEW COMMANDS
+            // EXTRA UTILITY COMMANDS
             addCommandOnce(names, 'fakenumber');
             addCommandOnce(names, 'receivecode');
+            addCommandOnce(names, 'tagcountry');
         }
 
         // GROUP
