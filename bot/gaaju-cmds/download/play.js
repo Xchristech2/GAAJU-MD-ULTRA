@@ -66,14 +66,13 @@ module.exports = {
         }
       });
 
-      let videoId;
-      let videoUrl;
-      let thumbnail = "";
-      let searchedTitle = query;
+      let results = [];
+      let directVideo = null;
 
       /*
-       * STEP 1:
-       * Search YouTube when the user gives a song name.
+       * STEP 1
+       * If user enters a YouTube URL, use that video directly.
+       * Otherwise search YouTube and collect several results.
        */
       if (/youtu\.be|youtube\.com/i.test(query)) {
         const match = query.match(
@@ -84,8 +83,14 @@ module.exports = {
           throw new Error("Invalid YouTube link.");
         }
 
-        videoId = match[1];
-        videoUrl = query;
+        directVideo = {
+          videoId: match[1],
+          url: query,
+          title: query,
+          thumbnail: ""
+        };
+
+        results.push(directVideo);
       } else {
         const search = await yts(query);
 
@@ -93,76 +98,204 @@ module.exports = {
           throw new Error("No YouTube results found.");
         }
 
-        const video = search.videos[0];
-
-        videoId = video.videoId;
-        videoUrl = video.url;
-        thumbnail = video.thumbnail || "";
-        searchedTitle = video.title;
+        /*
+         * Keep the first 7 results.
+         * If one fails, the next one is tried automatically.
+         */
+        results = search.videos.slice(0, 7);
       }
 
-      if (!videoId) {
-        throw new Error("Could not get YouTube video ID.");
+      let successfulAudio = null;
+      let lastError = null;
+
+      /*
+       * STEP 2
+       * Try each YouTube result until one works.
+       */
+      for (let i = 0; i < results.length; i++) {
+        const video = results[i];
+
+        const videoId = video.videoId;
+        const videoUrl = video.url;
+        const thumbnail = video.thumbnail || "";
+        const searchedTitle = video.title || query;
+
+        if (!videoId) {
+          continue;
+        }
+
+        try {
+          console.log(
+            `[PLAY] Trying result ${i + 1}/${results.length}: ${searchedTitle} (${videoId})`
+          );
+
+          /*
+           * Ask Wolvarex to convert this YouTube video.
+           */
+          const apiResponse = await axios.get(API_URL, {
+            params: {
+              id: videoId,
+              key: API_KEY
+            },
+            timeout: 60000,
+            validateStatus: () => true
+          });
+
+          const data = apiResponse.data;
+
+          /*
+           * If Wolvarex returns 502/5xx,
+           * immediately try the next YouTube result.
+           */
+          if (apiResponse.status >= 500) {
+            console.log(
+              `[PLAY] Wolvarex returned ${apiResponse.status} for ${videoId}. Trying next result...`
+            );
+
+            lastError = new Error(
+              `Wolvarex returned HTTP ${apiResponse.status}`
+            );
+
+            continue;
+          }
+
+          if (!data || data.success !== true) {
+            lastError = new Error(
+              data?.message ||
+              data?.error ||
+              "Wolvarex conversion failed."
+            );
+
+            console.log(
+              `[PLAY] Conversion failed for ${videoId}. Trying next result...`
+            );
+
+            continue;
+          }
+
+          if (!data.downloadURL) {
+            lastError = new Error(
+              "Wolvarex did not return a download URL."
+            );
+
+            console.log(
+              `[PLAY] No downloadURL for ${videoId}. Trying next result...`
+            );
+
+            continue;
+          }
+
+          /*
+           * Download the MP3.
+           */
+          let audioResponse;
+
+          try {
+            audioResponse = await axios.get(data.downloadURL, {
+              responseType: "arraybuffer",
+              timeout: 120000,
+              maxContentLength: 50 * 1024 * 1024,
+              maxBodyLength: 50 * 1024 * 1024,
+              validateStatus: () => true
+            });
+          } catch (downloadError) {
+            lastError = downloadError;
+
+            console.log(
+              `[PLAY] Download request failed for ${videoId}. Trying next result...`
+            );
+
+            continue;
+          }
+
+          /*
+           * Proxy/download itself may return 502.
+           */
+          if (audioResponse.status >= 500) {
+            console.log(
+              `[PLAY] Audio proxy returned ${audioResponse.status} for ${videoId}. Trying next result...`
+            );
+
+            lastError = new Error(
+              `Audio proxy returned HTTP ${audioResponse.status}`
+            );
+
+            continue;
+          }
+
+          if (audioResponse.status !== 200) {
+            console.log(
+              `[PLAY] Audio download returned HTTP ${audioResponse.status}. Trying next result...`
+            );
+
+            lastError = new Error(
+              `Audio download returned HTTP ${audioResponse.status}`
+            );
+
+            continue;
+          }
+
+          const buffer = Buffer.from(audioResponse.data);
+
+          if (!buffer.length) {
+            lastError = new Error("Downloaded audio is empty.");
+            continue;
+          }
+
+          /*
+           * We found a working result.
+           */
+          successfulAudio = {
+            buffer,
+            title: data.title || searchedTitle || query,
+            quality: data.quality || "MP3",
+            thumbnail,
+            videoUrl,
+            videoId
+          };
+
+          console.log(
+            `[PLAY] Success with result ${i + 1}: ${successfulAudio.title}`
+          );
+
+          break;
+
+        } catch (error) {
+          lastError = error;
+
+          console.log(
+            `[PLAY] Result ${i + 1} failed: ${error.message}`
+          );
+
+          /*
+           * Continue to the next result.
+           */
+          continue;
+        }
       }
 
       /*
-       * STEP 2:
-       * Call Wolvarex/WOLF TECH MP3 API.
+       * STEP 3
+       * Nothing worked.
        */
-      const apiResponse = await axios.get(API_URL, {
-        params: {
-          id: videoId,
-          key: API_KEY
-        },
-        timeout: 60000
-      });
-
-      const data = apiResponse.data;
-
-      /*
-       * Expected response:
-       *
-       * {
-       *   success: true,
-       *   title: "...",
-       *   quality: "480",
-       *   downloadURL: "https://..."
-       * }
-       */
-      if (!data || data.success !== true) {
+      if (!successfulAudio) {
         throw new Error(
-          data?.message ||
-          data?.error ||
-          "Wolvarex API failed."
+          lastError?.message ||
+          "All YouTube results failed."
         );
       }
 
-      if (!data.downloadURL) {
-        throw new Error("API did not return a download URL.");
-      }
-
-      const title = data.title || searchedTitle || query;
-
-      /*
-       * STEP 3:
-       * Download the actual MP3 from downloadURL.
-       */
-      const audioResponse = await axios.get(data.downloadURL, {
-        responseType: "arraybuffer",
-        timeout: 120000,
-        maxContentLength: 50 * 1024 * 1024,
-        maxBodyLength: 50 * 1024 * 1024
-      });
-
-      const buffer = Buffer.from(audioResponse.data);
-
-      if (!buffer.length) {
-        throw new Error("Downloaded audio is empty.");
-      }
+      const {
+        buffer,
+        title,
+        quality,
+        thumbnail,
+        videoUrl
+      } = successfulAudio;
 
       /*
-       * STEP 4:
-       * Send the MP3 to WhatsApp.
+       * STEP 4
+       * Send the working MP3.
        */
       const caption = [
         "╭━━━━━━━━━━━━━━━━━━╮",
@@ -170,7 +303,7 @@ module.exports = {
         "╰━━━━━━━━━━━━━━━━━━╯",
         "",
         "🎵 *Title:* " + trunc(title),
-        "🎧 *Quality:* " + (data.quality || "MP3"),
+        "🎧 *Quality:* " + quality,
         "📦 *Size:* " + fmtSize(buffer.length),
         "",
         "⏺️ *Status:* Ready",
@@ -187,6 +320,7 @@ module.exports = {
           mimetype: "audio/mpeg",
           ptt: false,
           caption,
+
           contextInfo: {
             externalAdReply: {
               showAdAttribution: false,
@@ -195,7 +329,7 @@ module.exports = {
               title: trunc(title),
               body: "ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ",
               thumbnailUrl: thumbnail,
-              sourceUrl: videoUrl || videoId
+              sourceUrl: videoUrl || ""
             }
           }
         },
@@ -227,7 +361,7 @@ module.exports = {
             "⚠️ *Reason:* " + (
               error.response?.data?.message ||
               error.message ||
-              "Unknown error"
+              "All available results failed."
             ),
             "",
             "╭━━━━━━━━━━━━━━━━━━╮",
