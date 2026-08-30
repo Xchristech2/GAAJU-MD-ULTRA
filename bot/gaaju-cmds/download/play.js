@@ -8,7 +8,7 @@ const { getBotName } = require("../../lib/botname");
 // ===== HARDCODED CONFIGURATION =====
 const API_BASE = 'https://api-red-iota-56.vercel.app';
 const API_KEY = 'nova_510035';
-const TIMEOUT = 120000; // 2 minutes
+const TIMEOUT = 120000;
 
 function trunc(text, max = 38) {
     if (text && text.length > max) {
@@ -16,18 +16,6 @@ function trunc(text, max = 38) {
     }
 
     return text || "";
-}
-
-function fmtSize(size) {
-    if (!size) {
-        return "? MB";
-    }
-
-    if (size >= 1048576) {
-        return (size / 1024 / 1024).toFixed(2) + " MB";
-    }
-
-    return (size / 1024).toFixed(1) + " KB";
 }
 
 module.exports = {
@@ -77,18 +65,13 @@ module.exports = {
                 jid,
                 {
                     text:
-`┏━━❐ 🎵 PLAY MUSIC ❐
+`┏━━❐ 🎵 PLAY ❐
 ┃
 ┃ ✦ Usage:
 ┃   ${p}play <song name>
 ┃
 ┃ ✦ Example:
-┃   ${p}play Alan Walker Faded
-┃
-┃ ✦ Aliases:
-┃   ${p}music
-┃   ${p}song
-┃   ${p}playsong
+┃   ${p}play Rema Calm Down
 ┃
 ┗━━❐
 ⚡ ${botName}`
@@ -119,35 +102,7 @@ module.exports = {
 
             /*
             |--------------------------------------------------------------------------
-            | SEARCHING MESSAGE
-            |--------------------------------------------------------------------------
-            */
-
-            const searching =
-                await sock.sendMessage(
-                    jid,
-                    {
-                        text:
-`┏━━❐ 🔎 MUSIC SEARCH ❐
-┃
-┃ ✦ Query:
-┃   ${trunc(query, 50)}
-┃
-┃ ✦ Status: Searching...
-┃
-┃ ⏳ Please wait...
-┃
-┗━━❐
-⚡ ${botName}`
-                    },
-                    {
-                        quoted: msg
-                    }
-                );
-
-            /*
-            |--------------------------------------------------------------------------
-            | NOVA API
+            | API REQUEST
             |--------------------------------------------------------------------------
             */
 
@@ -173,17 +128,9 @@ module.exports = {
                 !response.data ||
                 !response.data.success
             ) {
-
-                await sock.sendMessage(
-                    jid,
-                    {
-                        delete: searching.key
-                    }
-                );
-
                 throw new Error(
                     response.data?.message ||
-                    'Failed to download song'
+                    'Song download failed'
                 );
             }
 
@@ -192,19 +139,6 @@ module.exports = {
 
             const download =
                 response.data.download;
-
-            /*
-            |--------------------------------------------------------------------------
-            | DELETE SEARCH MESSAGE
-            |--------------------------------------------------------------------------
-            */
-
-            await sock.sendMessage(
-                jid,
-                {
-                    delete: searching.key
-                }
-            );
 
             /*
             |--------------------------------------------------------------------------
@@ -231,17 +165,8 @@ module.exports = {
                             );
                     }
 
-                } catch (e) {
-
-                    thumbnailBuffer = null;
-                }
+                } catch {}
             }
-
-            /*
-            |--------------------------------------------------------------------------
-            | THUMBNAIL URL FALLBACK
-            |--------------------------------------------------------------------------
-            */
 
             if (
                 !thumbnailBuffer &&
@@ -266,36 +191,12 @@ module.exports = {
                             imgRes.data
                         );
 
-                } catch (e) {
-
-                    thumbnailBuffer = null;
-                }
+                } catch {}
             }
 
             /*
             |--------------------------------------------------------------------------
-            | FILE SIZE
-            |--------------------------------------------------------------------------
-            */
-
-            const sizeMB =
-                (
-                    song.size /
-                    1024 /
-                    1024
-                ).toFixed(2);
-
-            const sizeLabel =
-                sizeMB > 1
-                    ? `${sizeMB} MB`
-                    : `${(
-                        song.size /
-                        1024
-                    ).toFixed(1)} KB`;
-
-            /*
-            |--------------------------------------------------------------------------
-            | AUDIO BUFFER
+            | AUDIO
             |--------------------------------------------------------------------------
             */
 
@@ -309,18 +210,12 @@ module.exports = {
                         'base64'
                     );
 
-            } catch (e) {
+            } catch {
 
                 throw new Error(
-                    'Failed to decode audio data'
+                    'Failed to decode audio'
                 );
             }
-
-            /*
-            |--------------------------------------------------------------------------
-            | VALIDATE AUDIO
-            |--------------------------------------------------------------------------
-            */
 
             if (
                 !audioBuffer ||
@@ -328,7 +223,7 @@ module.exports = {
             ) {
 
                 throw new Error(
-                    'Downloaded file is too small'
+                    'Downloaded audio is invalid'
                 );
             }
 
@@ -350,12 +245,12 @@ module.exports = {
 
             /*
             |--------------------------------------------------------------------------
-            | CAPTION
+            | SIMPLE INFO
             |--------------------------------------------------------------------------
             */
 
             const caption =
-`┏━━❐ 🎵 NOW PLAYING ❐
+`┏━━❐ 🎵 PLAY MUSIC ❐
 ┃
 ┃ ✦ Title:
 ┃   ${trunc(song.title, 50)}
@@ -369,21 +264,12 @@ module.exports = {
 ┃ ✦ Quality:
 ┃   128kbps MP3
 ┃
-┃ ✦ Size:
-┃   ${sizeLabel}
-┃
-┃ ✦ Status:
-┃   ✅ Ready
-┃
 ┗━━❐
-
-🎶 ${botName}
-
-> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ`;
+🎶 ${botName}`;
 
             /*
             |--------------------------------------------------------------------------
-            | SEND THUMBNAIL
+            | SEND THUMBNAIL + INFO
             |--------------------------------------------------------------------------
             */
 
@@ -447,7 +333,7 @@ module.exports = {
                                 ),
 
                             body:
-                                "ᴘᴏᴡᴇʀᴇᴅ ʙʏ ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ",
+                                botName,
 
                             thumbnailUrl:
                                 song.thumbnail ||
@@ -464,71 +350,36 @@ module.exports = {
                 }
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | SUCCESS
-            |--------------------------------------------------------------------------
-            */
-
-            await sock.sendMessage(
-                jid,
-                {
-                    text:
-`┏━━❐ ✅ DOWNLOAD COMPLETE ❐
-┃
-┃ ✦ Song:
-┃   ${trunc(song.title, 50)}
-┃
-┃ ✦ Quality:
-┃   128kbps MP3
-┃
-┃ ✦ Status:
-┃   Successfully downloaded
-┃
-┗━━❐
-
-🎶 ${botName}
-
-> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ`
-                },
-                {
-                    quoted: msg
-                }
-            );
-
         } catch (error) {
-
-            /*
-            |--------------------------------------------------------------------------
-            | ERROR
-            |--------------------------------------------------------------------------
-            */
 
             console.error(
                 '[PLAY ERROR]',
                 error
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | SIMPLE ERROR
+            |--------------------------------------------------------------------------
+            */
+
             await sock.sendMessage(
                 jid,
                 {
                     text:
-`┏━━❐ ❌ PLAY MUSIC ❐
+`┏━━❐ ❌ PLAY ❐
 ┃
-┃ ✦ Query:
+┃ ✦ Song:
 ┃   ${trunc(query, 50)}
 ┃
 ┃ ✦ Status:
-┃   ❌ Failed
+┃   Failed
 ┃
 ┃ ✦ Reason:
 ┃   ${error.message || 'Unknown error'}
 ┃
 ┗━━❐
-
-🎶 ${botName}
-
-> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ`
+⚡ ${botName}`
                 },
                 {
                     quoted: msg
