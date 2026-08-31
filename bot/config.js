@@ -31,6 +31,7 @@
         WEATHER_API_KEY:  process.env.WEATHER_API_KEY  || '',
         NEWSAPI_API_KEY:  process.env.NEWSAPI_API_KEY  || '',
         RAPIDAPI_API_KEY: process.env.RAPIDAPI_API_KEY || '',
+        OMDB_API_KEY:     process.env.OMDB_API_KEY     || '',
 
         CREATORS,
     };
