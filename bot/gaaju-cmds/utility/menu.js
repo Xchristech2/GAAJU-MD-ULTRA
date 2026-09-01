@@ -127,6 +127,11 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'muteuser');
                 addCommandOnce(cmdNames, 'unmuteuser');
                 addCommandOnce(cmdNames, 'disappearmessage');
+
+                // NEW UTILITY COMMANDS
+                addCommandOnce(cmdNames, 'userid');
+                addCommandOnce(cmdNames, 'listblocked');
+                addCommandOnce(cmdNames, 'readreceipt');
             }
 
             // GROUP
@@ -136,6 +141,12 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'cancelkick');
                 addCommandOnce(cmdNames, 'introcard');
                 addCommandOnce(cmdNames, 'getgrouppic');
+
+                // NEW GROUP COMMANDS
+                addCommandOnce(cmdNames, 'disapproveall');
+                addCommandOnce(cmdNames, 'editsettings');
+                addCommandOnce(cmdNames, 'totalmembers');
+                addCommandOnce(cmdNames, 'opentime');
             }
 
             // CHANNEL
@@ -287,6 +298,11 @@ function getCategoryData() {
             addCommandOnce(names, 'muteuser');
             addCommandOnce(names, 'unmuteuser');
             addCommandOnce(names, 'disappearmessage');
+
+            // NEW UTILITY COMMANDS
+            addCommandOnce(names, 'userid');
+            addCommandOnce(names, 'listblocked');
+            addCommandOnce(names, 'readreceipt');
         }
 
         // GROUP
@@ -296,6 +312,12 @@ function getCategoryData() {
             addCommandOnce(names, 'cancelkick');
             addCommandOnce(names, 'introcard');
             addCommandOnce(names, 'getgrouppic');
+
+            // NEW GROUP COMMANDS
+            addCommandOnce(names, 'disapproveall');
+            addCommandOnce(names, 'editsettings');
+            addCommandOnce(names, 'totalmembers');
+            addCommandOnce(names, 'opentime');
         }
 
         // CHANNEL
