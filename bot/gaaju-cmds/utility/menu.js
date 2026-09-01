@@ -134,6 +134,7 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'listonline');
                 addCommandOnce(cmdNames, 'cancelkick');
                 addCommandOnce(cmdNames, 'introcard');
+                addCommandOnce(cmdNames, 'grouppic');
             }
 
             // CHANNEL
@@ -292,6 +293,7 @@ function getCategoryData() {
             addCommandOnce(names, 'listonline');
             addCommandOnce(names, 'cancelkick');
             addCommandOnce(names, 'introcard');
+            addCommandOnce(names, 'grouppic');
         }
 
         // CHANNEL
