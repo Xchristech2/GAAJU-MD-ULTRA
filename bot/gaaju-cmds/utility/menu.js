@@ -126,6 +126,7 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'tagcountry');
                 addCommandOnce(cmdNames, 'muteuser');
                 addCommandOnce(cmdNames, 'unmuteuser');
+                addCommandOnce(cmdNames, 'disappearmessage');
             }
 
             // GROUP
@@ -285,6 +286,7 @@ function getCategoryData() {
             addCommandOnce(names, 'tagcountry');
             addCommandOnce(names, 'muteuser');
             addCommandOnce(names, 'unmuteuser');
+            addCommandOnce(names, 'disappearmessage');
         }
 
         // GROUP
@@ -593,7 +595,7 @@ module.exports = {
                     cat,
                     cmdNames
                 } =
-                catData[i];
+                    catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
