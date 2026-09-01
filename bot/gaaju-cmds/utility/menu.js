@@ -134,7 +134,7 @@ function getCategoryData() {
                 addCommandOnce(cmdNames, 'listonline');
                 addCommandOnce(cmdNames, 'cancelkick');
                 addCommandOnce(cmdNames, 'introcard');
-                addCommandOnce(cmdNames, 'grouppic');
+                addCommandOnce(cmdNames, 'getgrouppic');
             }
 
             // CHANNEL
@@ -293,7 +293,7 @@ function getCategoryData() {
             addCommandOnce(names, 'listonline');
             addCommandOnce(names, 'cancelkick');
             addCommandOnce(names, 'introcard');
-            addCommandOnce(names, 'grouppic');
+            addCommandOnce(names, 'getgrouppic');
         }
 
         // CHANNEL
@@ -353,12 +353,6 @@ function getUptime() {
 
     return `${h}h ${m}m ${sec}s`;
 }
-
-/*
-|--------------------------------------------------------------------------
-| RAM
-|--------------------------------------------------------------------------
-*/
 
 function getUsage() {
     const memory =
@@ -491,7 +485,6 @@ module.exports = {
             const lines = [];
 
             // HEADER
-
             lines.push(
                 `┏━━❐✧ *${botName}* ✧❐`
             );
@@ -544,8 +537,6 @@ module.exports = {
 
             lines.push(readMore);
 
-            // SPLIT
-
             const mid1 =
                 Math.floor(
                     catData.length / 3
@@ -557,7 +548,6 @@ module.exports = {
                 );
 
             // PART 1
-
             for (
                 let i = 0;
                 i < mid1;
@@ -594,7 +584,6 @@ module.exports = {
             lines.push(readMore);
 
             // PART 2
-
             for (
                 let i = mid1;
                 i < mid2;
@@ -631,7 +620,6 @@ module.exports = {
             lines.push(readMore);
 
             // PART 3
-
             for (
                 let i = mid2;
                 i < catData.length;
@@ -641,7 +629,7 @@ module.exports = {
                     cat,
                     cmdNames
                 } =
-                catData[i];
+                    catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
@@ -668,7 +656,6 @@ module.exports = {
             lines.push(readMore);
 
             // FOOTER
-
             lines.push('');
             lines.push('');
 
@@ -687,18 +674,12 @@ module.exports = {
                 quoted: msg
             };
 
-            /*
-            |--------------------------------------------------------------------------
-            | MENU IMAGE
-            |--------------------------------------------------------------------------
-            */
-
+            // MENU IMAGE
             if (
                 fs.existsSync(
                     CUSTOM_MENU_IMAGE
                 )
             ) {
-
                 const img =
                     fs.readFileSync(
                         CUSTOM_MENU_IMAGE
@@ -717,12 +698,7 @@ module.exports = {
                 return;
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | TEXT-ONLY MENU
-            |--------------------------------------------------------------------------
-            */
-
+            // TEXT-ONLY MENU
             await sock.sendMessage(
                 chatId,
                 {
@@ -732,7 +708,6 @@ module.exports = {
             );
 
         } catch (error) {
-
             console.error(
                 '[MENU ERROR]',
                 error
