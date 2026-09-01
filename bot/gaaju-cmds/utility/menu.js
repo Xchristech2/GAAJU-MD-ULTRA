@@ -132,6 +132,9 @@ function getCategoryData() {
             if (cat === 'group') {
                 addCommandOnce(cmdNames, 'join');
                 addCommandOnce(cmdNames, 'listonline');
+
+                // ONLY NEW COMMAND
+                addCommandOnce(cmdNames, 'cancelkick');
             }
 
             // CHANNEL
@@ -288,6 +291,9 @@ function getCategoryData() {
         if (cat === 'group') {
             addCommandOnce(names, 'join');
             addCommandOnce(names, 'listonline');
+
+            // ONLY NEW COMMAND
+            addCommandOnce(names, 'cancelkick');
         }
 
         // CHANNEL
