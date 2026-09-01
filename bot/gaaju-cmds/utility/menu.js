@@ -132,9 +132,8 @@ function getCategoryData() {
             if (cat === 'group') {
                 addCommandOnce(cmdNames, 'join');
                 addCommandOnce(cmdNames, 'listonline');
-
-                // ONLY NEW COMMAND
                 addCommandOnce(cmdNames, 'cancelkick');
+                addCommandOnce(cmdNames, 'introcard');
             }
 
             // CHANNEL
@@ -291,9 +290,8 @@ function getCategoryData() {
         if (cat === 'group') {
             addCommandOnce(names, 'join');
             addCommandOnce(names, 'listonline');
-
-            // ONLY NEW COMMAND
             addCommandOnce(names, 'cancelkick');
+            addCommandOnce(names, 'introcard');
         }
 
         // CHANNEL
@@ -493,7 +491,7 @@ module.exports = {
             // HEADER
 
             lines.push(
-                `┏━━❐✧ ${botName} ✧❐`
+                `┏━━❐✧ *${botName}* ✧❐`
             );
 
             lines.push(
