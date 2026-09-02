@@ -21,6 +21,7 @@ module.exports = {
         const chatId = msg.key.remoteJid;
         const botName = getBotName();
 
+        // Owner reaction
         try {
             await sock.sendMessage(chatId, {
                 react: {
@@ -30,60 +31,29 @@ module.exports = {
             });
         } catch {}
 
-        const text = `
-┏━━❐ *👑 CHRIS GAAJU* ❐━━
-
+        const text =
+`┏━━❐ *👑 GAAJU TECH* ❐━━
 ┃✦ *Name:* Chris Gaaju
+┃✦ *Number:* +2348069675806
 ┃✦ *Role:* Bot Developer & Owner 👨‍💻
 ┃✦ *Project:* GAAJU-MD-ULTRA 🤖
 ┃✦ *Brand:* Gaaju Tech 🚀
 ┃
-┃✦ *🎤 MUSIC*
-┃
-┃✦ *Artist Name:* Young Gaaju
-┃✦ *Status:* Upcoming Artist 🔥
-┃
-┃🙏 I'm praying to God Almighty to guide me,
-┃give me strength, wisdom and the opportunity
-┃to become a successful artist. ❤️🎤
-┃
-┃✦ *Developer:* Chris Gaaju
-┃✦ *Bot:* GAAJU-MD-ULTRA
-┃
+┃✦ *Developer:* Xchris tech 
 ┗━━❐ *${botName}* ❐
 
-> ⚡ Powered by Chris Gaaju 🔥
-`;
+> ⚡ Powered by Chris Gaaju 🔥`;
 
         try {
-            // Send owner information
             await sock.sendMessage(
                 chatId,
                 {
-                    text: text.trim()
+                    text: text
                 },
                 {
                     quoted: msg
                 }
             );
-
-            // Send phone number as a separate contact
-            await sock.sendMessage(chatId, {
-                contacts: {
-                    displayName: 'Chris Gaaju',
-                    contacts: [
-                        {
-                            vcard:
-                                'BEGIN:VCARD\\n' +
-                                'VERSION:3.0\\n' +
-                                'FN:Chris Gaaju\\n' +
-                                'TEL;type=CELL;type=VOICE;waid=2348069675806:+2348069675806\\n' +
-                                'END:VCARD'
-                        }
-                    ]
-                }
-            });
-
         } catch (error) {
             console.error(
                 '[GAAJU COMMAND ERROR]',
