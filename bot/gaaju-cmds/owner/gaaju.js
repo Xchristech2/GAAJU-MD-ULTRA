@@ -7,8 +7,7 @@ module.exports = {
 
     aliases: ['owner'],
 
-    description:
-        'Show information about Chris Gaaju',
+    description: 'Show information about Chris Gaaju',
 
     category: 'owner',
 
@@ -19,68 +18,45 @@ module.exports = {
         prefix,
         ctx
     ) {
-        const chatId =
-            msg.key.remoteJid;
-
-        const botName =
-            getBotName();
+        const chatId = msg.key.remoteJid;
+        const botName = getBotName();
 
         try {
-            await sock.sendMessage(
-                chatId,
-                {
-                    react: {
-                        text: '👑',
-                        key: msg.key
-                    }
+            await sock.sendMessage(chatId, {
+                react: {
+                    text: '👑',
+                    key: msg.key
                 }
-            );
+            });
         } catch {}
 
         const text = `
-# 👑 ABOUT ME — CHRIS GAAJU
+┏━━❐ *👑 CHRIS GAAJU* ❐━━
 
-Hello everyone! 👋🔥
-
-My name is **Bethel**, also known as **Chris Gaaju**, the founder and developer behind **GAAJU-MD-ULTRA** and other projects. 🤖💻
-
-I'm a **Bot Developer**, proudly supported by **Gaaju Tech** and approved by **Xchristech2**. I'm passionate about technology, WhatsApp bot development, coding, and building powerful tools for the community. 🚀
-
-### 👤 PERSONAL INFORMATION
-
-- **Name:** Bethel
-- **Known As:** Chris Gaaju
-- **Age:** 18+
-- **Origin:** Port Harcourt, Nigeria 🇳🇬
-- **State:** Imo State
-- **Build:** Tall
-- **Relationship:** Single boy 😎❤️
-- **Occupation:** Bot Developer & Creator 👨‍💻
-
-### 🤖 MY WORK
-
-I am the developer and owner of **GAAJU-MD-ULTRA**, along with other projects and bot systems. My goal is to keep creating, improving, and bringing new technology to the community. 🔥
-
-### 🎵 MY DREAM — BECOMING AN ARTIST
-
-Beyond technology and bot development, I have another big dream in my heart — **becoming a successful music artist**. 🎤🔥
-
-I'm praying to **God Almighty** to guide me, give me strength, wisdom, talent, and the opportunity to achieve my dreams. 🙏❤️
-
-I believe that with **God, consistency, hard work, patience, and dedication**, my dream of becoming an artist will one day become reality. 🎶🚀
-
-From **coding and building bots** to **making music and chasing my dreams**, I'm just getting started. One day, I hope people will know **Chris Gaaju** not only as a developer, but also as an artist. 🎤👑
-
-**Founder:** Chris Gaaju  
-**Supported by:** Gaaju Tech  
-**Approved by:** Xchristech2
-
-> 🙏 One dream. One journey. One day, I'll make it.
+┃✦ *Name:* Chris Gaaju
+┃✦ *Role:* Bot Developer & Owner 👨‍💻
+┃✦ *Project:* GAAJU-MD-ULTRA 🤖
+┃✦ *Brand:* Gaaju Tech 🚀
+┃
+┃✦ *🎤 MUSIC*
+┃
+┃✦ *Artist Name:* Young Gaaju
+┃✦ *Status:* Upcoming Artist 🔥
+┃
+┃🙏 I'm praying to God Almighty to guide me,
+┃give me strength, wisdom and the opportunity
+┃to become a successful artist. ❤️🎤
+┃
+┃✦ *Developer:* Chris Gaaju
+┃✦ *Bot:* GAAJU-MD-ULTRA
+┃
+┗━━❐ *${botName}* ❐
 
 > ⚡ Powered by Chris Gaaju 🔥
 `;
 
         try {
+            // Send owner information
             await sock.sendMessage(
                 chatId,
                 {
@@ -90,6 +66,24 @@ From **coding and building bots** to **making music and chasing my dreams**, I'm
                     quoted: msg
                 }
             );
+
+            // Send phone number as a separate contact
+            await sock.sendMessage(chatId, {
+                contacts: {
+                    displayName: 'Chris Gaaju',
+                    contacts: [
+                        {
+                            vcard:
+                                'BEGIN:VCARD\\n' +
+                                'VERSION:3.0\\n' +
+                                'FN:Chris Gaaju\\n' +
+                                'TEL;type=CELL;type=VOICE;waid=2348069675806:+2348069675806\\n' +
+                                'END:VCARD'
+                        }
+                    ]
+                }
+            });
+
         } catch (error) {
             console.error(
                 '[GAAJU COMMAND ERROR]',
