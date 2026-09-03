@@ -76,11 +76,78 @@ function addCommandOnce(list, command) {
     }
 }
 
-function getCategoryData() {
-    const liveRegistry = globalThis._botCommandCategories;
+function addForcedCommands(cat, cmdNames) {
 
-    if (liveRegistry && liveRegistry.size > 0) {
-        const allCats = [...liveRegistry.keys()];
+    // OWNER
+    if (cat === 'owner') {
+        addCommandOnce(cmdNames, 'block');
+        addCommandOnce(cmdNames, 'unblock');
+        addCommandOnce(cmdNames, 'gaaju');
+    }
+
+    // UTILITY
+    if (cat === 'utility') {
+        addCommandOnce(cmdNames, 'botrules');
+        addCommandOnce(cmdNames, 'support');
+        addCommandOnce(cmdNames, 'deploy');
+        addCommandOnce(cmdNames, 'menuimage');
+        addCommandOnce(cmdNames, 'date');
+        addCommandOnce(cmdNames, 'code');
+
+        // EXTRA UTILITY COMMANDS
+        addCommandOnce(cmdNames, 'fakenumber');
+        addCommandOnce(cmdNames, 'receivecode');
+        addCommandOnce(cmdNames, 'tagcountry');
+        addCommandOnce(cmdNames, 'muteuser');
+        addCommandOnce(cmdNames, 'unmuteuser');
+        addCommandOnce(cmdNames, 'disappearmessage');
+
+        // NEW UTILITY COMMANDS
+        addCommandOnce(cmdNames, 'userid');
+        addCommandOnce(cmdNames, 'listblocked');
+        addCommandOnce(cmdNames, 'readreceipt');
+    }
+
+    // GROUP
+    if (cat === 'group') {
+        addCommandOnce(cmdNames, 'join');
+        addCommandOnce(cmdNames, 'listonline');
+        addCommandOnce(cmdNames, 'cancelkick');
+        addCommandOnce(cmdNames, 'introcard');
+        addCommandOnce(cmdNames, 'getgrouppic');
+
+        // NEW GROUP COMMANDS
+        addCommandOnce(cmdNames, 'disapproveall');
+        addCommandOnce(cmdNames, 'editsettings');
+        addCommandOnce(cmdNames, 'totalmembers');
+        addCommandOnce(cmdNames, 'opentime');
+
+        // NEW
+        addCommandOnce(cmdNames, 'closetime');
+    }
+
+    // CHANNEL
+    if (cat === 'channel') {
+        addCommandOnce(cmdNames, 'idch');
+    }
+
+    // DOWNLOAD
+    if (cat === 'download') {
+        addCommandOnce(cmdNames, 'video');
+    }
+}
+
+function getCategoryData() {
+    const liveRegistry =
+        globalThis._botCommandCategories;
+
+    if (
+        liveRegistry &&
+        liveRegistry.size > 0
+    ) {
+        const allCats = [
+            ...liveRegistry.keys()
+        ];
 
         const ordered = [
             ...CATEGORY_ORDER.filter(c =>
@@ -98,70 +165,24 @@ function getCategoryData() {
         let totalCmds = 0;
 
         for (const cat of ordered) {
+
             const cmdNames = [
                 ...new Set(
                     liveRegistry.get(cat) || []
                 )
             ];
 
-            // OWNER
-            if (cat === 'owner') {
-                addCommandOnce(cmdNames, 'block');
-                addCommandOnce(cmdNames, 'unblock');
-                addCommandOnce(cmdNames, 'gaaju');
+            addForcedCommands(
+                cat,
+                cmdNames
+            );
+
+            if (!cmdNames.length) {
+                continue;
             }
 
-            // UTILITY
-            if (cat === 'utility') {
-                addCommandOnce(cmdNames, 'botrules');
-                addCommandOnce(cmdNames, 'support');
-                addCommandOnce(cmdNames, 'deploy');
-                addCommandOnce(cmdNames, 'menuimage');
-                addCommandOnce(cmdNames, 'date');
-                addCommandOnce(cmdNames, 'code');
-
-                // EXTRA UTILITY COMMANDS
-                addCommandOnce(cmdNames, 'fakenumber');
-                addCommandOnce(cmdNames, 'receivecode');
-                addCommandOnce(cmdNames, 'tagcountry');
-                addCommandOnce(cmdNames, 'muteuser');
-                addCommandOnce(cmdNames, 'unmuteuser');
-                addCommandOnce(cmdNames, 'disappearmessage');
-
-                // NEW UTILITY COMMANDS
-                addCommandOnce(cmdNames, 'userid');
-                addCommandOnce(cmdNames, 'listblocked');
-                addCommandOnce(cmdNames, 'readreceipt');
-            }
-
-            // GROUP
-            if (cat === 'group') {
-                addCommandOnce(cmdNames, 'join');
-                addCommandOnce(cmdNames, 'listonline');
-                addCommandOnce(cmdNames, 'cancelkick');
-                addCommandOnce(cmdNames, 'introcard');
-                addCommandOnce(cmdNames, 'getgrouppic');
-
-                // NEW GROUP COMMANDS
-                addCommandOnce(cmdNames, 'disapproveall');
-                addCommandOnce(cmdNames, 'editsettings');
-                addCommandOnce(cmdNames, 'totalmembers');
-                addCommandOnce(cmdNames, 'opentime');
-            }
-
-            // CHANNEL
-            if (cat === 'channel') {
-                addCommandOnce(cmdNames, 'idch');
-            }
-
-            // DOWNLOAD
-            if (cat === 'download') {
-                addCommandOnce(cmdNames, 'video');
-            }
-
-            if (!cmdNames.length) continue;
-
-            totalCmds += cmdNames.length;
+            totalCmds +=
+                cmdNames.length;
 
             catData.push({
                 cat,
@@ -181,15 +202,22 @@ function getCategoryData() {
         allCats = fs
             .readdirSync(CMDS_DIR)
             .filter(item => {
+
                 try {
                     return fs.statSync(
-                        path.join(CMDS_DIR, item)
+                        path.join(
+                            CMDS_DIR,
+                            item
+                        )
                     ).isDirectory();
+
                 } catch {
                     return false;
                 }
             });
+
     } catch (error) {
+
         console.error(
             '[MENU] Failed to read commands directory:',
             error
@@ -217,20 +245,29 @@ function getCategoryData() {
     let totalCmds = 0;
 
     for (const cat of ordered) {
+
         const names = [];
 
         try {
+
             const categoryPath =
-                path.join(CMDS_DIR, cat);
+                path.join(
+                    CMDS_DIR,
+                    cat
+                );
 
             const files =
-                fs.readdirSync(categoryPath)
-                    .filter(file =>
-                        file.endsWith('.js')
-                    );
+                fs.readdirSync(
+                    categoryPath
+                )
+                .filter(file =>
+                    file.endsWith('.js')
+                );
 
             for (const file of files) {
+
                 try {
+
                     const filePath =
                         path.join(
                             categoryPath,
@@ -250,7 +287,10 @@ function getCategoryData() {
                                 ? [raw]
                                 : [];
 
-                    for (const cmd of list) {
+                    for (
+                        const cmd of list
+                    ) {
+
                         if (
                             cmd &&
                             cmd.name
@@ -261,78 +301,35 @@ function getCategoryData() {
                             );
                         }
                     }
+
                 } catch (error) {
+
                     console.error(
                         `[MENU] Failed loading ${cat}/${file}:`,
                         error.message
                     );
                 }
             }
+
         } catch (error) {
+
             console.error(
                 `[MENU] Failed reading category ${cat}:`,
                 error.message
             );
         }
 
-        // OWNER
-        if (cat === 'owner') {
-            addCommandOnce(names, 'block');
-            addCommandOnce(names, 'unblock');
-            addCommandOnce(names, 'gaaju');
+        addForcedCommands(
+            cat,
+            names
+        );
+
+        if (!names.length) {
+            continue;
         }
 
-        // UTILITY
-        if (cat === 'utility') {
-            addCommandOnce(names, 'botrules');
-            addCommandOnce(names, 'support');
-            addCommandOnce(names, 'deploy');
-            addCommandOnce(names, 'menuimage');
-            addCommandOnce(names, 'date');
-            addCommandOnce(names, 'code');
-
-            // EXTRA UTILITY COMMANDS
-            addCommandOnce(names, 'fakenumber');
-            addCommandOnce(names, 'receivecode');
-            addCommandOnce(names, 'tagcountry');
-            addCommandOnce(names, 'muteuser');
-            addCommandOnce(names, 'unmuteuser');
-            addCommandOnce(names, 'disappearmessage');
-
-            // NEW UTILITY COMMANDS
-            addCommandOnce(names, 'userid');
-            addCommandOnce(names, 'listblocked');
-            addCommandOnce(names, 'readreceipt');
-        }
-
-        // GROUP
-        if (cat === 'group') {
-            addCommandOnce(names, 'join');
-            addCommandOnce(names, 'listonline');
-            addCommandOnce(names, 'cancelkick');
-            addCommandOnce(names, 'introcard');
-            addCommandOnce(names, 'getgrouppic');
-
-            // NEW GROUP COMMANDS
-            addCommandOnce(names, 'disapproveall');
-            addCommandOnce(names, 'editsettings');
-            addCommandOnce(names, 'totalmembers');
-            addCommandOnce(names, 'opentime');
-        }
-
-        // CHANNEL
-        if (cat === 'channel') {
-            addCommandOnce(names, 'idch');
-        }
-
-        // DOWNLOAD
-        if (cat === 'download') {
-            addCommandOnce(names, 'video');
-        }
-
-        if (!names.length) continue;
-
-        totalCmds += names.length;
+        totalCmds +=
+            names.length;
 
         catData.push({
             cat,
@@ -347,6 +344,7 @@ function getCategoryData() {
 }
 
 function getPlatform() {
+
     if (process.env.DYNO) {
         return 'Heroku';
     }
@@ -363,14 +361,21 @@ function getPlatform() {
 }
 
 function getUptime() {
+
     const s =
-        Math.floor(process.uptime());
+        Math.floor(
+            process.uptime()
+        );
 
     const h =
-        Math.floor(s / 3600);
+        Math.floor(
+            s / 3600
+        );
 
     const m =
-        Math.floor((s % 3600) / 60);
+        Math.floor(
+            (s % 3600) / 60
+        );
 
     const sec =
         s % 60;
@@ -379,6 +384,7 @@ function getUptime() {
 }
 
 function getUsage() {
+
     const memory =
         process.memoryUsage();
 
@@ -413,7 +419,11 @@ function getUsage() {
 }
 
 function getSpeed(msg) {
-    if (msg && msg._botReceivedAt) {
+
+    if (
+        msg &&
+        msg._botReceivedAt
+    ) {
         return (
             Date.now() -
             msg._botReceivedAt
@@ -424,6 +434,7 @@ function getSpeed(msg) {
 }
 
 function getBar(percent) {
+
     const total = 10;
 
     const filled =
@@ -444,7 +455,48 @@ function getBar(percent) {
     );
 }
 
+function buildCategoryBlock(
+    label,
+    cmdNames,
+    prefix
+) {
+
+    const block = [];
+
+    // Bigger category header
+    block.push('');
+    block.push(
+        `┏━━━━━━━━❐ ${label} ❐━━━━━━━━┓`
+    );
+
+    block.push(
+        `┃`
+    );
+
+    for (
+        const cmd of cmdNames
+    ) {
+
+        block.push(
+            `┃   ✦ ${prefix}${cmd}`
+        );
+
+        // Extra spacing makes the menu
+        // look bigger and easier to read.
+        block.push(
+            `┃`
+        );
+    }
+
+    block.push(
+        `┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛`
+    );
+
+    return block;
+}
+
 module.exports = {
+
     name: 'menu',
 
     aliases: [
@@ -466,7 +518,9 @@ module.exports = {
         prefix,
         ctx
     ) {
+
         try {
+
             const chatId =
                 msg.key.remoteJid;
 
@@ -508,58 +562,70 @@ module.exports = {
 
             const lines = [];
 
+            // =====================================
             // HEADER
+            // =====================================
+
             lines.push(
-                `┏━━❐✧ *${botName}* ✧❐`
+                `┏━━━━━━━━❐✧ *${botName}* ✧❐━━━━━━━━┓`
+            );
+
+            lines.push(`┃`);
+            lines.push(
+                `┃  ✦ Prefix   : [${p}]`
             );
 
             lines.push(
-                `┃✦ Prefix: [${p}]`
+                `┃  ✦ Owner    : ${owner}`
             );
 
             lines.push(
-                `┃✦ Owner: ${owner}`
+                `┃  ✦ Mode     : ${mode}`
             );
 
             lines.push(
-                `┃✦ Mode: ${mode}`
+                `┃  ✦ Platform : ${getPlatform()}`
             );
 
             lines.push(
-                `┃✦ Platform: ${getPlatform()}`
+                `┃  ✦ Speed    : ${getSpeed(msg)}`
             );
 
             lines.push(
-                `┃✦ Speed: ${getSpeed(msg)}`
+                `┃  ✦ Uptime   : ${getUptime()}`
             );
 
             lines.push(
-                `┃✦ Uptime: ${getUptime()}`
+                `┃  ✦ Version  : ${BOT_VERSION}`
             );
 
             lines.push(
-                `┃✦ Version: ${BOT_VERSION}`
+                `┃  ✦ Usage    : ${usage.text}`
             );
 
             lines.push(
-                `┃✦ Usage: ${usage.text}`
-            );
-
-            lines.push(
-                `┃✦ RAM: ${getBar(
+                `┃  ✦ RAM      : ${getBar(
                     usage.percent
                 )}`
             );
 
             lines.push(
-                `┃✦ Commands: ${totalCmds}`
+                `┃  ✦ Commands : ${totalCmds}`
+            );
+
+            lines.push(`┃`);
+
+            lines.push(
+                `┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛`
             );
 
             lines.push(
-                `┗━━❐`
+                readMore
             );
 
-            lines.push(readMore);
+            // =====================================
+            // SPLIT INTO 3 PARTS
+            // =====================================
 
             const mid1 =
                 Math.floor(
@@ -571,12 +637,16 @@ module.exports = {
                     catData.length * 2 / 3
                 );
 
+            // =====================================
             // PART 1
+            // =====================================
+
             for (
                 let i = 0;
                 i < mid1;
                 i++
             ) {
+
                 const {
                     cat,
                     cmdNames
@@ -588,31 +658,28 @@ module.exports = {
                     `📁 ${cat.toUpperCase()}`;
 
                 lines.push(
-                    `\n┏━━❐ ${label} ❐`
-                );
-
-                for (
-                    const cmd
-                    of cmdNames
-                ) {
-                    lines.push(
-                        `┃✦ ${p}${cmd}`
-                    );
-                }
-
-                lines.push(
-                    `┗━━❐`
+                    ...buildCategoryBlock(
+                        label,
+                        cmdNames,
+                        p
+                    )
                 );
             }
 
-            lines.push(readMore);
+            lines.push(
+                readMore
+            );
 
+            // =====================================
             // PART 2
+            // =====================================
+
             for (
                 let i = mid1;
                 i < mid2;
                 i++
             ) {
+
                 const {
                     cat,
                     cmdNames
@@ -624,31 +691,28 @@ module.exports = {
                     `📁 ${cat.toUpperCase()}`;
 
                 lines.push(
-                    `\n┏━━❐ ${label} ❐`
-                );
-
-                for (
-                    const cmd
-                    of cmdNames
-                ) {
-                    lines.push(
-                        `┃✦ ${p}${cmd}`
-                    );
-                }
-
-                lines.push(
-                    `┗━━❐`
+                    ...buildCategoryBlock(
+                        label,
+                        cmdNames,
+                        p
+                    )
                 );
             }
 
-            lines.push(readMore);
+            lines.push(
+                readMore
+            );
 
+            // =====================================
             // PART 3
+            // =====================================
+
             for (
                 let i = mid2;
                 i < catData.length;
                 i++
             ) {
+
                 const {
                     cat,
                     cmdNames
@@ -660,35 +724,30 @@ module.exports = {
                     `📁 ${cat.toUpperCase()}`;
 
                 lines.push(
-                    `\n┏━━❐ ${label} ❐`
-                );
-
-                for (
-                    const cmd
-                    of cmdNames
-                ) {
-                    lines.push(
-                        `┃✦ ${p}${cmd}`
-                    );
-                }
-
-                lines.push(
-                    `┗━━❐`
+                    ...buildCategoryBlock(
+                        label,
+                        cmdNames,
+                        p
+                    )
                 );
             }
 
-            lines.push(readMore);
-
-            // FOOTER
-            lines.push('');
-            lines.push('');
-
             lines.push(
-                ` ${botName}`
+                readMore
             );
 
+            // =====================================
+            // FOOTER
+            // =====================================
+
+            lines.push('');
+            lines.push('');
             lines.push(
-                '> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ'
+                `          ✦ ${botName} ✦`
+            );
+            lines.push('');
+            lines.push(
+                `> ⚡ Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ 🔥`
             );
 
             const caption =
@@ -698,12 +757,16 @@ module.exports = {
                 quoted: msg
             };
 
+            // =====================================
             // MENU IMAGE
+            // =====================================
+
             if (
                 fs.existsSync(
                     CUSTOM_MENU_IMAGE
                 )
             ) {
+
                 const img =
                     fs.readFileSync(
                         CUSTOM_MENU_IMAGE
@@ -722,7 +785,10 @@ module.exports = {
                 return;
             }
 
-            // TEXT-ONLY MENU
+            // =====================================
+            // TEXT ONLY
+            // =====================================
+
             await sock.sendMessage(
                 chatId,
                 {
@@ -732,12 +798,14 @@ module.exports = {
             );
 
         } catch (error) {
+
             console.error(
                 '[MENU ERROR]',
                 error
             );
 
             try {
+
                 await sock.sendMessage(
                     msg.key.remoteJid,
                     {
@@ -748,6 +816,7 @@ module.exports = {
                         quoted: msg
                     }
                 );
+
             } catch {}
         }
     }
