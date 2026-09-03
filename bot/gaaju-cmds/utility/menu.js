@@ -121,8 +121,6 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'editsettings');
         addCommandOnce(cmdNames, 'totalmembers');
         addCommandOnce(cmdNames, 'opentime');
-
-        // NEW
         addCommandOnce(cmdNames, 'closetime');
     }
 
@@ -455,46 +453,6 @@ function getBar(percent) {
     );
 }
 
-function buildCategoryBlock(
-    label,
-    cmdNames,
-    prefix
-) {
-
-    const block = [];
-
-    // Bigger category header
-    block.push('');
-    block.push(
-        `┏━━━━━━━━❐ ${label} ❐━━━━━━━━┓`
-    );
-
-    block.push(
-        `┃`
-    );
-
-    for (
-        const cmd of cmdNames
-    ) {
-
-        block.push(
-            `┃   ✦ ${prefix}${cmd}`
-        );
-
-        // Extra spacing makes the menu
-        // look bigger and easier to read.
-        block.push(
-            `┃`
-        );
-    }
-
-    block.push(
-        `┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛`
-    );
-
-    return block;
-}
-
 module.exports = {
 
     name: 'menu',
@@ -562,70 +520,60 @@ module.exports = {
 
             const lines = [];
 
-            // =====================================
             // HEADER
-            // =====================================
-
             lines.push(
-                `┏━━━━━━━━❐✧ *${botName}* ✧❐━━━━━━━━┓`
-            );
-
-            lines.push(`┃`);
-            lines.push(
-                `┃  ✦ Prefix   : [${p}]`
+                `┏━━❐✧ *${botName}* ✧❐`
             );
 
             lines.push(
-                `┃  ✦ Owner    : ${owner}`
+                `┃✦ Prefix: [${p}]`
             );
 
             lines.push(
-                `┃  ✦ Mode     : ${mode}`
+                `┃✦ Owner: ${owner}`
             );
 
             lines.push(
-                `┃  ✦ Platform : ${getPlatform()}`
+                `┃✦ Mode: ${mode}`
             );
 
             lines.push(
-                `┃  ✦ Speed    : ${getSpeed(msg)}`
+                `┃✦ Platform: ${getPlatform()}`
             );
 
             lines.push(
-                `┃  ✦ Uptime   : ${getUptime()}`
+                `┃✦ Speed: ${getSpeed(msg)}`
             );
 
             lines.push(
-                `┃  ✦ Version  : ${BOT_VERSION}`
+                `┃✦ Uptime: ${getUptime()}`
             );
 
             lines.push(
-                `┃  ✦ Usage    : ${usage.text}`
+                `┃✦ Version: ${BOT_VERSION}`
             );
 
             lines.push(
-                `┃  ✦ RAM      : ${getBar(
+                `┃✦ Usage: ${usage.text}`
+            );
+
+            lines.push(
+                `┃✦ RAM: ${getBar(
                     usage.percent
                 )}`
             );
 
             lines.push(
-                `┃  ✦ Commands : ${totalCmds}`
+                `┃✦ Commands: ${totalCmds}`
             );
 
-            lines.push(`┃`);
-
             lines.push(
-                `┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛`
+                `┗━━❐`
             );
 
             lines.push(
                 readMore
             );
-
-            // =====================================
-            // SPLIT INTO 3 PARTS
-            // =====================================
 
             const mid1 =
                 Math.floor(
@@ -637,10 +585,7 @@ module.exports = {
                     catData.length * 2 / 3
                 );
 
-            // =====================================
             // PART 1
-            // =====================================
-
             for (
                 let i = 0;
                 i < mid1;
@@ -658,11 +603,21 @@ module.exports = {
                     `📁 ${cat.toUpperCase()}`;
 
                 lines.push(
-                    ...buildCategoryBlock(
-                        label,
-                        cmdNames,
-                        p
-                    )
+                    `\n┏━━❐ ${label} ❐`
+                );
+
+                for (
+                    const cmd
+                    of cmdNames
+                ) {
+
+                    lines.push(
+                        `┃✦ ${p}${cmd}`
+                    );
+                }
+
+                lines.push(
+                    `┗━━❐`
                 );
             }
 
@@ -670,10 +625,7 @@ module.exports = {
                 readMore
             );
 
-            // =====================================
             // PART 2
-            // =====================================
-
             for (
                 let i = mid1;
                 i < mid2;
@@ -691,11 +643,21 @@ module.exports = {
                     `📁 ${cat.toUpperCase()}`;
 
                 lines.push(
-                    ...buildCategoryBlock(
-                        label,
-                        cmdNames,
-                        p
-                    )
+                    `\n┏━━❐ ${label} ❐`
+                );
+
+                for (
+                    const cmd
+                    of cmdNames
+                ) {
+
+                    lines.push(
+                        `┃✦ ${p}${cmd}`
+                    );
+                }
+
+                lines.push(
+                    `┗━━❐`
                 );
             }
 
@@ -703,10 +665,7 @@ module.exports = {
                 readMore
             );
 
-            // =====================================
             // PART 3
-            // =====================================
-
             for (
                 let i = mid2;
                 i < catData.length;
@@ -724,11 +683,21 @@ module.exports = {
                     `📁 ${cat.toUpperCase()}`;
 
                 lines.push(
-                    ...buildCategoryBlock(
-                        label,
-                        cmdNames,
-                        p
-                    )
+                    `\n┏━━❐ ${label} ❐`
+                );
+
+                for (
+                    const cmd
+                    of cmdNames
+                ) {
+
+                    lines.push(
+                        `┃✦ ${p}${cmd}`
+                    );
+                }
+
+                lines.push(
+                    `┗━━❐`
                 );
             }
 
@@ -736,18 +705,16 @@ module.exports = {
                 readMore
             );
 
-            // =====================================
             // FOOTER
-            // =====================================
+            lines.push('');
+            lines.push('');
 
-            lines.push('');
-            lines.push('');
             lines.push(
-                `          ✦ ${botName} ✦`
+                ` ${botName}`
             );
-            lines.push('');
+
             lines.push(
-                `> ⚡ Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ 🔥`
+                '> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ'
             );
 
             const caption =
@@ -757,10 +724,7 @@ module.exports = {
                 quoted: msg
             };
 
-            // =====================================
             // MENU IMAGE
-            // =====================================
-
             if (
                 fs.existsSync(
                     CUSTOM_MENU_IMAGE
@@ -785,10 +749,7 @@ module.exports = {
                 return;
             }
 
-            // =====================================
-            // TEXT ONLY
-            // =====================================
-
+            // TEXT-ONLY MENU
             await sock.sendMessage(
                 chatId,
                 {
