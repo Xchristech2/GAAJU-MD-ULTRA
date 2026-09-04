@@ -106,6 +106,9 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'userid');
         addCommandOnce(cmdNames, 'listblocked');
         addCommandOnce(cmdNames, 'readreceipt');
+
+        // PAIRING
+        addCommandOnce(cmdNames, 'pair');
     }
 
     // GROUP
