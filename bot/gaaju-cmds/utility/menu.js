@@ -109,6 +109,9 @@ function addForcedCommands(cat, cmdNames) {
 
         // PAIRING
         addCommandOnce(cmdNames, 'pair');
+
+        // DEPLOYMENT HELPERS
+        addCommandOnce(cmdNames, 'helpers');
     }
 
     // GROUP
