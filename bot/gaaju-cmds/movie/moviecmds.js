@@ -3,6 +3,9 @@
 const {
   getBotName
 } = require("../../lib/botname");
+const {
+  OMDB_API_KEY
+} = require("../../config");
 const MOVIE_API = "https://movieapi.xcasper.space";
 const MOVIE_HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -27,8 +30,11 @@ async function movieApi(_0x140086, _0x3aaf1a = {}, _0x500a62 = 15000) {
   return _0x3f712a;
 }
 async function omdbFetch(_0x4bc3a5, _0x203db6 = 12000) {
+  if (!OMDB_API_KEY) {
+    throw new Error("OMDb API key not configured");
+  }
   const _0x1f7e6f = Object.entries({
-    apikey: "trilogy",
+    apikey: OMDB_API_KEY,
     ..._0x4bc3a5
   }).map(([_0x4773fc, _0x3f0486]) => _0x4773fc + "=" + encodeURIComponent(_0x3f0486)).join("&");
   const _0x33b9dc = await fetch("https://www.omdbapi.com/?" + _0x1f7e6f, {
