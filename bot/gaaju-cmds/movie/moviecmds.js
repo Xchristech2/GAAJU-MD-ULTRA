@@ -10,6 +10,14 @@ const MOVIE_HEADERS = {
   Origin: "https://movieapi.xcasper.space",
   Referer: "https://movieapi.xcasper.space/"
 };
+const MOVIE_COOLDOWN_MS = 5000;
+const _movieCooldowns = new Map();
+function _isMovieRateLimited(sender) {
+  const now = Date.now();
+  if (now - (_movieCooldowns.get(sender) || 0) < MOVIE_COOLDOWN_MS) return true;
+  _movieCooldowns.set(sender, now);
+  return false;
+}
 async function movieApi(_0x140086, _0x3aaf1a = {}, _0x500a62 = 15000) {
   const _0x1324cd = new URLSearchParams(_0x3aaf1a).toString();
   const _0x258097 = "" + MOVIE_API + _0x140086 + (_0x1324cd ? "?" + _0x1324cd : "");
@@ -94,6 +102,7 @@ const movieCmd = {
     const _0x4ffd87 = _0x18326d.key.remoteJid;
     const _0x4a55cf = getBotName();
     const _0x4babbb = _0x13c118.join(" ").trim();
+    if (_isMovieRateLimited(_0x18326d.key.participant || _0x4ffd87)) return;
     if (!_0x4babbb) {
       return _0x2ac4ef.sendMessage(_0x4ffd87, {
         text: "╔═|〔  🎬 MOVIE INFO 〕\n║\n║ ▸ *Usage*   : " + _0x4a7c80 + "movie <title>\n║ ▸ *Example* : " + _0x4a7c80 + "movie avengers endgame\n║ ▸ *Tip*     : Use " + _0x4a7c80 + "trailer <title> for the trailer\n║\n╚═|〔 " + _0x4a55cf + " 〕"
@@ -156,6 +165,7 @@ const mboxCmd = {
     const _0xe44b20 = _0x582176.key.remoteJid;
     const _0x483a49 = getBotName();
     const _0x4abfb2 = _0x45f3d3.join(" ").trim();
+    if (_isMovieRateLimited(_0x582176.key.participant || _0xe44b20)) return;
     if (!_0x4abfb2) {
       return _0x2888bd.sendMessage(_0xe44b20, {
         text: "╔═|〔  🎥 MOVIE SEARCH 〕\n║\n║ ▸ *Usage*   : " + _0x5682bf + "mbox <title>\n║ ▸ *Example* : " + _0x5682bf + "mbox avengers\n║ ▸ *Tip*     : " + _0x5682bf + "movie <title> for full details\n║\n╚═|〔 " + _0x483a49 + " 〕"
@@ -197,6 +207,7 @@ const trendingCmd = {
   async execute(_0x3a4c22, _0x3d113d, _0x1990fc, _0x119058) {
     const _0x1727e9 = _0x3d113d.key.remoteJid;
     const _0x1d05c4 = getBotName();
+    if (_isMovieRateLimited(_0x3d113d.key.participant || _0x1727e9)) return;
     try {
       await _0x3a4c22.sendMessage(_0x1727e9, {
         react: {
@@ -233,6 +244,7 @@ const hotCmd = {
   async execute(_0x178190, _0x1f3de9, _0xe22fe, _0x845040) {
     const _0x415def = _0x1f3de9.key.remoteJid;
     const _0x5759de = getBotName();
+    if (_isMovieRateLimited(_0x1f3de9.key.participant || _0x415def)) return;
     try {
       await _0x178190.sendMessage(_0x415def, {
         react: {
@@ -274,6 +286,7 @@ const latestCmd = {
   async execute(_0x57b8b4, _0x1986f5, _0x3b5b45, _0x1e3302) {
     const _0x3bd147 = _0x1986f5.key.remoteJid;
     const _0x3a4faf = getBotName();
+    if (_isMovieRateLimited(_0x1986f5.key.participant || _0x3bd147)) return;
     try {
       await _0x57b8b4.sendMessage(_0x3bd147, {
         react: {
@@ -312,6 +325,7 @@ const dramaCmd = {
     const _0x333bfd = _0x47982e.key.remoteJid;
     const _0x206695 = getBotName();
     const _0x24c7ba = _0x5ee3be.join(" ").trim();
+    if (_isMovieRateLimited(_0x47982e.key.participant || _0x333bfd)) return;
     if (!_0x24c7ba) {
       return _0x4ac09b.sendMessage(_0x333bfd, {
         text: "╔═|〔  🎭 TV / DRAMA SEARCH 〕\n║\n║ ▸ *Usage*   : " + _0x2bcbdf + "drama <title>\n║ ▸ *Example* : " + _0x2bcbdf + "drama game of thrones\n║\n╚═|〔 " + _0x206695 + " 〕"
@@ -354,6 +368,7 @@ const actorCmd = {
     const _0x221190 = _0x5bad86.key.remoteJid;
     const _0x2b1021 = getBotName();
     const _0xce42b8 = _0x2dbe50.join(" ").trim();
+    if (_isMovieRateLimited(_0x5bad86.key.participant || _0x221190)) return;
     if (!_0xce42b8) {
       return _0x1fcc68.sendMessage(_0x221190, {
         text: "╔═|〔  🎬 ACTOR SEARCH 〕\n║\n║ ▸ *Usage* : " + _0x5c89fd + "actor <name>\n║ ▸ *Example* : " + _0x5c89fd + "actor will smith\n║\n╚═|〔 " + _0x2b1021 + " 〕"
