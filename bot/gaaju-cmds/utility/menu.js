@@ -83,6 +83,9 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'block');
         addCommandOnce(cmdNames, 'unblock');
         addCommandOnce(cmdNames, 'gaaju');
+
+        // ANTICALL
+        addCommandOnce(cmdNames, 'anticall');
     }
 
     // UTILITY
