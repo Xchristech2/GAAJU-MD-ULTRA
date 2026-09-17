@@ -531,49 +531,49 @@ module.exports = {
 
             // HEADER
             lines.push(
-                `┏━━❐✧ *${botName}* ✧❐`
+                `┏━━❐⎈ *${botName}* ⎈❐`
             );
 
             lines.push(
-                `┃➣ Prefix: [${p}]`
+                `┃⎈ Prefix: [${p}]`
             );
 
             lines.push(
-                `┃➣ Owner: ${owner}`
+                `┃⎈ Owner: ${owner}`
             );
 
             lines.push(
-                `┃➣ Mode: ${mode}`
+                `┃⎈ Mode: ${mode}`
             );
 
             lines.push(
-                `┃➣ Platform: ${getPlatform()}`
+                `┃⎈ Platform: ${getPlatform()}`
             );
 
             lines.push(
-                `┃➣ Speed: ${getSpeed(msg)}`
+                `┃⎈ Speed: ${getSpeed(msg)}`
             );
 
             lines.push(
-                `┃➣ Uptime: ${getUptime()}`
+                `┃⎈ Uptime: ${getUptime()}`
             );
 
             lines.push(
-                `┃➣ Version: ${BOT_VERSION}`
+                `┃⎈ Version: ${BOT_VERSION}`
             );
 
             lines.push(
-                `┃➣ Usage: ${usage.text}`
+                `┃⎈ Usage: ${usage.text}`
             );
 
             lines.push(
-                `┃➣ RAM: ${getBar(
+                `┃⎈ RAM: ${getBar(
                     usage.percent
                 )}`
             );
 
             lines.push(
-                `┃➣ Commands: ${totalCmds}`
+                `┃⎈ Commands: ${totalCmds}`
             );
 
             lines.push(
@@ -621,7 +621,7 @@ module.exports = {
                 ) {
 
                     lines.push(
-                        `┃➣ ${p}${cmd}`
+                        `┃⎈ ${p}${cmd}`
                     );
                 }
 
@@ -661,7 +661,7 @@ module.exports = {
                 ) {
 
                     lines.push(
-                        `┃➣ ${p}${cmd}`
+                        `┃⎈ ${p}${cmd}`
                     );
                 }
 
@@ -701,7 +701,7 @@ module.exports = {
                 ) {
 
                     lines.push(
-                        `┃➣ ${p}${cmd}`
+                        `┃⎈ ${p}${cmd}`
                     );
                 }
 
@@ -723,7 +723,7 @@ module.exports = {
             );
 
             lines.push(
-                '> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ'
+                '> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ'
             );
 
             const caption =
