@@ -18,25 +18,6 @@ module.exports = {
     ) {
         const chatId = msg.key.remoteJid;
 
-        const sender =
-            msg.key.participant ||
-            msg.key.remoteJid;
-
-        const ownerNumber = '2348069675806';
-
-        // Owner only
-        if (!sender.includes(ownerNumber)) {
-            return sock.sendMessage(
-                chatId,
-                {
-                    text: '❌ This command is only available to the bot owner.'
-                },
-                {
-                    quoted: msg
-                }
-            );
-        }
-
         const mode = args[0]?.toLowerCase();
 
         // Show AntiCall options
@@ -82,9 +63,7 @@ module.exports = {
 
 📵 Incoming calls will be automatically declined.`
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
         }
 
@@ -100,9 +79,7 @@ module.exports = {
 
 🚫 Incoming callers will be blocked.`
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
         }
 
@@ -119,9 +96,7 @@ module.exports = {
 📵 Incoming calls will be declined.
 🚫 The caller will then be blocked.`
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
         }
 
@@ -141,9 +116,7 @@ module.exports = {
 Default message:
 "My owner is currently unavailable or busy. Please send a message instead."`
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
         }
 
@@ -159,9 +132,7 @@ Default message:
 
 📞 Incoming calls will no longer be automatically handled.`
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
         }
 
@@ -180,9 +151,7 @@ ${prefix}anticall declineblock
 ${prefix}anticall declinetext
 ${prefix}anticall off`
             },
-            {
-                quoted: msg
-            }
+            { quoted: msg }
         );
     }
 };
