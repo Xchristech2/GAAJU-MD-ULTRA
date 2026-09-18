@@ -46,7 +46,7 @@ const CATEGORY_LABELS = {
     spiritual: '🕊️ SPIRITUAL',
     sports: '⚽ SPORTS',
     stalker: '🔍 STALKER',
-    utility: '🔧 UTILITY',
+    utility: '🔧 UTILITY'
 };
 
 const CATEGORY_ORDER = [
@@ -109,6 +109,10 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'userid');
         addCommandOnce(cmdNames, 'listblocked');
         addCommandOnce(cmdNames, 'readreceipt');
+
+        // COMMANDS ADDED SO FAR
+        addCommandOnce(cmdNames, 'randomnumber');
+        addCommandOnce(cmdNames, 'choose');
 
         // PAIRING
         addCommandOnce(cmdNames, 'pair');
@@ -209,7 +213,6 @@ function getCategoryData() {
         allCats = fs
             .readdirSync(CMDS_DIR)
             .filter(item => {
-
                 try {
                     return fs.statSync(
                         path.join(
@@ -217,12 +220,10 @@ function getCategoryData() {
                             item
                         )
                     ).isDirectory();
-
                 } catch {
                     return false;
                 }
             });
-
     } catch (error) {
 
         console.error(
