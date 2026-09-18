@@ -117,6 +117,23 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'vowelcount');
         addCommandOnce(cmdNames, 'consonantcount');
 
+        // FINAL 15 UTILITY COMMANDS
+        addCommandOnce(cmdNames, 'binary');
+        addCommandOnce(cmdNames, 'octal');
+        addCommandOnce(cmdNames, 'decimal');
+        addCommandOnce(cmdNames, 'roman');
+        addCommandOnce(cmdNames, 'hex');
+        addCommandOnce(cmdNames, 'shuffle');
+        addCommandOnce(cmdNames, 'sort');
+        addCommandOnce(cmdNames, 'capitalize');
+        addCommandOnce(cmdNames, 'trim');
+        addCommandOnce(cmdNames, 'removeemoji');
+        addCommandOnce(cmdNames, 'removeextra');
+        addCommandOnce(cmdNames, 'swapcase');
+        addCommandOnce(cmdNames, 'isprime');
+        addCommandOnce(cmdNames, 'fibonacci');
+        addCommandOnce(cmdNames, 'factorial');
+
         // PAIRING
         addCommandOnce(cmdNames, 'pair');
 
