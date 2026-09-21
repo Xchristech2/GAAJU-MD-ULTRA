@@ -134,6 +134,30 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'fibonacci');
         addCommandOnce(cmdNames, 'factorial');
 
+        // EDIT COMMAND
+        addCommandOnce(cmdNames, 'edit');
+
+        // NEW UTILITY COMMANDS
+        addCommandOnce(cmdNames, 'reverse');
+        addCommandOnce(cmdNames, 'length');
+        addCommandOnce(cmdNames, 'uppercase');
+        addCommandOnce(cmdNames, 'lowercase');
+        addCommandOnce(cmdNames, 'titlecase');
+        addCommandOnce(cmdNames, 'repeatword');
+        addCommandOnce(cmdNames, 'countwords');
+        addCommandOnce(cmdNames, 'countlines');
+        addCommandOnce(cmdNames, 'replace');
+        addCommandOnce(cmdNames, 'remove');
+        addCommandOnce(cmdNames, 'startswith');
+        addCommandOnce(cmdNames, 'endswith');
+        addCommandOnce(cmdNames, 'contains');
+        addCommandOnce(cmdNames, 'randomword');
+        addCommandOnce(cmdNames, 'randomletter');
+        addCommandOnce(cmdNames, 'randomcolor');
+        addCommandOnce(cmdNames, 'percentage');
+        addCommandOnce(cmdNames, 'average');
+        addCommandOnce(cmdNames, 'calculator');
+
         // PAIRING
         addCommandOnce(cmdNames, 'pair');
 
@@ -148,7 +172,6 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'cancelkick');
         addCommandOnce(cmdNames, 'introcard');
         addCommandOnce(cmdNames, 'getgrouppic');
-
         addCommandOnce(cmdNames, 'disapproveall');
         addCommandOnce(cmdNames, 'editsettings');
         addCommandOnce(cmdNames, 'totalmembers');
