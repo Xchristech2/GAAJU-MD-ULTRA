@@ -188,13 +188,27 @@ function addForcedCommands(cat, cmdNames) {
     if (cat === 'download') {
         addCommandOnce(cmdNames, 'video');
     }
+
+    // GAMES
+    if (cat === 'games') {
+        addCommandOnce(cmdNames, 'blackjack');
+        addCommandOnce(cmdNames, 'slot');
+        addCommandOnce(cmdNames, 'racing');
+    }
 }
 
 function getCategoryData() {
     const liveRegistry = globalThis._botCommandCategories;
 
     if (liveRegistry && liveRegistry.size > 0) {
+
         const allCats = [...liveRegistry.keys()];
+
+        // Make sure the Games category is included
+        // even if the live registry has not registered it yet.
+        if (!allCats.includes('games')) {
+            allCats.push('games');
+        }
 
         const ordered = [
             ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
@@ -207,8 +221,11 @@ function getCategoryData() {
         let totalCmds = 0;
 
         for (const cat of ordered) {
+
             const cmdNames = [
-                ...new Set(liveRegistry.get(cat) || [])
+                ...new Set(
+                    liveRegistry.get(cat) || []
+                )
             ];
 
             addForcedCommands(cat, cmdNames);
@@ -266,9 +283,11 @@ function getCategoryData() {
     let totalCmds = 0;
 
     for (const cat of ordered) {
+
         const names = [];
 
         try {
+
             const categoryPath = path.join(
                 CMDS_DIR,
                 cat
@@ -279,7 +298,9 @@ function getCategoryData() {
                 .filter(file => file.endsWith('.js'));
 
             for (const file of files) {
+
                 try {
+
                     const filePath = path.join(
                         categoryPath,
                         file
@@ -295,21 +316,27 @@ function getCategoryData() {
                             : [];
 
                     for (const cmd of list) {
+
                         if (cmd && cmd.name) {
+
                             addCommandOnce(
                                 names,
                                 cmd.name
                             );
                         }
                     }
+
                 } catch (error) {
+
                     console.error(
                         `[MENU] Failed loading ${cat}/${file}:`,
                         error.message
                     );
                 }
             }
+
         } catch (error) {
+
             console.error(
                 `[MENU] Failed reading category ${cat}:`,
                 error.message
@@ -564,7 +591,6 @@ module.exports = {
                     const cmd of cmdNames
                 ) {
 
-                    // COMMANDS SHOW WITHOUT PREFIX
                     lines.push(
                         `┃⎈ ${cmd}`
                     );
@@ -603,7 +629,6 @@ module.exports = {
                     const cmd of cmdNames
                 ) {
 
-                    // COMMANDS SHOW WITHOUT PREFIX
                     lines.push(
                         `┃⎈ ${cmd}`
                     );
@@ -642,7 +667,6 @@ module.exports = {
                     const cmd of cmdNames
                 ) {
 
-                    // COMMANDS SHOW WITHOUT PREFIX
                     lines.push(
                         `┃⎈ ${cmd}`
                     );
