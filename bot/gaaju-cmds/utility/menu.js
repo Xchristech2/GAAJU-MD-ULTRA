@@ -198,22 +198,25 @@ function addForcedCommands(cat, cmdNames) {
 }
 
 function getCategoryData() {
+
     const liveRegistry = globalThis._botCommandCategories;
 
     if (liveRegistry && liveRegistry.size > 0) {
 
         const allCats = [...liveRegistry.keys()];
 
-        // Make sure the Games category is included
-        // even if the live registry has not registered it yet.
         if (!allCats.includes('games')) {
             allCats.push('games');
         }
 
         const ordered = [
-            ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
+            ...CATEGORY_ORDER.filter(
+                c => allCats.includes(c)
+            ),
             ...allCats
-                .filter(c => !CATEGORY_ORDER.includes(c))
+                .filter(
+                    c => !CATEGORY_ORDER.includes(c)
+                )
                 .sort()
         ];
 
@@ -249,9 +252,11 @@ function getCategoryData() {
     let allCats = [];
 
     try {
+
         allCats = fs
             .readdirSync(CMDS_DIR)
             .filter(item => {
+
                 try {
                     return fs.statSync(
                         path.join(CMDS_DIR, item)
@@ -259,8 +264,11 @@ function getCategoryData() {
                 } catch {
                     return false;
                 }
+
             });
+
     } catch (error) {
+
         console.error(
             '[MENU] Failed to read commands directory:',
             error
@@ -273,9 +281,13 @@ function getCategoryData() {
     }
 
     const ordered = [
-        ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
+        ...CATEGORY_ORDER.filter(
+            c => allCats.includes(c)
+        ),
         ...allCats
-            .filter(c => !CATEGORY_ORDER.includes(c))
+            .filter(
+                c => !CATEGORY_ORDER.includes(c)
+            )
             .sort()
     ];
 
@@ -288,36 +300,49 @@ function getCategoryData() {
 
         try {
 
-            const categoryPath = path.join(
-                CMDS_DIR,
-                cat
-            );
+            const categoryPath =
+                path.join(
+                    CMDS_DIR,
+                    cat
+                );
 
-            const files = fs
-                .readdirSync(categoryPath)
-                .filter(file => file.endsWith('.js'));
+            const files =
+                fs
+                    .readdirSync(categoryPath)
+                    .filter(
+                        file =>
+                            file.endsWith('.js')
+                    );
 
             for (const file of files) {
 
                 try {
 
-                    const filePath = path.join(
-                        categoryPath,
-                        file
-                    );
+                    const filePath =
+                        path.join(
+                            categoryPath,
+                            file
+                        );
 
-                    const mod = require(filePath);
-                    const raw = mod.default || mod;
+                    const mod =
+                        require(filePath);
 
-                    const list = Array.isArray(raw)
-                        ? raw
-                        : raw?.name
-                            ? [raw]
-                            : [];
+                    const raw =
+                        mod.default || mod;
+
+                    const list =
+                        Array.isArray(raw)
+                            ? raw
+                            : raw?.name
+                                ? [raw]
+                                : [];
 
                     for (const cmd of list) {
 
-                        if (cmd && cmd.name) {
+                        if (
+                            cmd &&
+                            cmd.name
+                        ) {
 
                             addCommandOnce(
                                 names,
@@ -362,6 +387,7 @@ function getCategoryData() {
 }
 
 function getPlatform() {
+
     if (process.env.DYNO) return 'Heroku';
     if (process.env.RAILWAY_ENVIRONMENT) return 'Railway';
     if (process.env.RENDER) return 'Render';
@@ -370,23 +396,40 @@ function getPlatform() {
 }
 
 function getUptime() {
-    const s = Math.floor(process.uptime());
 
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sec = s % 60;
+    const s =
+        Math.floor(
+            process.uptime()
+        );
+
+    const h =
+        Math.floor(s / 3600);
+
+    const m =
+        Math.floor(
+            (s % 3600) / 60
+        );
+
+    const sec =
+        s % 60;
 
     return `${h}h ${m}m ${sec}s`;
 }
 
 function getUsage() {
-    const memory = process.memoryUsage();
+
+    const memory =
+        process.memoryUsage();
 
     const usedMB =
-        memory.heapUsed / 1024 / 1024;
+        memory.heapUsed /
+        1024 /
+        1024;
 
     const totalMB =
-        memory.heapTotal / 1024 / 1024;
+        memory.heapTotal /
+        1024 /
+        1024;
 
     const percent =
         totalMB > 0
@@ -403,13 +446,17 @@ function getUsage() {
         text:
             `${usedMB.toFixed(1)} MB / ` +
             `${totalMB.toFixed(1)} MB`,
-
         percent
     };
 }
 
 function getSpeed(msg) {
-    if (msg && msg._botReceivedAt) {
+
+    if (
+        msg &&
+        msg._botReceivedAt
+    ) {
+
         return (
             Date.now() -
             msg._botReceivedAt
@@ -420,16 +467,20 @@ function getSpeed(msg) {
 }
 
 function getBar(percent) {
+
     const total = 10;
 
-    const filled = Math.round(
-        (percent / 100) * total
-    );
+    const filled =
+        Math.round(
+            (percent / 100) * total
+        );
 
     return (
         '[' +
         '█'.repeat(filled) +
-        '░'.repeat(total - filled) +
+        '░'.repeat(
+            total - filled
+        ) +
         '] ' +
         Math.round(percent) +
         '%'
@@ -490,7 +541,8 @@ module.exports = {
             const {
                 catData,
                 totalCmds
-            } = getCategoryData();
+            } =
+                getCategoryData();
 
             const usage =
                 getUsage();
@@ -506,7 +558,6 @@ module.exports = {
                 `┏━━❐⎈ *${botName}* ⎈❐`
             );
 
-            // PREFIX IS SHOWN ONLY HERE
             lines.push(
                 `┃⎈ Prefix: [${p}]`
             );
@@ -553,9 +604,7 @@ module.exports = {
                 `┗━━❐`
             );
 
-            lines.push(
-                readMore
-            );
+            lines.push(readMore);
 
             const mid1 =
                 Math.floor(
@@ -577,14 +626,21 @@ module.exports = {
                 const {
                     cat,
                     cmdNames
-                } = catData[i];
+                } =
+                    catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
 
+                const cleanLabel =
+                    label.replace(
+                        /^[^\s]+\s/,
+                        ''
+                    );
+
                 lines.push(
-                    `\n┏━━❐ ${label} ❐`
+                    `\n━━❐ *➮* ${cleanLabel} ❐━━`
                 );
 
                 for (
@@ -592,18 +648,12 @@ module.exports = {
                 ) {
 
                     lines.push(
-                        `┃⎈ ${cmd}`
+                        `*➮* ${p}${cmd}`
                     );
                 }
-
-                lines.push(
-                    `┗━━❐`
-                );
             }
 
-            lines.push(
-                readMore
-            );
+            lines.push(readMore);
 
             // PART 2
             for (
@@ -615,14 +665,21 @@ module.exports = {
                 const {
                     cat,
                     cmdNames
-                } = catData[i];
+                } =
+                    catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
 
+                const cleanLabel =
+                    label.replace(
+                        /^[^\s]+\s/,
+                        ''
+                    );
+
                 lines.push(
-                    `\n┏━━❐ ${label} ❐`
+                    `\n━━❐ *➮* ${cleanLabel} ❐━━`
                 );
 
                 for (
@@ -630,18 +687,12 @@ module.exports = {
                 ) {
 
                     lines.push(
-                        `┃⎈ ${cmd}`
+                        `*➮* ${p}${cmd}`
                     );
                 }
-
-                lines.push(
-                    `┗━━❐`
-                );
             }
 
-            lines.push(
-                readMore
-            );
+            lines.push(readMore);
 
             // PART 3
             for (
@@ -653,14 +704,21 @@ module.exports = {
                 const {
                     cat,
                     cmdNames
-                } = catData[i];
+                } =
+                    catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
 
+                const cleanLabel =
+                    label.replace(
+                        /^[^\s]+\s/,
+                        ''
+                    );
+
                 lines.push(
-                    `\n┏━━❐ ${label} ❐`
+                    `\n━━❐ *➮* ${cleanLabel} ❐━━`
                 );
 
                 for (
@@ -668,18 +726,12 @@ module.exports = {
                 ) {
 
                     lines.push(
-                        `┃⎈ ${cmd}`
+                        `*➮* ${p}${cmd}`
                     );
                 }
-
-                lines.push(
-                    `┗━━❐`
-                );
             }
 
-            lines.push(
-                readMore
-            );
+            lines.push(readMore);
 
             lines.push('');
             lines.push('');
