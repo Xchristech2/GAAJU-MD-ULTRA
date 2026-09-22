@@ -117,7 +117,7 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'vowelcount');
         addCommandOnce(cmdNames, 'consonantcount');
 
-        // FINAL 15 UTILITY COMMANDS
+        // UTILITY COMMANDS
         addCommandOnce(cmdNames, 'binary');
         addCommandOnce(cmdNames, 'octal');
         addCommandOnce(cmdNames, 'decimal');
@@ -134,10 +134,10 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'fibonacci');
         addCommandOnce(cmdNames, 'factorial');
 
-        // EDIT COMMAND
+        // EDIT
         addCommandOnce(cmdNames, 'edit');
 
-        // NEW UTILITY COMMANDS
+        // MORE UTILITY COMMANDS
         addCommandOnce(cmdNames, 'reverse');
         addCommandOnce(cmdNames, 'length');
         addCommandOnce(cmdNames, 'uppercase');
@@ -198,11 +198,9 @@ function addForcedCommands(cat, cmdNames) {
 }
 
 function getCategoryData() {
-
     const liveRegistry = globalThis._botCommandCategories;
 
     if (liveRegistry && liveRegistry.size > 0) {
-
         const allCats = [...liveRegistry.keys()];
 
         if (!allCats.includes('games')) {
@@ -210,12 +208,12 @@ function getCategoryData() {
         }
 
         const ordered = [
-            ...CATEGORY_ORDER.filter(
-                c => allCats.includes(c)
+            ...CATEGORY_ORDER.filter(c =>
+                allCats.includes(c)
             ),
             ...allCats
-                .filter(
-                    c => !CATEGORY_ORDER.includes(c)
+                .filter(c =>
+                    !CATEGORY_ORDER.includes(c)
                 )
                 .sort()
         ];
@@ -224,7 +222,6 @@ function getCategoryData() {
         let totalCmds = 0;
 
         for (const cat of ordered) {
-
             const cmdNames = [
                 ...new Set(
                     liveRegistry.get(cat) || []
@@ -252,11 +249,9 @@ function getCategoryData() {
     let allCats = [];
 
     try {
-
         allCats = fs
             .readdirSync(CMDS_DIR)
             .filter(item => {
-
                 try {
                     return fs.statSync(
                         path.join(CMDS_DIR, item)
@@ -264,11 +259,8 @@ function getCategoryData() {
                 } catch {
                     return false;
                 }
-
             });
-
     } catch (error) {
-
         console.error(
             '[MENU] Failed to read commands directory:',
             error
@@ -281,12 +273,12 @@ function getCategoryData() {
     }
 
     const ordered = [
-        ...CATEGORY_ORDER.filter(
-            c => allCats.includes(c)
+        ...CATEGORY_ORDER.filter(c =>
+            allCats.includes(c)
         ),
         ...allCats
-            .filter(
-                c => !CATEGORY_ORDER.includes(c)
+            .filter(c =>
+                !CATEGORY_ORDER.includes(c)
             )
             .sort()
     ];
@@ -295,73 +287,52 @@ function getCategoryData() {
     let totalCmds = 0;
 
     for (const cat of ordered) {
-
         const names = [];
 
         try {
+            const categoryPath = path.join(
+                CMDS_DIR,
+                cat
+            );
 
-            const categoryPath =
-                path.join(
-                    CMDS_DIR,
-                    cat
+            const files = fs
+                .readdirSync(categoryPath)
+                .filter(file =>
+                    file.endsWith('.js')
                 );
 
-            const files =
-                fs
-                    .readdirSync(categoryPath)
-                    .filter(
-                        file =>
-                            file.endsWith('.js')
+            for (const file of files) {
+                try {
+                    const filePath = path.join(
+                        categoryPath,
+                        file
                     );
 
-            for (const file of files) {
+                    const mod = require(filePath);
+                    const raw = mod.default || mod;
 
-                try {
-
-                    const filePath =
-                        path.join(
-                            categoryPath,
-                            file
-                        );
-
-                    const mod =
-                        require(filePath);
-
-                    const raw =
-                        mod.default || mod;
-
-                    const list =
-                        Array.isArray(raw)
-                            ? raw
-                            : raw?.name
-                                ? [raw]
-                                : [];
+                    const list = Array.isArray(raw)
+                        ? raw
+                        : raw?.name
+                            ? [raw]
+                            : [];
 
                     for (const cmd of list) {
-
-                        if (
-                            cmd &&
-                            cmd.name
-                        ) {
-
+                        if (cmd && cmd.name) {
                             addCommandOnce(
                                 names,
                                 cmd.name
                             );
                         }
                     }
-
                 } catch (error) {
-
                     console.error(
                         `[MENU] Failed loading ${cat}/${file}:`,
                         error.message
                     );
                 }
             }
-
         } catch (error) {
-
             console.error(
                 `[MENU] Failed reading category ${cat}:`,
                 error.message
@@ -387,37 +358,40 @@ function getCategoryData() {
 }
 
 function getPlatform() {
+    if (process.env.DYNO) {
+        return 'Heroku';
+    }
 
-    if (process.env.DYNO) return 'Heroku';
-    if (process.env.RAILWAY_ENVIRONMENT) return 'Railway';
-    if (process.env.RENDER) return 'Render';
+    if (process.env.RAILWAY_ENVIRONMENT) {
+        return 'Railway';
+    }
+
+    if (process.env.RENDER) {
+        return 'Render';
+    }
 
     return 'VPS';
 }
 
 function getUptime() {
+    const s = Math.floor(
+        process.uptime()
+    );
 
-    const s =
-        Math.floor(
-            process.uptime()
-        );
+    const h = Math.floor(
+        s / 3600
+    );
 
-    const h =
-        Math.floor(s / 3600);
+    const m = Math.floor(
+        (s % 3600) / 60
+    );
 
-    const m =
-        Math.floor(
-            (s % 3600) / 60
-        );
-
-    const sec =
-        s % 60;
+    const sec = s % 60;
 
     return `${h}h ${m}m ${sec}s`;
 }
 
 function getUsage() {
-
     const memory =
         process.memoryUsage();
 
@@ -446,17 +420,13 @@ function getUsage() {
         text:
             `${usedMB.toFixed(1)} MB / ` +
             `${totalMB.toFixed(1)} MB`,
+
         percent
     };
 }
 
 function getSpeed(msg) {
-
-    if (
-        msg &&
-        msg._botReceivedAt
-    ) {
-
+    if (msg && msg._botReceivedAt) {
         return (
             Date.now() -
             msg._botReceivedAt
@@ -467,20 +437,16 @@ function getSpeed(msg) {
 }
 
 function getBar(percent) {
-
     const total = 10;
 
-    const filled =
-        Math.round(
-            (percent / 100) * total
-        );
+    const filled = Math.round(
+        (percent / 100) * total
+    );
 
     return (
         '[' +
         '█'.repeat(filled) +
-        '░'.repeat(
-            total - filled
-        ) +
+        '░'.repeat(total - filled) +
         '] ' +
         Math.round(percent) +
         '%'
@@ -488,7 +454,6 @@ function getBar(percent) {
 }
 
 module.exports = {
-
     name: 'menu',
 
     aliases: [
@@ -510,9 +475,7 @@ module.exports = {
         prefix,
         ctx
     ) {
-
         try {
-
             const chatId =
                 msg.key.remoteJid;
 
@@ -541,8 +504,7 @@ module.exports = {
             const {
                 catData,
                 totalCmds
-            } =
-                getCategoryData();
+            } = getCategoryData();
 
             const usage =
                 getUsage();
@@ -554,57 +516,71 @@ module.exports = {
 
             const lines = [];
 
+            /*
+             * ==========================
+             * TOP MENU HEADER
+             * ==========================
+             */
+
             lines.push(
-                `┏━━❐⎈ *${botName}* ⎈❐`
+                `━━❐➮  ☠️ ${botName} 💝 ➮❐`
             );
 
             lines.push(
-                `┃⎈ Prefix: [${p}]`
+                `┃ ᴘʀᴇꜰɪx: [ ${p} ]`
             );
 
             lines.push(
-                `┃⎈ Owner: ${owner}`
+                `┃ ᴏᴡɴᴇʀ: ${owner}`
             );
 
             lines.push(
-                `┃⎈ Mode: ${mode}`
+                `┃ ᴍᴏᴅᴇ: 🌐 ${mode}`
             );
 
             lines.push(
-                `┃⎈ Platform: ${getPlatform()}`
+                `┃ ᴘʟᴀᴛꜰᴏʀᴍ: 🖥️ ${getPlatform()}`
             );
 
             lines.push(
-                `┃⎈ Speed: ${getSpeed(msg)}`
+                `┃ ꜱᴘᴇᴇᴅ: ${getSpeed(msg)}`
             );
 
             lines.push(
-                `┃⎈ Uptime: ${getUptime()}`
+                `┃ ᴜᴘᴛɪᴍᴇ: ${getUptime()}`
             );
 
             lines.push(
-                `┃⎈ Version: ${BOT_VERSION}`
+                `┃ Vᴇʀꜱɪᴏɴ: ${BOT_VERSION}`
             );
 
             lines.push(
-                `┃⎈ Usage: ${usage.text}`
+                `┃ ᴜꜱᴀɢᴇ: ${usage.text}`
             );
 
             lines.push(
-                `┃⎈ RAM: ${getBar(
+                `┃ ʀᴀᴍ: ${getBar(
                     usage.percent
                 )}`
             );
 
             lines.push(
-                `┃⎈ Commands: ${totalCmds}`
+                `┃ Cᴏᴍᴍᴀɴᴅꜱ: ${totalCmds}`
             );
 
             lines.push(
-                `┗━━❐`
+                `┗❐➮`
             );
 
-            lines.push(readMore);
+            lines.push(
+                readMore
+            );
+
+            /*
+             * ==========================
+             * SPLIT MENU INTO 3 PARTS
+             * ==========================
+             */
 
             const mid1 =
                 Math.floor(
@@ -616,18 +592,21 @@ module.exports = {
                     catData.length * 2 / 3
                 );
 
-            // PART 1
+            /*
+             * ==========================
+             * PART 1
+             * ==========================
+             */
+
             for (
                 let i = 0;
                 i < mid1;
                 i++
             ) {
-
                 const {
                     cat,
                     cmdNames
-                } =
-                    catData[i];
+                } = catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
@@ -646,27 +625,31 @@ module.exports = {
                 for (
                     const cmd of cmdNames
                 ) {
-
                     lines.push(
-                        `*➮* ${p}${cmd}`
+                        `*➮* ${cmd}`
                     );
                 }
             }
 
-            lines.push(readMore);
+            lines.push(
+                readMore
+            );
 
-            // PART 2
+            /*
+             * ==========================
+             * PART 2
+             * ==========================
+             */
+
             for (
                 let i = mid1;
                 i < mid2;
                 i++
             ) {
-
                 const {
                     cat,
                     cmdNames
-                } =
-                    catData[i];
+                } = catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
@@ -685,27 +668,31 @@ module.exports = {
                 for (
                     const cmd of cmdNames
                 ) {
-
                     lines.push(
-                        `*➮* ${p}${cmd}`
+                        `*➮* ${cmd}`
                     );
                 }
             }
 
-            lines.push(readMore);
+            lines.push(
+                readMore
+            );
 
-            // PART 3
+            /*
+             * ==========================
+             * PART 3
+             * ==========================
+             */
+
             for (
                 let i = mid2;
                 i < catData.length;
                 i++
             ) {
-
                 const {
                     cat,
                     cmdNames
-                } =
-                    catData[i];
+                } = catData[i];
 
                 const label =
                     CATEGORY_LABELS[cat] ||
@@ -724,14 +711,21 @@ module.exports = {
                 for (
                     const cmd of cmdNames
                 ) {
-
                     lines.push(
-                        `*➮* ${p}${cmd}`
+                        `*➮* ${cmd}`
                     );
                 }
             }
 
-            lines.push(readMore);
+            lines.push(
+                readMore
+            );
+
+            /*
+             * ==========================
+             * FOOTER
+             * ==========================
+             */
 
             lines.push('');
             lines.push('');
@@ -751,12 +745,17 @@ module.exports = {
                 quoted: msg
             };
 
+            /*
+             * ==========================
+             * CUSTOM MENU IMAGE
+             * ==========================
+             */
+
             if (
                 fs.existsSync(
                     CUSTOM_MENU_IMAGE
                 )
             ) {
-
                 const img =
                     fs.readFileSync(
                         CUSTOM_MENU_IMAGE
@@ -775,6 +774,12 @@ module.exports = {
                 return;
             }
 
+            /*
+             * ==========================
+             * TEXT MENU
+             * ==========================
+             */
+
             await sock.sendMessage(
                 chatId,
                 {
@@ -784,14 +789,12 @@ module.exports = {
             );
 
         } catch (error) {
-
             console.error(
                 '[MENU ERROR]',
                 error
             );
 
             try {
-
                 await sock.sendMessage(
                     msg.key.remoteJid,
                     {
@@ -802,7 +805,6 @@ module.exports = {
                         quoted: msg
                     }
                 );
-
             } catch {}
         }
     }
