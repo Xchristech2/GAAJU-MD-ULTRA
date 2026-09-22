@@ -523,53 +523,53 @@ module.exports = {
              */
 
             lines.push(
-                `━━❐➮  ☠️ ${botName} 💝 ➮❐`
+                `┏━━❐➭ *${botName}* ➭❐━━`
             );
 
             lines.push(
-                `┃ ᴘʀᴇꜰɪx: [ ${p} ]`
+                `┃ Prefix: [${p}]`
             );
 
             lines.push(
-                `┃ ᴏᴡɴᴇʀ: ${owner}`
+                `┃ Owner: ${owner}`
             );
 
             lines.push(
-                `┃ ᴍᴏᴅᴇ: 🌐 ${mode}`
+                `┃ Mode: ${mode}`
             );
 
             lines.push(
-                `┃ ᴘʟᴀᴛꜰᴏʀᴍ: 🖥️ ${getPlatform()}`
+                `┃ Platform: ${getPlatform()}`
             );
 
             lines.push(
-                `┃ ꜱᴘᴇᴇᴅ: ${getSpeed(msg)}`
+                `┃ Speed: ${getSpeed(msg)}`
             );
 
             lines.push(
-                `┃ ᴜᴘᴛɪᴍᴇ: ${getUptime()}`
+                `┃ Uptime: ${getUptime()}`
             );
 
             lines.push(
-                `┃ Vᴇʀꜱɪᴏɴ: ${BOT_VERSION}`
+                `┃ Version: ${BOT_VERSION}`
             );
 
             lines.push(
-                `┃ ᴜꜱᴀɢᴇ: ${usage.text}`
+                `┃ Usage: ${usage.text}`
             );
 
             lines.push(
-                `┃ ʀᴀᴍ: ${getBar(
+                `┃ RAM: ${getBar(
                     usage.percent
                 )}`
             );
 
             lines.push(
-                `┃ Cᴏᴍᴍᴀɴᴅꜱ: ${totalCmds}`
+                `┃ Commands: ${totalCmds}`
             );
 
             lines.push(
-                `┗❐➮`
+                `┗━━❐➭`
             );
 
             lines.push(
@@ -612,23 +612,21 @@ module.exports = {
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
 
-                const cleanLabel =
-                    label.replace(
-                        /^[^\s]+\s/,
-                        ''
-                    );
-
                 lines.push(
-                    `\n━━❐ *➮* ${cleanLabel} ❐━━`
+                    `\n┏━━❐ ${label} ❐`
                 );
 
                 for (
                     const cmd of cmdNames
                 ) {
                     lines.push(
-                        `*➮* ${cmd}`
+                        `┃➭ ${cmd}`
                     );
                 }
+
+                lines.push(
+                    `┗━━❐`
+                );
             }
 
             lines.push(
@@ -655,23 +653,21 @@ module.exports = {
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
 
-                const cleanLabel =
-                    label.replace(
-                        /^[^\s]+\s/,
-                        ''
-                    );
-
                 lines.push(
-                    `\n━━❐ *➮* ${cleanLabel} ❐━━`
+                    `\n┏━━❐ ${label} ❐`
                 );
 
                 for (
                     const cmd of cmdNames
                 ) {
                     lines.push(
-                        `*➮* ${cmd}`
+                        `┃➭ ${cmd}`
                     );
                 }
+
+                lines.push(
+                    `┗━━❐`
+                );
             }
 
             lines.push(
@@ -698,23 +694,21 @@ module.exports = {
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
 
-                const cleanLabel =
-                    label.replace(
-                        /^[^\s]+\s/,
-                        ''
-                    );
-
                 lines.push(
-                    `\n━━❐ *➮* ${cleanLabel} ❐━━`
+                    `\n┏━━❐ ${label} ❐`
                 );
 
                 for (
                     const cmd of cmdNames
                 ) {
                     lines.push(
-                        `*➮* ${cmd}`
+                        `┃➭ ${cmd}`
                     );
                 }
+
+                lines.push(
+                    `┗━━❐`
+                );
             }
 
             lines.push(
