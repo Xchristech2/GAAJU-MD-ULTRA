@@ -479,6 +479,7 @@ module.exports = {
                 `┏━━❐⎈ *${botName}* ⎈❐`
             );
 
+            // PREFIX IS SHOWN ONLY HERE
             lines.push(
                 `┃⎈ Prefix: [${p}]`
             );
@@ -563,8 +564,9 @@ module.exports = {
                     const cmd of cmdNames
                 ) {
 
+                    // COMMANDS SHOW WITHOUT PREFIX
                     lines.push(
-                        `┃⎈ ${p}${cmd}`
+                        `┃⎈ ${cmd}`
                     );
                 }
 
@@ -601,8 +603,9 @@ module.exports = {
                     const cmd of cmdNames
                 ) {
 
+                    // COMMANDS SHOW WITHOUT PREFIX
                     lines.push(
-                        `┃⎈ ${p}${cmd}`
+                        `┃⎈ ${cmd}`
                     );
                 }
 
@@ -639,8 +642,9 @@ module.exports = {
                     const cmd of cmdNames
                 ) {
 
+                    // COMMANDS SHOW WITHOUT PREFIX
                     lines.push(
-                        `┃⎈ ${p}${cmd}`
+                        `┃⎈ ${cmd}`
                     );
                 }
 
