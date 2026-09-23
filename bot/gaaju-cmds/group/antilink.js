@@ -1,227 +1,200 @@
 'use strict';
 
-/*
- * ==========================
- * ANTI-LINK
- * GAAJU-MD-ULTRA
- * ==========================
- */
+const { BOT_NAME } = require('../../config');
 
 const URL_PATTERNS = [
-    /https?:\/\/[^\s]+/i,
-    /www\.[^\s]+/i,
-
-    /t\.me\/[^\s]+/i,
-
-    /instagram\.com\/[^\s]+/i,
-    /facebook\.com\/[^\s]+/i,
-    /fb\.com\/[^\s]+/i,
-
-    /twitter\.com\/[^\s]+/i,
-    /x\.com\/[^\s]+/i,
-
-    /youtube\.com\/[^\s]+/i,
-    /youtu\.be\/[^\s]+/i,
-
-    /whatsapp\.com\/[^\s]+/i,
-    /chat\.whatsapp\.com\/[^\s]+/i,
-
-    /discord\.gg\/[^\s]+/i,
-    /discord\.com\/[^\s]+/i,
-
-    /snapchat\.com\/[^\s]+/i,
-    /tiktok\.com\/[^\s]+/i,
-    /reddit\.com\/[^\s]+/i,
-    /linkedin\.com\/[^\s]+/i,
-    /github\.com\/[^\s]+/i,
-
-    /bitly\.com\/[^\s]+/i,
-    /tinyurl\.com\/[^\s]+/i,
-    /goo\.gl\/[^\s]+/i,
-    /ow\.ly\/[^\s]+/i,
-    /is\.gd\/[^\s]+/i,
-    /v\.gd\/[^\s]+/i,
-    /cutt\.ly\/[^\s]+/i,
-    /shorturl\.at\/[^\s]+/i,
-
-    /wa\.me\/[^\s]+/i,
-    /vm\.tiktok\.com\/[^\s]+/i,
-    /pin\.it\/[^\s]+/i,
-
-    /open\.spotify\.com\/[^\s]+/i,
-    /spotify\.link\/[^\s]+/i
+    /https?:\/\/[^\s<>]+/gi,
+    /www\.[^\s<>]+\.[a-zA-Z]{2,}/gi,
+    /t\.me\/[^\s<>]+/gi,
+    /instagram\.com\/[^\s<>]+/gi,
+    /facebook\.com\/[^\s<>]+/gi,
+    /fb\.com\/[^\s<>]+/gi,
+    /twitter\.com\/[^\s<>]+/gi,
+    /x\.com\/[^\s<>]+/gi,
+    /youtube\.com\/[^\s<>]+/gi,
+    /youtu\.be\/[^\s<>]+/gi,
+    /whatsapp\.com\/[^\s<>]+/gi,
+    /chat\.whatsapp\.com\/[^\s<>]+/gi,
+    /discord\.gg\/[^\s<>]+/gi,
+    /discord\.com\/[^\s<>]+/gi,
+    /snapchat\.com\/[^\s<>]+/gi,
+    /tiktok\.com\/[^\s<>]+/gi,
+    /reddit\.com\/[^\s<>]+/gi,
+    /linkedin\.com\/[^\s<>]+/gi,
+    /github\.com\/[^\s<>]+/gi,
+    /bit\.ly\/[^\s<>]+/gi,
+    /tinyurl\.com\/[^\s<>]+/gi,
+    /goo\.gl\/[^\s<>]+/gi,
+    /ow\.ly\/[^\s<>]+/gi,
+    /is\.gd\/[^\s<>]+/gi,
+    /v\.gd\/[^\s<>]+/gi,
+    /cutt\.ly\/[^\s<>]+/gi,
+    /shorturl\.at\/[^\s<>]+/gi,
+    /wa\.me\/[^\s<>]+/gi,
+    /vm\.tiktok\.com\/[^\s<>]+/gi,
+    /pin\.it\/[^\s<>]+/gi,
+    /open\.spotify\.com\/[^\s<>]+/gi,
+    /spotify\.link\/[^\s<>]+/gi,
 ];
 
-const BARE_DOMAIN_PATTERN =
-    /\b(?:[a-z0-9-]+\.)+(?:com|net|org|xyz|info|biz|me|io|co|app|dev|ng|uk|us|site|online|store|tech|live|tv|gg|ly|link|cloud|shop|top|pro|vip|fun|club|one|world|website|space|click|today|win|work|digital|agency|solutions|social|media)\b/i;
-
-
-/*
- * ==========================
- * GAAJU STYLE
- * ==========================
- */
-
-const H =
-    '┏━━❐➭ ANTI LINK ❐';
-
-const F =
-    '┗━━❐➭';
-
-const SEP =
-    '┃➭';
-
-
-/*
- * ==========================
- * MESSAGE TEXT
- * ==========================
- */
+const BARE_DOMAIN_PATTERN = /\b[a-zA-Z0-9][-a-zA-Z0-9]*\.(com|net|org|io|co|me|info|biz|xyz|dev|app|gg|tv|cc|ly|to|link|shop|store|site|online|live|club|pro|tech|space|fun|one|world|top|click|buzz|win|website)\b/gi;
 
 function extractMessageText(message) {
     if (!message) return '';
-
-    return (
-        message.conversation ||
-        message.extendedTextMessage?.text ||
-        message.imageMessage?.caption ||
-        message.videoMessage?.caption ||
-        message.documentMessage?.caption ||
-        message.buttonsResponseMessage?.selectedButtonId ||
-        message.listResponseMessage?.singleSelectReply?.selectedRowId ||
-        message.templateButtonReplyMessage?.selectedId ||
-        message.interactiveResponseMessage?.body?.text ||
-        ''
-    );
+    const parts = [];
+    if (message.conversation) parts.push(message.conversation);
+    if (message.extendedTextMessage?.text) parts.push(message.extendedTextMessage.text);
+    if (message.imageMessage?.caption) parts.push(message.imageMessage.caption);
+    if (message.videoMessage?.caption) parts.push(message.videoMessage.caption);
+    if (message.documentMessage?.caption) parts.push(message.documentMessage.caption);
+    if (message.documentMessage?.fileName) parts.push(message.documentMessage.fileName);
+    if (message.contactMessage?.displayName) parts.push(message.contactMessage.displayName);
+    if (message.contactMessage?.vcard) parts.push(message.contactMessage.vcard);
+    if (message.listMessage?.title) parts.push(message.listMessage.title);
+    if (message.listMessage?.description) parts.push(message.listMessage.description);
+    if (message.buttonsMessage?.contentText) parts.push(message.buttonsMessage.contentText);
+    if (message.buttonsMessage?.headerText) parts.push(message.buttonsMessage.headerText);
+    if (message.templateMessage?.hydratedTemplate?.hydratedContentText) {
+        parts.push(message.templateMessage.hydratedTemplate.hydratedContentText);
+    }
+    if (message.pollCreationMessage?.name) parts.push(message.pollCreationMessage.name);
+    if (message.contactsArrayMessage?.contacts) {
+        for (const c of message.contactsArrayMessage.contacts) {
+            if (c.displayName) parts.push(c.displayName);
+            if (c.vcard) parts.push(c.vcard);
+        }
+    }
+    if (message.extendedTextMessage?.matchedText) parts.push(message.extendedTextMessage.matchedText);
+    if (message.extendedTextMessage?.canonicalUrl) parts.push(message.extendedTextMessage.canonicalUrl);
+    return parts.join(' ');
 }
-
-
-/*
- * ==========================
- * LINK CHECK
- * ==========================
- */
 
 function containsLink(text) {
-    if (!text) return false;
-
-    if (URL_PATTERNS.some(pattern => pattern.test(text))) {
-        return true;
+    if (!text || typeof text !== 'string') return false;
+    const cleanText = text.replace(/[*_~`|]/g, '');
+    for (const pattern of URL_PATTERNS) {
+        pattern.lastIndex = 0;
+        if (pattern.test(cleanText)) return true;
     }
-
-    return BARE_DOMAIN_PATTERN.test(text);
+    BARE_DOMAIN_PATTERN.lastIndex = 0;
+    if (BARE_DOMAIN_PATTERN.test(cleanText)) return true;
+    return false;
 }
-
 
 function extractLinks(text) {
-    if (!text) return [];
-
-    const links = [];
+    if (!text || typeof text !== 'string') return [];
+    const links = new Set();
+    const cleanText = text.replace(/[*_~`|]/g, '');
 
     for (const pattern of URL_PATTERNS) {
-        const matches = text.match(new RegExp(pattern.source, 'gi'));
+        pattern.lastIndex = 0;
+        const matches = cleanText.match(pattern);
 
         if (matches) {
-            links.push(...matches);
+            for (let link of matches) {
+                link = link.trim().replace(/[.,;:!?]+$/, '');
+
+                if (link.startsWith('www.') && !link.startsWith('https://')) {
+                    link = 'https://' + link;
+                }
+
+                links.add(link);
+            }
         }
     }
 
-    const domains = text.match(
-        new RegExp(BARE_DOMAIN_PATTERN.source, 'gi')
-    );
+    BARE_DOMAIN_PATTERN.lastIndex = 0;
+    const bareMatches = cleanText.match(BARE_DOMAIN_PATTERN);
 
-    if (domains) {
-        links.push(...domains);
-    }
-
-    return [...new Set(links)];
-}
-
-
-/*
- * ==========================
- * JID CLEANER
- * ==========================
- */
-
-function cleanJid(jid = '') {
-    return jid
-        .replace(/:\d+@/, '@')
-        .replace(/@c\.us$/, '@s.whatsapp.net');
-}
-
-
-/*
- * ==========================
- * CONFIG
- * ==========================
- */
-
-function getConfigStore() {
-    if (!globalThis._antilinkConfig) {
-        globalThis._antilinkConfig = {};
-    }
-
-    return globalThis._antilinkConfig;
-}
-
-
-function saveConfigStore() {
-    try {
-        if (typeof globalThis._saveAntilinkConfig === 'function') {
-            globalThis._saveAntilinkConfig(
-                globalThis._antilinkConfig
-            );
+    if (bareMatches) {
+        for (const m of bareMatches) {
+            links.add(m.trim());
         }
-    } catch (error) {
-        console.error('ANTILINK CONFIG SAVE ERROR:', error);
+    }
+
+    return [...links];
+}
+
+function cleanJid(jid) {
+    if (!jid) return jid;
+    const clean = jid.split(':')[0];
+    return clean.includes('@') ? clean : clean + '@s.whatsapp.net';
+}
+
+function loadConfig() {
+    if (
+        typeof globalThis._antilinkConfig === 'object' &&
+        globalThis._antilinkConfig !== null
+    ) {
+        return globalThis._antilinkConfig;
+    }
+
+    return {};
+}
+
+function saveConfig(data) {
+    globalThis._antilinkConfig = data;
+
+    if (typeof globalThis._saveAntilinkConfig === 'function') {
+        globalThis._saveAntilinkConfig(data);
     }
 }
 
+function isEnabled(chatJid) {
+    const config = loadConfig();
+    return config[chatJid]?.enabled || false;
+}
 
-function getGroupConfig(groupId) {
-    const store = getConfigStore();
+function getMode(chatJid) {
+    const config = loadConfig();
+    return config[chatJid]?.mode || 'delete';
+}
 
-    if (!store[groupId]) {
-        store[groupId] = {
-            enabled: false,
-            mode: 'warn',
-            allowedLinks: [],
-            exemptAdmins: false,
-            excludeTypes: []
+function getGroupConfig(chatJid) {
+    const config = loadConfig();
+    return config[chatJid] || null;
+}
+
+function checkMessageForLinks(msg) {
+    if (!msg.message) {
+        return {
+            hasLink: false,
+            links: [],
+            text: ''
         };
     }
 
-    return store[groupId];
+    const text = extractMessageText(msg.message);
+    const hasLink = containsLink(text);
+    const links = hasLink ? extractLinks(text) : [];
+
+    return {
+        hasLink,
+        links,
+        text
+    };
 }
 
+function isLinkExempt(links, exemptLinks) {
+    if (!exemptLinks || exemptLinks.length === 0) return false;
 
-function isEnabled(groupId) {
-    return getGroupConfig(groupId).enabled === true;
+    return links.some(link => {
+        const cleanLink = link
+            .replace(/^https?:\/\//, '')
+            .toLowerCase();
+
+        return exemptLinks.some(
+            exempt =>
+                cleanLink.includes(exempt) ||
+                exempt.includes(cleanLink)
+        );
+    });
 }
-
-
-function getMode(groupId) {
-    return getGroupConfig(groupId).mode || 'warn';
-}
-
-
-/*
- * ==========================
- * LINK TYPES
- * ==========================
- */
 
 const LINK_TYPE_PATTERNS = {
-    whatsapp: [
-        /whatsapp\.com/i,
+    grouplinks: [
         /chat\.whatsapp\.com/i,
-        /wa\.me/i
-    ],
-
-    telegram: [
-        /t\.me/i,
-        /telegram\.me/i
+        /wa\.me\//i
     ],
 
     instagram: [
@@ -235,7 +208,7 @@ const LINK_TYPE_PATTERNS = {
 
     twitter: [
         /twitter\.com/i,
-        /x\.com/i
+        /x\.com\//i
     ],
 
     youtube: [
@@ -248,238 +221,155 @@ const LINK_TYPE_PATTERNS = {
         /vm\.tiktok\.com/i
     ],
 
+    telegram: [
+        /t\.me\//i
+    ],
+
     discord: [
         /discord\.gg/i,
-        /discord\.com/i
+        /discord\.com\/invite/i
     ],
 
-    github: [
-        /github\.com/i
-    ],
-
-    snapchat: [
-        /snapchat\.com/i
-    ],
-
-    reddit: [
-        /reddit\.com/i
-    ],
-
-    linkedin: [
-        /linkedin\.com/i
-    ],
-
-    spotify: [
-        /spotify\.com/i,
-        /spotify\.link/i
-    ],
-
-    shortener: [
-        /bitly\.com/i,
+    shortened: [
+        /bit\.ly\//i,
         /tinyurl\.com/i,
-        /goo\.gl/i,
-        /ow\.ly/i,
-        /is\.gd/i,
-        /v\.gd/i,
-        /cutt\.ly/i,
-        /shorturl/i
+        /goo\.gl\//i,
+        /ow\.ly\//i,
+        /is\.gd\//i,
+        /v\.gd\//i,
+        /cutt\.ly\//i,
+        /shorturl\.at\//i,
+        /pin\.it\//i,
+        /spotify\.link\//i
     ],
-
-    website: [
-        BARE_DOMAIN_PATTERN
-    ]
 };
-
 
 const VALID_EXCLUDE_TYPES = Object.keys(LINK_TYPE_PATTERNS);
 
-
 function getLinkType(link) {
-    if (!link) return 'website';
+    const lower = link.toLowerCase();
 
     for (const [type, patterns] of Object.entries(LINK_TYPE_PATTERNS)) {
-        if (patterns.some(pattern => pattern.test(link))) {
+        if (patterns.some(p => p.test(lower))) {
             return type;
         }
     }
 
-    return 'website';
+    return 'other';
 }
 
+function isExcludedType(links, excludeTypes) {
+    if (!excludeTypes || excludeTypes.length === 0) return false;
 
-function isExcludedType(groupId, link) {
-    const config = getGroupConfig(groupId);
-    const type = getLinkType(link);
-
-    return config.excludeTypes.includes(type);
-}
-
-
-function getExcludeTypes(groupId) {
-    return getGroupConfig(groupId).excludeTypes || [];
-}
-
-
-/*
- * ==========================
- * MESSAGE CHECK
- * ==========================
- */
-
-function checkMessageForLinks(groupId, text) {
-    if (!isEnabled(groupId)) {
-        return {
-            detected: false,
-            links: []
-        };
-    }
-
-    if (!containsLink(text)) {
-        return {
-            detected: false,
-            links: []
-        };
-    }
-
-    const links = extractLinks(text);
-
-    const filteredLinks = links.filter(
-        link => !isExcludedType(groupId, link)
+    return links.some(
+        link => excludeTypes.includes(getLinkType(link))
     );
+}
 
-    return {
-        detected: filteredLinks.length > 0,
-        links: filteredLinks
-    };
+function getExcludeTypes(chatJid) {
+    const config = loadConfig();
+    return config[chatJid]?.excludeTypes || [];
 }
 
 
 /*
  * ==========================
- * EXEMPTION
+ * GAAJU STYLE ONLY
  * ==========================
  */
 
-function isLinkExempt(groupId, jid, groupMetadata = null) {
-    const config = getGroupConfig(groupId);
+const H = '┏━━❐➭ ANTI LINK ❐';
+const F = '┗━━❐➭';
+const SEP = '┃➭';
 
-    if (!jid) return false;
-
-    const cleaned = cleanJid(jid);
-
-    /*
-     * Bot itself
-     */
-    if (
-        globalThis.sock?.user?.id &&
-        cleanJid(globalThis.sock.user.id) === cleaned
-    ) {
-        return true;
-    }
-
-    /*
-     * Admin exemption
-     */
-    if (config.exemptAdmins && groupMetadata?.participants) {
-        const participant = groupMetadata.participants.find(
-            p => cleanJid(p.id) === cleaned
-        );
-
-        if (
-            participant &&
-            (participant.admin === 'admin' ||
-                participant.admin === 'superadmin')
-        ) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
-/*
- * ==========================
- * COMMAND
- * ==========================
- */
 
 module.exports = {
     name: 'antilink',
 
-    aliases: [
-        'antilink'
-    ],
-
-    description: 'Control anti-link protection',
+    description: 'Control link sharing in the group with different actions',
 
     category: 'group',
 
-    async execute(sock, msg, args, prefix, ctx) {
+    checkMessageForLinks,
+    isEnabled,
+    getMode,
+    getGroupConfig,
+    isLinkExempt,
+    isExcludedType,
+    getExcludeTypes,
+    containsLink,
+    extractLinks,
+    extractMessageText,
+
+    async execute(sock, msg, args, PREFIX, extra) {
         const chatId = msg.key.remoteJid;
 
-        /*
-         * ==========================
-         * GROUP CHECK
-         * ==========================
-         */
+        try {
+            await sock.sendMessage(chatId, {
+                react: {
+                    text: '🔗',
+                    key: msg.key
+                }
+            });
+        } catch {}
 
-        if (!chatId?.endsWith('@g.us')) {
+        const isGroup = chatId.endsWith('@g.us');
+
+        if (!isGroup) {
             return sock.sendMessage(
                 chatId,
                 {
                     text:
                         `${H}\n` +
-                        `${SEP}➭ This command can only be used in groups.\n` +
+                        `${SEP}➭ Group only command\n` +
                         `${F}`
                 },
                 { quoted: msg }
             );
         }
 
-
-        /*
-         * ==========================
-         * HELPERS
-         * ==========================
-         */
-
-        const sender =
+        let sender =
             msg.key.participant ||
-            msg.participant ||
-            msg.key.remoteJid;
+            (msg.key.fromMe ? sock.user.id : chatId);
 
-        const cleanSender = cleanJid(sender);
+        sender = cleanJid(sender);
 
-        let groupMetadata;
+        let isAdmin = false;
 
         try {
-            groupMetadata = await sock.groupMetadata(chatId);
-        } catch (error) {
-            console.error('ANTILINK GROUP METADATA ERROR:', error);
+            const groupMetadata =
+                await sock.groupMetadata(chatId);
+
+            const participant =
+                groupMetadata.participants.find(
+                    p => cleanJid(p.id) === sender
+                );
+
+            isAdmin =
+                participant?.admin === 'admin' ||
+                participant?.admin === 'superadmin';
+
+        } catch {
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+                        `${H}\n` +
+                        `${SEP}➭ Status : ❌ Failed to fetch group info\n` +
+                        `${F}`
+                },
+                { quoted: msg }
+            );
         }
 
-        const participant = groupMetadata?.participants?.find(
-            p => cleanJid(p.id) === cleanSender
-        );
-
-        const isAdmin =
-            participant?.admin === 'admin' ||
-            participant?.admin === 'superadmin';
-
-        const ownerNumber =
-            globalThis.config?.OWNER_NUMBER ||
-            globalThis.ownerNumber ||
-            globalThis.owner;
-
         const isOwner =
-            ownerNumber &&
-            cleanSender.replace(/\D/g, '') ===
-            String(ownerNumber).replace(/\D/g, '');
+            extra?.isOwner
+                ? extra.isOwner()
+                : false;
 
         const isSudo =
-            typeof globalThis.isSudo === 'function'
-                ? await globalThis.isSudo(cleanSender)
+            extra?.isSudo
+                ? extra.isSudo()
                 : false;
 
         if (!isAdmin && !isOwner && !isSudo) {
@@ -488,74 +378,52 @@ module.exports = {
                 {
                     text:
                         `${H}\n` +
-                        `${SEP}➭ Admin/owner only.\n` +
+                        `${SEP}➭ Admins only command\n` +
                         `${F}`
                 },
                 { quoted: msg }
             );
         }
 
-
-        /*
-         * ==========================
-         * ARGS
-         * ==========================
-         */
-
-        const action = (args[0] || '').toLowerCase();
-        const value = args.slice(1).join(' ').trim();
-
-        const config = getGroupConfig(chatId);
+        const config = loadConfig();
+        const sub = (args[0] || '').toLowerCase();
 
 
-        /*
-         * ==========================
-         * HELP
-         * ==========================
-         */
+        // ── ON ────────────────────────────────────────────────
+        if (sub === 'on') {
+            const mode = (args[1] || '').toLowerCase();
 
-        if (!action) {
-            return sock.sendMessage(
-                chatId,
-                {
-                    text:
-                        `${H}\n` +
-                        `${SEP}➭ ${prefix}antilink on [warn|delete|kick]\n` +
-                        `${SEP}➭ ${prefix}antilink off\n` +
-                        `${SEP}➭ ${prefix}antilink status\n` +
-                        `${SEP}➭ ${prefix}antilink allow [link]\n` +
-                        `${SEP}➭ ${prefix}antilink disallow [link]\n` +
-                        `${SEP}➭ ${prefix}antilink listallowed\n` +
-                        `${SEP}➭ ${prefix}antilink exemptadmins on/off\n` +
-                        `${SEP}➭ ${prefix}antilink exclude [type]\n` +
-                        `${SEP}➭ ${prefix}antilink removeexclude [type]\n` +
-                        `${SEP}➭ ${prefix}antilink listexclude\n` +
-                        `${SEP}➭ ${prefix}antilink test [text]\n` +
-                        `${F}`
-                },
-                { quoted: msg }
-            );
-        }
+            if (
+                !mode ||
+                !['warn', 'delete', 'kick'].includes(mode)
+            ) {
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ Usage  : ${PREFIX}antilink on [mode]\n` +
+                            `${SEP}➭ warn   → warn senders\n` +
+                            `${SEP}➭ delete → auto-delete links\n` +
+                            `${SEP}➭ kick   → kick senders\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
+                );
+            }
 
+            config[chatId] = {
+                enabled: true,
+                mode,
+                exemptAdmins:
+                    config[chatId]?.exemptAdmins ?? true,
+                exemptLinks:
+                    config[chatId]?.exemptLinks || [],
+                warningCount:
+                    config[chatId]?.warningCount || {}
+            };
 
-        /*
-         * ==========================
-         * ON
-         * ==========================
-         */
-
-        if (action === 'on') {
-            const mode =
-                ['warn', 'delete', 'kick'].includes(
-                    value.toLowerCase()
-                )
-                    ? value.toLowerCase()
-                    : 'warn';
-
-            config.enabled = true;
-            config.mode = mode;
-
-            saveConfigStore();
+            saveConfig(config);
 
             return sock.sendMessage(
                 chatId,
@@ -563,7 +431,8 @@ module.exports = {
                     text:
                         `${H}\n` +
                         `${SEP}➭ Status : ✅ Enabled\n` +
-                        `${SEP}➭ Mode   : ${mode}\n` +
+                        `${SEP}➭ Mode   : ${mode.toUpperCase()}\n` +
+                        `${SEP}➭ Admins : ${config[chatId].exemptAdmins ? 'Exempt' : 'Not exempt'}\n` +
                         `${F}`
                 },
                 { quoted: msg }
@@ -571,16 +440,12 @@ module.exports = {
         }
 
 
-        /*
-         * ==========================
-         * OFF
-         * ==========================
-         */
-
-        if (action === 'off') {
-            config.enabled = false;
-
-            saveConfigStore();
+        // ── OFF ───────────────────────────────────────────────
+        if (sub === 'off') {
+            if (config[chatId]) {
+                config[chatId].enabled = false;
+                saveConfig(config);
+            }
 
             return sock.sendMessage(
                 chatId,
@@ -588,6 +453,7 @@ module.exports = {
                     text:
                         `${H}\n` +
                         `${SEP}➭ Status : ❌ Disabled\n` +
+                        `${SEP}➭ Note   : Links allowed again\n` +
                         `${F}`
                 },
                 { quoted: msg }
@@ -595,62 +461,39 @@ module.exports = {
         }
 
 
-        /*
-         * ==========================
-         * STATUS
-         * ==========================
-         */
+        // ── STATUS ────────────────────────────────────────────
+        if (sub === 'status') {
+            const gc = config[chatId];
 
-        if (action === 'status') {
-            return sock.sendMessage(
-                chatId,
-                {
-                    text:
-                        `${H}\n` +
-                        `${SEP}➭ Status       : ${config.enabled ? '✅ Enabled' : '❌ Disabled'}\n` +
-                        `${SEP}➭ Mode         : ${config.mode}\n` +
-                        `${SEP}➭ Admin Exempt : ${config.exemptAdmins ? '✅ On' : '❌ Off'}\n` +
-                        `${SEP}➭ Allowed      : ${config.allowedLinks.length}\n` +
-                        `${SEP}➭ Excluded     : ${config.excludeTypes.length}\n` +
-                        `${F}`
-                },
-                { quoted: msg }
-            );
-        }
+            if (gc?.enabled) {
+                const excludeList =
+                    gc.excludeTypes?.length
+                        ? gc.excludeTypes.join(', ')
+                        : 'none';
 
-
-        /*
-         * ==========================
-         * ALLOW
-         * ==========================
-         */
-
-        if (action === 'allow') {
-            if (!value) {
                 return sock.sendMessage(
                     chatId,
                     {
                         text:
                             `${H}\n` +
-                            `${SEP}➭ Enter a link/type to allow.\n` +
+                            `${SEP}➭ Status   : ✅ ENABLED\n` +
+                            `${SEP}➭ Mode     : ${gc.mode.toUpperCase()}\n` +
+                            `${SEP}➭ Admins   : ${gc.exemptAdmins ? 'Exempt' : 'Not exempt'}\n` +
+                            `${SEP}➭ Allowed  : ${gc.exemptLinks?.length || 0} link(s)\n` +
+                            `${SEP}➭ Excluded : ${excludeList}\n` +
                             `${F}`
                     },
                     { quoted: msg }
                 );
             }
 
-            if (!config.allowedLinks.includes(value)) {
-                config.allowedLinks.push(value);
-            }
-
-            saveConfigStore();
-
             return sock.sendMessage(
                 chatId,
                 {
                     text:
                         `${H}\n` +
-                        `${SEP}➭ Allowed : ${value}\n` +
+                        `${SEP}➭ Status : ❌ DISABLED\n` +
+                        `${SEP}➭ Enable : ${PREFIX}antilink on [mode]\n` +
                         `${F}`
                 },
                 { quoted: msg }
@@ -658,121 +501,71 @@ module.exports = {
         }
 
 
-        /*
-         * ==========================
-         * DISALLOW / REMOVE
-         * ==========================
-         */
+        // ── ALLOW ─────────────────────────────────────────────
+        if (sub === 'allow') {
+            const linkToAllow =
+                args.slice(1).join(' ').trim();
 
-        if (
-            action === 'disallow' ||
-            action === 'remove'
-        ) {
-            if (!value) {
+            if (!linkToAllow) {
                 return sock.sendMessage(
                     chatId,
                     {
                         text:
                             `${H}\n` +
-                            `${SEP}➭ Enter a link/type to remove.\n` +
+                            `${SEP}➭ Usage : ${PREFIX}antilink allow [link]\n` +
+                            `${SEP}➭ e.g.   : ${PREFIX}antilink allow youtube.com\n` +
                             `${F}`
                     },
                     { quoted: msg }
                 );
             }
 
-            config.allowedLinks =
-                config.allowedLinks.filter(
-                    item =>
-                        item.toLowerCase() !==
-                        value.toLowerCase()
-                );
+            if (!config[chatId]) {
+                config[chatId] = {
+                    enabled: false,
+                    mode: 'delete',
+                    exemptAdmins: true,
+                    exemptLinks: [],
+                    warningCount: {}
+                };
+            }
 
-            saveConfigStore();
+            if (!config[chatId].exemptLinks) {
+                config[chatId].exemptLinks = [];
+            }
 
-            return sock.sendMessage(
-                chatId,
-                {
-                    text:
-                        `${H}\n` +
-                        `${SEP}➭ Removed : ${value}\n` +
-                        `${F}`
-                },
-                { quoted: msg }
-            );
-        }
-
-
-        /*
-         * ==========================
-         * LIST ALLOWED
-         * ==========================
-         */
-
-        if (
-            action === 'listallowed' ||
-            action === 'list'
-        ) {
-            const allowed =
-                config.allowedLinks.length
-                    ? config.allowedLinks
-                        .map(x => `${SEP} ${x}`)
-                        .join('\n')
-                    : `${SEP} None`;
-
-            return sock.sendMessage(
-                chatId,
-                {
-                    text:
-                        `${H}\n` +
-                        `${allowed}\n` +
-                        `${F}`
-                },
-                { quoted: msg }
-            );
-        }
-
-
-        /*
-         * ==========================
-         * EXEMPT ADMINS
-         * ==========================
-         */
-
-        if (
-            action === 'exemptadmins' ||
-            action === 'exempt'
-        ) {
-            const setting =
-                value.toLowerCase();
+            const cleanLink =
+                linkToAllow
+                    .replace(/^https?:\/\//, '')
+                    .toLowerCase();
 
             if (
-                setting !== 'on' &&
-                setting !== 'off'
+                config[chatId].exemptLinks.includes(cleanLink)
             ) {
                 return sock.sendMessage(
                     chatId,
                     {
                         text:
                             `${H}\n` +
-                            `${SEP}➭ Use: ${prefix}antilink exemptadmins on/off\n` +
+                            `${SEP}➭ Link   : ${cleanLink}\n` +
+                            `${SEP}➭ Status : Already allowed\n` +
                             `${F}`
                     },
                     { quoted: msg }
                 );
             }
 
-            config.exemptAdmins =
-                setting === 'on';
+            config[chatId].exemptLinks.push(cleanLink);
 
-            saveConfigStore();
+            saveConfig(config);
 
             return sock.sendMessage(
                 chatId,
                 {
                     text:
                         `${H}\n` +
-                        `${SEP}➭ Admin Exempt : ${config.exemptAdmins ? '✅ On' : '❌ Off'}\n` +
+                        `${SEP}➭ Link   : ${cleanLink}\n` +
+                        `${SEP}➭ Status : ✅ Added to allow list\n` +
                         `${F}`
                 },
                 { quoted: msg }
@@ -780,144 +573,70 @@ module.exports = {
         }
 
 
-        /*
-         * ==========================
-         * EXCLUDE
-         * ==========================
-         */
+        // ── DISALLOW ─────────────────────────────────────────
+        if (sub === 'disallow' || sub === 'remove') {
+            const linkToRemove =
+                args.slice(1).join(' ').trim();
 
-        if (
-            action === 'exclude' ||
-            action === 'addexclude'
-        ) {
-            const type =
-                value.toLowerCase();
-
-            if (!VALID_EXCLUDE_TYPES.includes(type)) {
+            if (!linkToRemove) {
                 return sock.sendMessage(
                     chatId,
                     {
                         text:
                             `${H}\n` +
-                            `${SEP}➭ Invalid type.\n` +
-                            `${SEP}➭ Available: ${VALID_EXCLUDE_TYPES.join(', ')}\n` +
+                            `${SEP}➭ Usage : ${PREFIX}antilink disallow [link]\n` +
                             `${F}`
                     },
                     { quoted: msg }
                 );
             }
 
-            if (!config.excludeTypes.includes(type)) {
-                config.excludeTypes.push(type);
-            }
-
-            saveConfigStore();
-
-            return sock.sendMessage(
-                chatId,
-                {
-                    text:
-                        `${H}\n` +
-                        `${SEP}➭ Excluded : ${type}\n` +
-                        `${F}`
-                },
-                { quoted: msg }
-            );
-        }
-
-
-        /*
-         * ==========================
-         * REMOVE EXCLUDE
-         * ==========================
-         */
-
-        if (
-            action === 'removeexclude' ||
-            action === 'unexclude'
-        ) {
-            const type =
-                value.toLowerCase();
-
-            config.excludeTypes =
-                config.excludeTypes.filter(
-                    item => item !== type
-                );
-
-            saveConfigStore();
-
-            return sock.sendMessage(
-                chatId,
-                {
-                    text:
-                        `${H}\n` +
-                        `${SEP}➭ Removed : ${type}\n` +
-                        `${F}`
-                },
-                { quoted: msg }
-            );
-        }
-
-
-        /*
-         * ==========================
-         * LIST EXCLUDES
-         * ==========================
-         */
-
-        if (
-            action === 'listexclude' ||
-            action === 'excludes'
-        ) {
-            const excludes =
-                getExcludeTypes(chatId);
-
-            return sock.sendMessage(
-                chatId,
-                {
-                    text:
-                        `${H}\n` +
-                        `${SEP}➭ ${excludes.length ? excludes.join(', ') : 'None'}\n` +
-                        `${F}`
-                },
-                { quoted: msg }
-            );
-        }
-
-
-        /*
-         * ==========================
-         * TEST
-         * ==========================
-         */
-
-        if (action === 'test') {
-            if (!value) {
+            if (!config[chatId]?.exemptLinks?.length) {
                 return sock.sendMessage(
                     chatId,
                     {
                         text:
                             `${H}\n` +
-                            `${SEP}➭ Enter text to test.\n` +
+                            `${SEP}➭ No allowed links to remove\n` +
                             `${F}`
                     },
                     { quoted: msg }
                 );
             }
 
-            const result =
-                checkMessageForLinks(
+            const cleanLink =
+                linkToRemove
+                    .replace(/^https?:\/\//, '')
+                    .toLowerCase();
+
+            const idx =
+                config[chatId].exemptLinks.indexOf(cleanLink);
+
+            if (idx === -1) {
+                return sock.sendMessage(
                     chatId,
-                    value
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ Link   : ${cleanLink}\n` +
+                            `${SEP}➭ Status : Not in allow list\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
                 );
+            }
+
+            config[chatId].exemptLinks.splice(idx, 1);
+
+            saveConfig(config);
 
             return sock.sendMessage(
                 chatId,
                 {
                     text:
                         `${H}\n` +
-                        `${SEP}➭ Link Found : ${result.detected ? '✅ Yes' : '❌ No'}\n` +
-                        `${SEP}➭ Links     : ${result.links.length}\n` +
+                        `${SEP}➭ Link   : ${cleanLink}\n` +
+                        `${SEP}➭ Status : ✅ Removed from allow list\n` +
                         `${F}`
                 },
                 { quoted: msg }
@@ -925,48 +644,338 @@ module.exports = {
         }
 
 
-        /*
-         * ==========================
-         * UNKNOWN ACTION
-         * ==========================
-         */
+        // ── LIST ALLOWED ─────────────────────────────────────
+        if (sub === 'listallowed' || sub === 'list') {
+            const exemptLinks =
+                config[chatId]?.exemptLinks || [];
 
-        return sock.sendMessage(
-            chatId,
-            {
-                text:
-                    `${H}\n` +
-                    `${SEP}➭ Unknown option.\n` +
-                    `${SEP}➭ Use ${prefix}antilink for help.\n` +
-                    `${F}`
-            },
-            { quoted: msg }
-        );
-    },
+            if (exemptLinks.length === 0) {
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ No links in allow list\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
+                );
+            }
+
+            const rows =
+                exemptLinks
+                    .map(
+                        (link, i) =>
+                            `${SEP}➭ ${i + 1}. ${link}`
+                    )
+                    .join('\n');
+
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+                        `${H}\n` +
+                        `${rows}\n` +
+                        `${SEP}➭ Total : ${exemptLinks.length}\n` +
+                        `${F}`
+                },
+                { quoted: msg }
+            );
+        }
 
 
-    /*
-     * ==========================
-     * EXPORTED HELPERS
-     * ==========================
-     */
+        // ── EXEMPTADMINS ─────────────────────────────────────
+        if (sub === 'exemptadmins') {
+            const toggle =
+                (args[1] || '').toLowerCase();
 
-    extractMessageText,
-    containsLink,
-    extractLinks,
-    cleanJid,
+            if (!config[chatId]) {
+                config[chatId] = {
+                    enabled: false,
+                    mode: 'delete',
+                    exemptAdmins: true,
+                    exemptLinks: [],
+                    warningCount: {}
+                };
+            }
 
-    getGroupConfig,
-    isEnabled,
-    getMode,
+            if (toggle === 'on') {
+                config[chatId].exemptAdmins = true;
+                saveConfig(config);
 
-    checkMessageForLinks,
-    isLinkExempt,
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ Admins : ✅ Exempt from antilink\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
+                );
+            }
 
-    getLinkType,
-    isExcludedType,
-    getExcludeTypes,
+            if (toggle === 'off') {
+                config[chatId].exemptAdmins = false;
+                saveConfig(config);
 
-    LINK_TYPE_PATTERNS,
-    VALID_EXCLUDE_TYPES
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ Admins : ❌ Not exempt — subject to antilink\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
+                );
+            }
+
+            const current =
+                config[chatId].exemptAdmins !== false
+                    ? '✅ Exempt'
+                    : '❌ Not exempt';
+
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+                        `${H}\n` +
+                        `${SEP}➭ Admins : ${current}\n` +
+                        `${SEP}➭ Usage  : ${PREFIX}antilink exemptadmins on/off\n` +
+                        `${F}`
+                },
+                { quoted: msg }
+            );
+        }
+
+
+        // ── EXCLUDE ──────────────────────────────────────────
+        if (
+            sub === 'exclude' ||
+            sub === 'addexclude'
+        ) {
+            const typeName =
+                (args[1] || '').toLowerCase();
+
+            if (
+                !typeName ||
+                !VALID_EXCLUDE_TYPES.includes(typeName)
+            ) {
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ Usage : ${PREFIX}antilink exclude [type]\n` +
+                            `${SEP}➭ Types :\n` +
+                            `${SEP}➭ grouplinks, instagram, facebook\n` +
+                            `${SEP}➭ twitter, youtube, tiktok\n` +
+                            `${SEP}➭ telegram, discord, shortened\n` +
+                            `${SEP}➭ Note  : Excluded types are always actioned even if domain is allowed\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
+                );
+            }
+
+            if (!config[chatId]) {
+                config[chatId] = {
+                    enabled: false,
+                    mode: 'delete',
+                    exemptAdmins: true,
+                    exemptLinks: [],
+                    warningCount: {},
+                    excludeTypes: []
+                };
+            }
+
+            if (!config[chatId].excludeTypes) {
+                config[chatId].excludeTypes = [];
+            }
+
+            if (
+                config[chatId].excludeTypes.includes(typeName)
+            ) {
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ Type   : ${typeName}\n` +
+                            `${SEP}➭ Status : Already excluded\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
+                );
+            }
+
+            config[chatId].excludeTypes.push(typeName);
+
+            saveConfig(config);
+
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+                        `${H}\n` +
+                        `${SEP}➭ Type   : ${typeName}\n` +
+                        `${SEP}➭ Status : ✅ Added to exclude list\n` +
+                        `${SEP}➭ Mode   : ${getMode(chatId).toUpperCase()}\n` +
+                        `${F}`
+                },
+                { quoted: msg }
+            );
+        }
+
+
+        // ── REMOVEEXCLUDE ────────────────────────────────────
+        if (
+            sub === 'removeexclude' ||
+            sub === 'unexclude'
+        ) {
+            const typeName =
+                (args[1] || '').toLowerCase();
+
+            if (!typeName) {
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ Usage : ${PREFIX}antilink removeexclude [type]\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
+                );
+            }
+
+            const excludeTypes =
+                config[chatId]?.excludeTypes || [];
+
+            const idx =
+                excludeTypes.indexOf(typeName);
+
+            if (idx === -1) {
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ Type   : ${typeName}\n` +
+                            `${SEP}➭ Status : Not in exclude list\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
+                );
+            }
+
+            config[chatId].excludeTypes.splice(idx, 1);
+
+            saveConfig(config);
+
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+                        `${H}\n` +
+                        `${SEP}➭ Type   : ${typeName}\n` +
+                        `${SEP}➭ Status : ✅ Removed from exclude list\n` +
+                        `${F}`
+                },
+                { quoted: msg }
+            );
+        }
+
+
+        // ── LISTEXCLUDE ──────────────────────────────────────
+        if (
+            sub === 'listexclude' ||
+            sub === 'excludes'
+        ) {
+            const excludeTypes =
+                config[chatId]?.excludeTypes || [];
+
+            if (excludeTypes.length === 0) {
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+                            `${H}\n` +
+                            `${SEP}➭ No excluded types\n` +
+                            `${SEP}➭ Add : ${PREFIX}antilink exclude [type]\n` +
+                            `${F}`
+                    },
+                    { quoted: msg }
+                );
+            }
+
+            const rows =
+                excludeTypes
+                    .map(
+                        (t, i) =>
+                            `${SEP}➭ ${i + 1}. ${t}`
+                    )
+                    .join('\n');
+
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+                        `${H}\n` +
+                        `${rows}\n` +
+                        `${SEP}➭ Total : ${excludeTypes.length}\n` +
+                        `${F}`
+                },
+                { quoted: msg }
+            );
+        }
+
+
+        // ── TEST ─────────────────────────────────────────────
+        if (sub === 'test') {
+            const testText =
+                args.slice(1).join(' ') ||
+                'Test message with https://example.com and youtube.com/watch?v=abc';
+
+            const hasLink =
+                containsLink(testText);
+
+            const extracted =
+                extractLinks(testText);
+
+            let rows =
+                `${SEP}➭ Found : ${hasLink ? '✅ Yes' : '❌ No'}\n`;
+
+            if (
+                hasLink &&
+                extracted.length > 0
+            ) {
+                rows +=
+                    `${SEP}➭ Links : ${extracted.length} detected\n`;
+
+                extracted.forEach((link, i) => {
+                    rows +=
+                        `${SEP}➭ ${i + 1}. ${link}\n`;
+                });
+            }
+
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+                        `${H}\n` +
+                        `${SEP}➭ Text : ${testText}\n` +
+                        `${SEP}\n` +
+                        `${rows}` +
+                        `${F}`
+                },
+                { quoted: msg }
+            );
+        }
+
+
+        // ── unknown arg → ignore silently ────────────────────
+        return;
+    }
 };
