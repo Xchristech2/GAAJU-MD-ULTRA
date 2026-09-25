@@ -75,13 +75,11 @@ function parseRepo(input) {
     );
 
     if (match) {
-        return match[1]
-            .replace(/\.git$/, '');
+        return match[1].replace(/\.git$/, '');
     }
 
     if (
-        /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i
-            .test(input)
+        /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i.test(input)
     ) {
         return input;
     }
@@ -445,61 +443,63 @@ Tap a button below to continue 👇`;
 
             /*
              * ==============================
-             * BUTTONS
+             * NATIVE URL BUTTONS
              * ==============================
              */
 
-            const buttons = [
+            const interactiveButtons = [
                 {
-                    index: 1,
-                    urlButton: {
-                        displayText: '📦 Download ZIP',
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '📦 Download ZIP',
                         url: downloadZip
-                    }
+                    })
                 },
                 {
-                    index: 2,
-                    urlButton: {
-                        displayText: '🌐 Visit Repo',
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '🌐 Visit Repo',
                         url: repoUrl
-                    }
+                    })
                 },
                 {
-                    index: 3,
-                    urlButton: {
-                        displayText: '🍴 Fork Repo',
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '🍴 Fork Repo',
                         url: forkUrl
-                    }
+                    })
                 }
             ];
 
             /*
+             * ==============================
              * OWN REPO RESOURCES
+             * ==============================
              */
 
             if (repo === OWN_REPO) {
 
-                buttons.push(
+                interactiveButtons.push(
                     {
-                        index: 4,
-                        urlButton: {
-                            displayText: '🎥 Watch Tutorial',
+                        name: 'cta_url',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '🎥 Watch Tutorial',
                             url: YOUTUBE_DEPLOY
-                        }
+                        })
                     },
                     {
-                        index: 5,
-                        urlButton: {
-                            displayText: '💬 Support',
+                        name: 'cta_url',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '💬 Support',
                             url: WHATSAPP_CHANNEL
-                        }
+                        })
                     },
                     {
-                        index: 6,
-                        urlButton: {
-                            displayText: '🔑 Pair Site',
+                        name: 'cta_url',
+                        buttonParamsJson: JSON.stringify({
+                            display_text: '🔑 Pair Site',
                             url: SESSION_ID
-                        }
+                        })
                     }
                 );
             }
@@ -515,9 +515,10 @@ Tap a button below to continue 👇`;
                 {
                     text,
 
-                    templateButtons: buttons,
+                    footer:
+                        'Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ',
 
-                    footer: `Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ`,
+                    interactiveButtons,
 
                     contextInfo: {
                         forwardingScore: 999,
