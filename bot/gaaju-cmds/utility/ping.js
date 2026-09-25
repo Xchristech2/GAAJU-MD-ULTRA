@@ -11,14 +11,21 @@ module.exports = {
     async execute(sock, msg) {
         const chatId = msg.key.remoteJid;
         const start = Date.now();
-
         const botName = getBotName();
 
-        // Send temporary message
+        // React to the user's message
+        await sock.sendMessage(chatId, {
+            react: {
+                text: '🏓',
+                key: msg.key
+            }
+        });
+
+        // Temporary message
         const sent = await sock.sendMessage(
             chatId,
             {
-                text: `*${botName} is checking... 😂*`
+                text: `*${botName} is checking... 🔍*`
             },
             {
                 quoted: msg
@@ -27,11 +34,11 @@ module.exports = {
 
         const latency = Date.now() - start;
 
-        // Edit the message
+        // Edit result
         await sock.sendMessage(
             chatId,
             {
-                text: `*⚡ ${botName}!*\n*Speed: ${latency}ms*`,
+                text: `*${botName}!*\n*Speed: ${latency}ms*`,
                 edit: sent.key
             }
         );
