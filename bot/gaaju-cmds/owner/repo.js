@@ -23,7 +23,6 @@ const WHATSAPP_CHANNEL =
 
 function ghGet(path) {
     return new Promise((resolve, reject) => {
-
         const request = https.get(
             'https://api.github.com' + path,
             {
@@ -33,7 +32,6 @@ function ghGet(path) {
                 }
             },
             res => {
-
                 let data = '';
 
                 res.on('data', chunk => {
@@ -41,16 +39,12 @@ function ghGet(path) {
                 });
 
                 res.on('end', () => {
-
                     try {
-
                         resolve({
                             status: res.statusCode,
                             data: JSON.parse(data)
                         });
-
                     } catch {
-
                         reject(
                             new Error(
                                 'Invalid GitHub response.'
@@ -72,7 +66,6 @@ function ghGet(path) {
  */
 
 function parseRepo(input) {
-
     if (!input) {
         return OWN_REPO;
     }
@@ -82,7 +75,6 @@ function parseRepo(input) {
     );
 
     if (match) {
-
         return match[1]
             .replace(/\.git$/, '');
     }
@@ -104,7 +96,6 @@ function parseRepo(input) {
  */
 
 function num(value) {
-
     if (value == null) {
         return 'N/A';
     }
@@ -118,10 +109,9 @@ function num(value) {
  * ==============================
  */
 
-function trunc(text, length = 70) {
-
+function trunc(text, length = 120) {
     if (!text) {
-        return 'N/A';
+        return 'No description available.';
     }
 
     text = String(text);
@@ -140,7 +130,6 @@ function trunc(text, length = 70) {
  */
 
 function getVisibility(data) {
-
     if (data.visibility === 'public') {
         return '🔓 Public';
     }
@@ -155,7 +144,6 @@ function getVisibility(data) {
  */
 
 function getLanguage(language) {
-
     if (!language) {
         return '💻 Unknown';
     }
@@ -229,17 +217,16 @@ module.exports = {
 
         if (input && !repo) {
 
-            const text = `┏━━❐✧ ${botName} ✧❐
-┃
-┃ ⚠️ Invalid repository
-┃
-┃ ✦ Usage:
-┃   ${p}repo owner/repository
-┃
-┃ ✦ Example:
-┃   ${p}repo Xchristech2/GAAJU-MD-ULTRA
-┃
-┗━━❐`;
+            const text = `┏━━❐➭ ${botName} ❐
+┃➭
+┃➭ ⚠️ Invalid repository
+┃➭
+┃➭ Usage:
+┃➭ ${p}repo owner/repository
+┃➭
+┃➭ Example:
+┃➭ ${p}repo Xchristech2/GAAJU-MD-ULTRA
+┗━━❐➭`;
 
             return sock.sendMessage(
                 jid,
@@ -304,7 +291,6 @@ module.exports = {
             ]);
 
             if (repoRes.status !== 200) {
-
                 throw new Error(
                     'Repository not found or is private.'
                 );
@@ -331,7 +317,7 @@ module.exports = {
                 trunc(
                     data.description ||
                     'No description available.',
-                    75
+                    120
                 );
 
             const language =
@@ -411,77 +397,116 @@ module.exports = {
 
             /*
              * ==============================
-             * OWN REPOSITORY LINKS
+             * REPOSITORY LINKS
              * ==============================
              */
 
-            let ownLinks = '';
+            const repoUrl =
+                data.html_url;
+
+            const downloadZip =
+                `https://github.com/${repo}/archive/refs/heads/${branch}.zip`;
+
+            const forkUrl =
+                `https://github.com/${repo}/fork`;
+
+            /*
+             * ==============================
+             * FINAL MESSAGE
+             * ==============================
+             */
+
+            const text = `📦 *${repository}*
+
+👤 Owner: ${owner}
+⭐ Stars: ${stars}
+🍴 Forks: ${forks}
+👁️ Watchers: ${watchers}
+🐛 Issues: ${issues}
+💾 Size: ${size}
+💻 Language: ${language}
+📜 License: ${license}
+🌿 Branch: ${branch}
+🔓 Status: ${visibility}
+
+🕒 Last Updated:
+${data.updated_at
+    ? new Date(data.updated_at).toLocaleString()
+    : 'N/A'}
+
+📝 *Description:*
+${description}
+
+👋 Hey @${owner}!
+
+⭐ Don't forget to fork and star the repo!
+
+Tap a button below to continue 👇`;
+
+            /*
+             * ==============================
+             * BUTTONS
+             * ==============================
+             */
+
+            const buttons = [
+                {
+                    index: 1,
+                    urlButton: {
+                        displayText: '📦 Download ZIP',
+                        url: downloadZip
+                    }
+                },
+                {
+                    index: 2,
+                    urlButton: {
+                        displayText: '🌐 Visit Repo',
+                        url: repoUrl
+                    }
+                },
+                {
+                    index: 3,
+                    urlButton: {
+                        displayText: '🍴 Fork Repo',
+                        url: forkUrl
+                    }
+                }
+            ];
+
+            /*
+             * OWN REPO RESOURCES
+             */
 
             if (repo === OWN_REPO) {
 
-                ownLinks = `
-
-┏━━❐✧ BOT RESOURCES ✧❐
-┃
-┃ 🔑 Pairing
-┃ ${SESSION_ID}
-┃
-┃ 🎬 Deployment Guide
-┃ ${YOUTUBE_DEPLOY}
-┃
-┃ 📢 WhatsApp Channel
-┃ ${WHATSAPP_CHANNEL}
-┃
-┗━━❐`;
+                buttons.push(
+                    {
+                        index: 4,
+                        urlButton: {
+                            displayText: '🎥 Watch Tutorial',
+                            url: YOUTUBE_DEPLOY
+                        }
+                    },
+                    {
+                        index: 5,
+                        urlButton: {
+                            displayText: '💬 Support',
+                            url: WHATSAPP_CHANNEL
+                        }
+                    },
+                    {
+                        index: 6,
+                        urlButton: {
+                            displayText: '🔑 Pair Site',
+                            url: SESSION_ID
+                        }
+                    }
+                );
             }
 
             /*
              * ==============================
-             * FINAL REPOSITORY CARD
-             * ==============================
-             */
-
-            const text = `┏━━❐✧ ${botName} ✧❐
-┃
-┃ 📦 REPOSITORY
-┃
-┃ ✦ Name      : ${repository}
-┃ ✦ Owner     : ${owner}
-┃ ✦ About     : ${description}
-┃ ✦ Language  : ${language}
-┃ ✦ License   : ${license}
-┃ ✦ Branch    : ${branch}
-┃ ✦ Status    : ${visibility}
-┃
-┗━━❐
-
-┏━━❐✧ PROJECT STATISTICS ✧❐
-┃
-┃ ⭐ Stars     : ${stars}
-┃ 🍴 Forks     : ${forks}
-┃ 👁️ Watchers  : ${watchers}
-┃ 🐛 Issues    : ${issues}
-┃ 💾 Size      : ${size}
-┃
-┗━━❐
-
-┏━━❐✧ SOURCE ✧❐
-┃
-┃ 🔗 Repository
-┃ ${data.html_url}
-┃
-┗━━❐${ownLinks}
-
-┏━━❐✧ DEVELOPER ✧❐
-┃
-┃ 🤖 ${botName}
-┃ ⚡ Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ
-┃
-┗━━❐`;
-
-            /*
-             * ==============================
-             * SEND
+             * SEND MESSAGE
              * ==============================
              */
 
@@ -489,14 +514,22 @@ module.exports = {
                 jid,
                 {
                     text,
+
+                    templateButtons: buttons,
+
+                    footer: `Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ`,
+
                     contextInfo: {
                         forwardingScore: 999,
                         isForwarded: true,
+
                         forwardedNewsletterMessageInfo: {
                             newsletterJid:
                                 '120363406588763460@newsletter',
+
                             newsletterName:
                                 'GAAJU-MD-ULTRA',
+
                             serverMessageId: -1
                         }
                     }
@@ -522,26 +555,29 @@ module.exports = {
             await sock.sendMessage(
                 jid,
                 {
-                    text: `┏━━❐✧ ${botName} ✧❐
-┃
-┃ ❌ REPOSITORY ERROR
-┃
-┃ ✦ Status : Failed
-┃ ✦ Reason : ${error.message}
-┃
-┃ Please try again later.
-┃
-┗━━❐
+                    text: `┏━━❐➭ ${botName} ❐
+┃➭
+┃➭ ❌ *REPOSITORY ERROR*
+┃➭
+┃➭ Status : Failed
+┃➭ Reason : ${error.message}
+┃➭
+┃➭ Please try again later.
+┗━━❐➭
 
-⚡ Powered by GAAJU-MD ULTRA`,
+> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ`,
+
                     contextInfo: {
                         forwardingScore: 999,
                         isForwarded: true,
+
                         forwardedNewsletterMessageInfo: {
                             newsletterJid:
                                 '120363406588763460@newsletter',
+
                             newsletterName:
                                 'GAAJU-MD-ULTRA',
+
                             serverMessageId: -1
                         }
                     }
