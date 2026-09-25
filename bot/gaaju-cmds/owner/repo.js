@@ -6,8 +6,17 @@ const { getBotName } = require('../../lib/botname');
 const OWN_REPO = 'Xchristech2/GAAJU-MD-ULTRA';
 const OWN_BRANCH = 'main';
 
-const REPO_IMAGE =
-    'https://raw.githubusercontent.com/Xchristech2/GAAJU-MD-ULTRA/main/assets/xd-logo.jpg';
+const REPO_SITE =
+    'https://github.com/Xchristech2/GAAJU-MD-ULTRA';
+
+const DEPLOY_TUTORIAL =
+    'https://youtu.be/jHYSN3vUJec?si=nimF4UmjSz-Mz2fV';
+
+const PAIR_SITE =
+    'https://gaaju-ultra-pair-ljtv.onrender.com';
+
+const VIEW_CHANNEL =
+    'https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z';
 
 function ghGet(path) {
     return new Promise((resolve, reject) => {
@@ -16,7 +25,8 @@ function ghGet(path) {
                 hostname: 'api.github.com',
                 path,
                 headers: {
-                    'User-Agent': 'GAAJU-MD-ULTRA'
+                    'User-Agent': 'GAAJU-MD-ULTRA',
+                    'Accept': 'application/vnd.github+json'
                 }
             },
             res => {
@@ -29,8 +39,8 @@ function ghGet(path) {
                 res.on('end', () => {
                     try {
                         resolve(JSON.parse(data));
-                    } catch (e) {
-                        reject(e);
+                    } catch (error) {
+                        reject(error);
                     }
                 });
             }
@@ -49,7 +59,7 @@ function parseRepo(input) {
     const parts = input.split('/');
 
     if (parts.length >= 2) {
-        return `${parts[0]}/${parts[1].replace(/\.git$/, '')}`;
+        return `${parts[0]}/${parts[1].replace(/\.git$/i, '')}`;
     }
 
     return OWN_REPO;
@@ -57,6 +67,18 @@ function parseRepo(input) {
 
 function num(value) {
     return Number(value || 0).toLocaleString();
+}
+
+function trunc(text, max = 120) {
+    if (!text) return 'No description available.';
+
+    text = String(text)
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return text.length > max
+        ? `${text.slice(0, max - 3)}...`
+        : text;
 }
 
 module.exports = {
@@ -73,18 +95,19 @@ module.exports = {
 
     category: 'owner',
 
-    async execute(sock, msg, args) {
+    async execute(sock, msg, args, cmdName, prefix) {
         const jid = msg.key.remoteJid;
 
         try {
             const repo = parseRepo(args?.[0]);
+
             const data = await ghGet(`/repos/${repo}`);
 
             if (!data || data.message === 'Not Found') {
                 return await sock.sendMessage(
                     jid,
                     {
-                        text: '❌ Repository not found.'
+                        text: '❌ *Repository not found.*'
                     },
                     { quoted: msg }
                 );
@@ -95,35 +118,49 @@ module.exports = {
 
             const text = `📦 *${repository}*
 
-👤 ${data.owner?.login || 'Unknown'}
-⭐ ${num(data.stargazers_count)}
-🍴 ${num(data.forks_count)}
-💻 ${data.language || 'Unknown'}
-🌿 ${branch}
-${data.private ? '🔒 Private' : '🔓 Public'}
+👤 Owner: ${data.owner?.login || 'Unknown'}
+⭐ Stars: ${num(data.stargazers_count)}
+🍴 Forks: ${num(data.forks_count)}
+💻 Language: ${data.language || 'Unknown'}
+🌿 Branch: ${branch}
+${data.private ? '🔒 Status: Private' : '🔓 Status: Public'}
 
-📝 ${data.description || 'No description available.'}
+📝 *Description:*
+${trunc(data.description)}
+
+🔗 *Deployment & Resources*
+
+🌐 *Repo Site*
+${REPO_SITE}
+
+🎥 *Deployment Tutorial*
+${DEPLOY_TUTORIAL}
+
+🔑 *Pair Site*
+${PAIR_SITE}
+
+📢 *View Channel*
+${VIEW_CHANNEL}
 
 > Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ`;
 
             await sock.sendMessage(
                 jid,
                 {
-                    image: {
-                        url: REPO_IMAGE
-                    },
-                    caption: text
+                    text: text
                 },
                 { quoted: msg }
             );
 
         } catch (error) {
-            console.error('Repo error:', error);
+            console.error('❌ Repo command error:', error);
 
             await sock.sendMessage(
                 jid,
                 {
-                    text: '❌ Unable to fetch repository information.'
+                    text:
+                        '❌ *Failed to fetch repository information.*\n\n' +
+                        'Please try again later.'
                 },
                 { quoted: msg }
             );
