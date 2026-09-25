@@ -15,6 +15,9 @@ const SESSION_ID =
 const WHATSAPP_CHANNEL =
     'https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z';
 
+const REPO_IMAGE =
+    'https://raw.githubusercontent.com/Xchristech2/GAAJU-MD-ULTRA/main/assets/xd-logo.jpg';
+
 /*
  * ==============================
  * GITHUB REQUEST
@@ -215,7 +218,10 @@ module.exports = {
 
         if (input && !repo) {
 
-            const text = `┏━━❐➭ ${botName} ❐
+            return sock.sendMessage(
+                jid,
+                {
+                    text: `┏━━❐➭ ${botName} ❐
 ┃➭
 ┃➭ ⚠️ Invalid repository
 ┃➭
@@ -224,23 +230,7 @@ module.exports = {
 ┃➭
 ┃➭ Example:
 ┃➭ ${p}repo Xchristech2/GAAJU-MD-ULTRA
-┗━━❐➭`;
-
-            return sock.sendMessage(
-                jid,
-                {
-                    text,
-                    contextInfo: {
-                        forwardingScore: 999,
-                        isForwarded: true,
-                        forwardedNewsletterMessageInfo: {
-                            newsletterJid:
-                                '120363406588763460@newsletter',
-                            newsletterName:
-                                'GAAJU-MD-ULTRA',
-                            serverMessageId: -1
-                        }
-                    }
+┗━━❐➭`
                 },
                 {
                     quoted: msg
@@ -395,7 +385,7 @@ module.exports = {
 
             /*
              * ==============================
-             * REPOSITORY LINKS
+             * LINKS
              * ==============================
              */
 
@@ -410,11 +400,11 @@ module.exports = {
 
             /*
              * ==============================
-             * FINAL MESSAGE
+             * REPO CAPTION
              * ==============================
              */
 
-            const text = `📦 *${repository}*
+            const caption = `📦 *${repository}*
 
 👤 Owner: ${owner}
 ⭐ Stars: ${stars}
@@ -439,90 +429,121 @@ ${description}
 
 ⭐ Don't forget to fork and star the repo!
 
-Tap a button below to continue 👇`;
+Tap a button below to continue 👇
+
+> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ`;
 
             /*
              * ==============================
-             * NATIVE URL BUTTONS
+             * BUTTONS
              * ==============================
              */
 
-            const interactiveButtons = [
+            const buttons = [
                 {
-                    name: 'cta_url',
-                    buttonParamsJson: JSON.stringify({
-                        display_text: '📦 Download ZIP',
-                        url: downloadZip
-                    })
+                    index: 1,
+                    urlButton: {
+                        displayText:
+                            '📋 Copy Link',
+                        url:
+                            repoUrl
+                    },
+                    buttonId:
+                        'repo_copy'
                 },
                 {
-                    name: 'cta_url',
-                    buttonParamsJson: JSON.stringify({
-                        display_text: '🌐 Visit Repo',
-                        url: repoUrl
-                    })
+                    index: 2,
+                    urlButton: {
+                        displayText:
+                            '↗️ Visit Repo',
+                        url:
+                            repoUrl
+                    }
                 },
                 {
-                    name: 'cta_url',
-                    buttonParamsJson: JSON.stringify({
-                        display_text: '🍴 Fork Repo',
-                        url: forkUrl
-                    })
+                    index: 3,
+                    urlButton: {
+                        displayText:
+                            '📥 Download ZIP',
+                        url:
+                            downloadZip
+                    }
                 }
             ];
 
             /*
              * ==============================
-             * OWN REPO RESOURCES
+             * OWN REPO BUTTONS
              * ==============================
              */
 
             if (repo === OWN_REPO) {
 
-                interactiveButtons.push(
+                buttons.push(
                     {
-                        name: 'cta_url',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: '🎥 Watch Tutorial',
-                            url: YOUTUBE_DEPLOY
-                        })
+                        index: 4,
+                        urlButton: {
+                            displayText:
+                                '🍴 Fork Repo',
+                            url:
+                                forkUrl
+                        }
                     },
                     {
-                        name: 'cta_url',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: '💬 Support',
-                            url: WHATSAPP_CHANNEL
-                        })
+                        index: 5,
+                        urlButton: {
+                            displayText:
+                                '🎥 Watch Tutorial',
+                            url:
+                                YOUTUBE_DEPLOY
+                        }
                     },
                     {
-                        name: 'cta_url',
-                        buttonParamsJson: JSON.stringify({
-                            display_text: '🔑 Pair Site',
-                            url: SESSION_ID
-                        })
+                        index: 6,
+                        urlButton: {
+                            displayText:
+                                '💬 Support',
+                            url:
+                                WHATSAPP_CHANNEL
+                        }
+                    },
+                    {
+                        index: 7,
+                        urlButton: {
+                            displayText:
+                                '🔑 Pair Site',
+                            url:
+                                SESSION_ID
+                        }
                     }
                 );
             }
 
             /*
              * ==============================
-             * SEND MESSAGE
+             * SEND IMAGE + BUTTONS
              * ==============================
              */
 
             await sock.sendMessage(
                 jid,
                 {
-                    text,
+                    image: {
+                        url: REPO_IMAGE
+                    },
 
-                    footer:
-                        'Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ',
+                    caption,
 
-                    interactiveButtons,
+                    templateButtons:
+                        buttons,
 
                     contextInfo: {
                         forwardingScore: 999,
                         isForwarded: true,
+
+                        mentionedJid: [
+                            `${owner}@s.whatsapp.net`
+                        ],
 
                         forwardedNewsletterMessageInfo: {
                             newsletterJid:
@@ -547,12 +568,6 @@ Tap a button below to continue 👇`;
                 error
             );
 
-            /*
-             * ==============================
-             * ERROR MESSAGE
-             * ==============================
-             */
-
             await sock.sendMessage(
                 jid,
                 {
@@ -566,22 +581,7 @@ Tap a button below to continue 👇`;
 ┃➭ Please try again later.
 ┗━━❐➭
 
-> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ`,
-
-                    contextInfo: {
-                        forwardingScore: 999,
-                        isForwarded: true,
-
-                        forwardedNewsletterMessageInfo: {
-                            newsletterJid:
-                                '120363406588763460@newsletter',
-
-                            newsletterName:
-                                'GAAJU-MD-ULTRA',
-
-                            serverMessageId: -1
-                        }
-                    }
+> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ`
                 },
                 {
                     quoted: msg
