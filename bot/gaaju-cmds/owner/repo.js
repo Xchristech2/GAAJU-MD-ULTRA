@@ -26,6 +26,7 @@ const REPO_IMAGE =
 
 function ghGet(path) {
     return new Promise((resolve, reject) => {
+
         const request = https.get(
             'https://api.github.com' + path,
             {
@@ -35,6 +36,7 @@ function ghGet(path) {
                 }
             },
             res => {
+
                 let data = '';
 
                 res.on('data', chunk => {
@@ -42,12 +44,16 @@ function ghGet(path) {
                 });
 
                 res.on('end', () => {
+
                     try {
+
                         resolve({
                             status: res.statusCode,
                             data: JSON.parse(data)
                         });
+
                     } catch {
+
                         reject(
                             new Error(
                                 'Invalid GitHub response.'
@@ -69,6 +75,7 @@ function ghGet(path) {
  */
 
 function parseRepo(input) {
+
     if (!input) {
         return OWN_REPO;
     }
@@ -78,11 +85,14 @@ function parseRepo(input) {
     );
 
     if (match) {
-        return match[1].replace(/\.git$/, '');
+
+        return match[1]
+            .replace(/\.git$/, '');
     }
 
     if (
-        /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i.test(input)
+        /^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i
+            .test(input)
     ) {
         return input;
     }
@@ -97,6 +107,7 @@ function parseRepo(input) {
  */
 
 function num(value) {
+
     if (value == null) {
         return 'N/A';
     }
@@ -111,6 +122,7 @@ function num(value) {
  */
 
 function trunc(text, length = 120) {
+
     if (!text) {
         return 'No description available.';
     }
@@ -131,6 +143,7 @@ function trunc(text, length = 120) {
  */
 
 function getVisibility(data) {
+
     if (data.visibility === 'public') {
         return '🔓 Public';
     }
@@ -145,6 +158,7 @@ function getVisibility(data) {
  */
 
 function getLanguage(language) {
+
     if (!language) {
         return '💻 Unknown';
     }
@@ -279,6 +293,7 @@ module.exports = {
             ]);
 
             if (repoRes.status !== 200) {
+
                 throw new Error(
                     'Repository not found or is private.'
                 );
@@ -400,11 +415,11 @@ module.exports = {
 
             /*
              * ==============================
-             * REPO CAPTION
+             * REPO TEXT
              * ==============================
              */
 
-            const caption = `📦 *${repository}*
+            const text = `📦 *${repository}*
 
 👤 Owner: ${owner}
 ⭐ Stars: ${stars}
@@ -427,47 +442,61 @@ ${description}
 
 👋 Hey @${owner}!
 
-⭐ Don't forget to fork and star the repo!
-
-Tap a button below to continue 👇
-
-> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ`;
+⭐ Don't forget to fork and star the repo!`;
 
             /*
              * ==============================
-             * BUTTONS
+             * NATIVE FLOW BUTTONS
              * ==============================
              */
 
             const buttons = [
                 {
-                    index: 1,
-                    urlButton: {
-                        displayText:
-                            '📋 Copy Link',
-                        url:
-                            repoUrl
-                    },
-                    buttonId:
-                        'repo_copy'
+                    name: 'cta_copy',
+
+                    buttonParamsJson:
+                        JSON.stringify({
+                            display_text:
+                                '📋 Copy Link',
+
+                            id:
+                                'repo_link',
+
+                            copy_code:
+                                repoUrl
+                        })
                 },
+
                 {
-                    index: 2,
-                    urlButton: {
-                        displayText:
-                            '↗️ Visit Repo',
-                        url:
-                            repoUrl
-                    }
+                    name: 'cta_url',
+
+                    buttonParamsJson:
+                        JSON.stringify({
+                            display_text:
+                                '↗️ Visit Repo',
+
+                            url:
+                                repoUrl,
+
+                            merchant_url:
+                                repoUrl
+                        })
                 },
+
                 {
-                    index: 3,
-                    urlButton: {
-                        displayText:
-                            '📥 Download ZIP',
-                        url:
-                            downloadZip
-                    }
+                    name: 'cta_url',
+
+                    buttonParamsJson:
+                        JSON.stringify({
+                            display_text:
+                                '📥 Download ZIP',
+
+                            url:
+                                downloadZip,
+
+                            merchant_url:
+                                downloadZip
+                        })
                 }
             ];
 
@@ -480,48 +509,76 @@ Tap a button below to continue 👇
             if (repo === OWN_REPO) {
 
                 buttons.push(
+
                     {
-                        index: 4,
-                        urlButton: {
-                            displayText:
-                                '🍴 Fork Repo',
-                            url:
-                                forkUrl
-                        }
+                        name: 'cta_url',
+
+                        buttonParamsJson:
+                            JSON.stringify({
+                                display_text:
+                                    '🍴 Fork Repo',
+
+                                url:
+                                    forkUrl,
+
+                                merchant_url:
+                                    forkUrl
+                            })
                     },
+
                     {
-                        index: 5,
-                        urlButton: {
-                            displayText:
-                                '🎥 Watch Tutorial',
-                            url:
-                                YOUTUBE_DEPLOY
-                        }
+                        name: 'cta_url',
+
+                        buttonParamsJson:
+                            JSON.stringify({
+                                display_text:
+                                    '🎥 Watch Tutorial',
+
+                                url:
+                                    YOUTUBE_DEPLOY,
+
+                                merchant_url:
+                                    YOUTUBE_DEPLOY
+                            })
                     },
+
                     {
-                        index: 6,
-                        urlButton: {
-                            displayText:
-                                '💬 Support',
-                            url:
-                                WHATSAPP_CHANNEL
-                        }
+                        name: 'cta_url',
+
+                        buttonParamsJson:
+                            JSON.stringify({
+                                display_text:
+                                    '💬 Support',
+
+                                url:
+                                    WHATSAPP_CHANNEL,
+
+                                merchant_url:
+                                    WHATSAPP_CHANNEL
+                            })
                     },
+
                     {
-                        index: 7,
-                        urlButton: {
-                            displayText:
-                                '🔑 Pair Site',
-                            url:
-                                SESSION_ID
-                        }
+                        name: 'cta_url',
+
+                        buttonParamsJson:
+                            JSON.stringify({
+                                display_text:
+                                    '🔑 Pair Site',
+
+                                url:
+                                    SESSION_ID,
+
+                                merchant_url:
+                                    SESSION_ID
+                            })
                     }
                 );
             }
 
             /*
              * ==============================
-             * SEND IMAGE + BUTTONS
+             * SEND REPO IMAGE + NATIVE BUTTONS
              * ==============================
              */
 
@@ -529,32 +586,18 @@ Tap a button below to continue 👇
                 jid,
                 {
                     image: {
-                        url: REPO_IMAGE
+                        url:
+                            REPO_IMAGE
                     },
 
-                    caption,
+                    caption:
+                        text,
 
-                    templateButtons:
-                        buttons,
+                    footer:
+                        'Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ',
 
-                    contextInfo: {
-                        forwardingScore: 999,
-                        isForwarded: true,
-
-                        mentionedJid: [
-                            `${owner}@s.whatsapp.net`
-                        ],
-
-                        forwardedNewsletterMessageInfo: {
-                            newsletterJid:
-                                '120363406588763460@newsletter',
-
-                            newsletterName:
-                                'GAAJU-MD-ULTRA',
-
-                            serverMessageId: -1
-                        }
-                    }
+                    interactiveButtons:
+                        buttons
                 },
                 {
                     quoted: msg
@@ -567,6 +610,12 @@ Tap a button below to continue 👇
                 '[REPO ERROR]',
                 error
             );
+
+            /*
+             * ==============================
+             * ERROR MESSAGE
+             * ==============================
+             */
 
             await sock.sendMessage(
                 jid,
