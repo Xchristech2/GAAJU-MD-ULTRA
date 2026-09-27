@@ -1,13 +1,10 @@
 'use strict';
 
 const yts = require("yt-search");
-const { dlBuffer } = require("../../lib/keithapi");
 const axios = require("axios");
 const { getBotName } = require("../../lib/botname");
 
-// ===== HARDCODED CONFIGURATION =====
-const API_BASE = 'https://api-red-iota-56.vercel.app';
-const API_KEY = 'nova_510035';
+const API_BASE = 'https://eliteprotech-apis.zone.id';
 const TIMEOUT = 120000;
 
 function trunc(text, max = 38) {
@@ -53,12 +50,6 @@ module.exports = {
         const query =
             args.join(" ").trim();
 
-        /*
-        |--------------------------------------------------------------------------
-        | USAGE
-        |--------------------------------------------------------------------------
-        */
-
         if (!query) {
 
             return sock.sendMessage(
@@ -84,12 +75,6 @@ module.exports = {
 
         try {
 
-            /*
-            |--------------------------------------------------------------------------
-            | REACTION
-            |--------------------------------------------------------------------------
-            */
-
             await sock.sendMessage(
                 jid,
                 {
@@ -100,89 +85,136 @@ module.exports = {
                 }
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | API REQUEST
-            |--------------------------------------------------------------------------
-            */
+            const search =
+                await yts(query);
+
+            if (
+                !search ||
+                !search.videos ||
+                !search.videos.length
+            ) {
+                throw new Error(
+                    "No YouTube results found"
+                );
+            }
+
+            const video =
+                search.videos[0];
+
+            if (!video.url) {
+                throw new Error(
+                    "YouTube video URL could not be found"
+                );
+            }
+
+            console.log(
+                `[PLAY] Found: ${video.title}`
+            );
+
+            console.log(
+                `[PLAY] URL: ${video.url}`
+            );
 
             const response =
                 await axios.get(
-                    `${API_BASE}/music/song3`,
+                    `${API_BASE}/download/ytmp3`,
                     {
                         params: {
-                            apikey: API_KEY,
-                            query: query
+                            url: video.url
                         },
                         timeout: TIMEOUT
                     }
                 );
 
-            /*
-            |--------------------------------------------------------------------------
-            | CHECK RESPONSE
-            |--------------------------------------------------------------------------
-            */
-
             if (
                 !response.data ||
-                !response.data.success
+                !response.data.status
             ) {
                 throw new Error(
                     response.data?.message ||
-                    'Song download failed'
+                    "Song download failed"
                 );
             }
-
-            const song =
-                response.data.song;
 
             const download =
                 response.data.download;
 
-            /*
-            |--------------------------------------------------------------------------
-            | THUMBNAIL
-            |--------------------------------------------------------------------------
-            */
-
-            let thumbnailBuffer = null;
-
-            if (song.thumbnail_base64) {
-
-                try {
-
-                    const base64Data =
-                        song.thumbnail_base64
-                            .split(',')[1];
-
-                    if (base64Data) {
-
-                        thumbnailBuffer =
-                            Buffer.from(
-                                base64Data,
-                                'base64'
-                            );
-                    }
-
-                } catch {}
+            if (
+                !download ||
+                !download.downloadUrl
+            ) {
+                throw new Error(
+                    "Download URL was not returned by the API"
+                );
             }
 
+            const title =
+                download.title ||
+                video.title ||
+                "Unknown Song";
+
+            const thumbnail =
+                download.thumbnail ||
+                video.thumbnail ||
+                "";
+
+            const duration =
+                download.duration ||
+                video.timestamp ||
+                "Unknown";
+
+            console.log(
+                `[PLAY] Downloading: ${title}`
+            );
+
+            const audioResponse =
+                await axios.get(
+                    download.downloadUrl,
+                    {
+                        responseType:
+                            "arraybuffer",
+
+                        timeout:
+                            TIMEOUT,
+
+                        maxContentLength:
+                            100 * 1024 * 1024,
+
+                        maxBodyLength:
+                            100 * 1024 * 1024
+                    }
+                );
+
+            const audioBuffer =
+                Buffer.from(
+                    audioResponse.data
+                );
+
             if (
-                !thumbnailBuffer &&
-                song.thumbnail
+                !audioBuffer ||
+                audioBuffer.length < 10000
             ) {
+                throw new Error(
+                    "Downloaded audio is invalid"
+                );
+            }
+
+            let thumbnailBuffer =
+                null;
+
+            if (thumbnail) {
 
                 try {
 
                     const imgRes =
                         await axios.get(
-                            song.thumbnail,
+                            thumbnail,
                             {
                                 responseType:
-                                    'arraybuffer',
+                                    "arraybuffer",
 
-                                timeout: 15000
+                                timeout:
+                                    15000
                             }
                         );
 
@@ -191,87 +223,44 @@ module.exports = {
                             imgRes.data
                         );
 
-                } catch {}
-            }
+                } catch (thumbnailError) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | AUDIO
-            |--------------------------------------------------------------------------
-            */
-
-            let audioBuffer;
-
-            try {
-
-                audioBuffer =
-                    Buffer.from(
-                        download.audio,
-                        'base64'
+                    console.log(
+                        "[PLAY] Thumbnail failed:",
+                        thumbnailError.message
                     );
-
-            } catch {
-
-                throw new Error(
-                    'Failed to decode audio'
-                );
+                }
             }
 
-            if (
-                !audioBuffer ||
-                audioBuffer.length < 10000
-            ) {
-
-                throw new Error(
-                    'Downloaded audio is invalid'
-                );
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | FILE NAME
-            |--------------------------------------------------------------------------
-            */
+            const safeTitle =
+                title
+                    .replace(
+                        /[<>:"/\\|?*\x00-\x1F]/g,
+                        ""
+                    )
+                    .trim()
+                    .substring(0, 80);
 
             const filename =
-                song.filename ||
-                `${song.title
-                    .replace(
-                        /[^\w\s-]/g,
-                        ''
-                    )
-                    .substring(0, 50)
-                }.mp3`;
-
-            /*
-            |--------------------------------------------------------------------------
-            | SIMPLE INFO
-            |--------------------------------------------------------------------------
-            */
+                `${safeTitle || "song"}.mp3`;
 
             const caption =
 `┏━━❐ 🎵 PLAY MUSIC ❐
 ┃
 ┃ ✦ Title:
-┃   ${trunc(song.title, 50)}
-┃
-┃ ✦ Artist:
-┃   ${song.author || 'Unknown'}
+┃   ${trunc(title, 50)}
 ┃
 ┃ ✦ Duration:
-┃   ${song.duration || 'Unknown'}
+┃   ${duration}
 ┃
 ┃ ✦ Quality:
 ┃   128kbps MP3
 ┃
+┃ ✦ Source:
+┃   YouTube
+┃
 ┗━━❐
 🎶 ${botName}`;
-
-            /*
-            |--------------------------------------------------------------------------
-            | SEND THUMBNAIL + INFO
-            |--------------------------------------------------------------------------
-            */
 
             if (
                 thumbnailBuffer &&
@@ -288,16 +277,25 @@ module.exports = {
                             caption
                     },
                     {
-                        quoted: msg
+                        quoted:
+                            msg
+                    }
+                );
+
+            } else {
+
+                await sock.sendMessage(
+                    jid,
+                    {
+                        text:
+                            caption
+                    },
+                    {
+                        quoted:
+                            msg
                     }
                 );
             }
-
-            /*
-            |--------------------------------------------------------------------------
-            | SEND AUDIO
-            |--------------------------------------------------------------------------
-            */
 
             await sock.sendMessage(
                 jid,
@@ -329,39 +327,37 @@ module.exports = {
 
                             title:
                                 trunc(
-                                    song.title
+                                    title,
+                                    50
                                 ),
 
                             body:
                                 botName,
 
                             thumbnailUrl:
-                                song.thumbnail ||
-                                "",
+                                thumbnail,
 
                             sourceUrl:
-                                song.url ||
-                                ""
+                                video.url
                         }
                     }
                 },
                 {
-                    quoted: msg
+                    quoted:
+                        msg
                 }
+            );
+
+            console.log(
+                `[PLAY] Sent: ${title}`
             );
 
         } catch (error) {
 
             console.error(
-                '[PLAY ERROR]',
+                "[PLAY ERROR]",
                 error
             );
-
-            /*
-            |--------------------------------------------------------------------------
-            | SIMPLE ERROR
-            |--------------------------------------------------------------------------
-            */
 
             await sock.sendMessage(
                 jid,
@@ -376,13 +372,19 @@ module.exports = {
 ┃   Failed
 ┃
 ┃ ✦ Reason:
-┃   ${error.message || 'Unknown error'}
+┃   ${trunc(
+        error.response?.data?.message ||
+        error.message ||
+        "Unknown error",
+        100
+    )}
 ┃
 ┗━━❐
 ⚡ ${botName}`
                 },
                 {
-                    quoted: msg
+                    quoted:
+                        msg
                 }
             );
         }
