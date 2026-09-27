@@ -2,12 +2,11 @@
 
 const yts = require("yt-search");
 const axios = require("axios");
-const { getBotName } = require("../../lib/botname");
 
 const API_BASE = 'https://eliteprotech-apis.zone.id';
 const TIMEOUT = 120000;
 
-function trunc(text, max = 38) {
+function trunc(text, max = 50) {
     if (text && text.length > max) {
         return text.slice(0, max - 1) + "…";
     }
@@ -38,34 +37,16 @@ module.exports = {
         ctx
     ) {
 
-        const jid =
-            msg.key.remoteJid;
+        const jid = msg.key.remoteJid;
+        const p = prefix || ".";
 
-        const botName =
-            getBotName();
-
-        const p =
-            prefix || ".";
-
-        const query =
-            args.join(" ").trim();
+        const query = args.join(" ").trim();
 
         if (!query) {
-
             return sock.sendMessage(
                 jid,
                 {
-                    text:
-`┏━━❐ 🎵 PLAY ❐
-┃
-┃ ✦ Usage:
-┃   ${p}play <song name>
-┃
-┃ ✦ Example:
-┃   ${p}play Rema Calm Down
-┃
-┗━━❐
-⚡ ${botName}`
+                    text: `Usage: ${p}play <song name>`
                 },
                 {
                     quoted: msg
@@ -85,21 +66,17 @@ module.exports = {
                 }
             );
 
-            const search =
-                await yts(query);
+            const search = await yts(query);
 
             if (
                 !search ||
                 !search.videos ||
                 !search.videos.length
             ) {
-                throw new Error(
-                    "No YouTube results found"
-                );
+                throw new Error("No YouTube results found");
             }
 
-            const video =
-                search.videos[0];
+            const video = search.videos[0];
 
             if (!video.url) {
                 throw new Error(
@@ -107,24 +84,18 @@ module.exports = {
                 );
             }
 
-            console.log(
-                `[PLAY] Found: ${video.title}`
-            );
+            console.log(`[PLAY] Found: ${video.title}`);
+            console.log(`[PLAY] URL: ${video.url}`);
 
-            console.log(
-                `[PLAY] URL: ${video.url}`
+            const response = await axios.get(
+                `${API_BASE}/download/ytmp3`,
+                {
+                    params: {
+                        url: video.url
+                    },
+                    timeout: TIMEOUT
+                }
             );
-
-            const response =
-                await axios.get(
-                    `${API_BASE}/download/ytmp3`,
-                    {
-                        params: {
-                            url: video.url
-                        },
-                        timeout: TIMEOUT
-                    }
-                );
 
             if (
                 !response.data ||
@@ -136,8 +107,7 @@ module.exports = {
                 );
             }
 
-            const download =
-                response.data.download;
+            const download = response.data.download;
 
             if (
                 !download ||
@@ -163,32 +133,21 @@ module.exports = {
                 video.timestamp ||
                 "Unknown";
 
-            console.log(
-                `[PLAY] Downloading: ${title}`
+            console.log(`[PLAY] Downloading: ${title}`);
+
+            const audioResponse = await axios.get(
+                download.downloadUrl,
+                {
+                    responseType: "arraybuffer",
+                    timeout: TIMEOUT,
+                    maxContentLength: 100 * 1024 * 1024,
+                    maxBodyLength: 100 * 1024 * 1024
+                }
             );
 
-            const audioResponse =
-                await axios.get(
-                    download.downloadUrl,
-                    {
-                        responseType:
-                            "arraybuffer",
-
-                        timeout:
-                            TIMEOUT,
-
-                        maxContentLength:
-                            100 * 1024 * 1024,
-
-                        maxBodyLength:
-                            100 * 1024 * 1024
-                    }
-                );
-
-            const audioBuffer =
-                Buffer.from(
-                    audioResponse.data
-                );
+            const audioBuffer = Buffer.from(
+                audioResponse.data
+            );
 
             if (
                 !audioBuffer ||
@@ -199,29 +158,22 @@ module.exports = {
                 );
             }
 
-            let thumbnailBuffer =
-                null;
+            let thumbnailBuffer = null;
 
             if (thumbnail) {
 
                 try {
 
-                    const imgRes =
-                        await axios.get(
-                            thumbnail,
-                            {
-                                responseType:
-                                    "arraybuffer",
-
-                                timeout:
-                                    15000
-                            }
-                        );
+                    const imgRes = await axios.get(
+                        thumbnail,
+                        {
+                            responseType: "arraybuffer",
+                            timeout: 15000
+                        }
+                    );
 
                     thumbnailBuffer =
-                        Buffer.from(
-                            imgRes.data
-                        );
+                        Buffer.from(imgRes.data);
 
                 } catch (thumbnailError) {
 
@@ -244,24 +196,13 @@ module.exports = {
             const filename =
                 `${safeTitle || "song"}.mp3`;
 
+            // Short information shown under the song picture
             const caption =
-`┏━━❐ 🎵 PLAY MUSIC ❐
-┃
-┃ ✦ Title:
-┃   ${trunc(title, 50)}
-┃
-┃ ✦ Duration:
-┃   ${duration}
-┃
-┃ ✦ Quality:
-┃   128kbps MP3
-┃
-┃ ✦ Source:
-┃   YouTube
-┃
-┗━━❐
-🎶 ${botName}`;
+`🎵 ${trunc(title, 60)}
+⏱ ${duration}
+🎧 128kbps MP3`;
 
+            // Send song picture
             if (
                 thumbnailBuffer &&
                 thumbnailBuffer.length > 1000
@@ -270,15 +211,11 @@ module.exports = {
                 await sock.sendMessage(
                     jid,
                     {
-                        image:
-                            thumbnailBuffer,
-
-                        caption:
-                            caption
+                        image: thumbnailBuffer,
+                        caption: caption
                     },
                     {
-                        quoted:
-                            msg
+                        quoted: msg
                     }
                 );
 
@@ -287,70 +224,29 @@ module.exports = {
                 await sock.sendMessage(
                     jid,
                     {
-                        text:
-                            caption
+                        text: caption
                     },
                     {
-                        quoted:
-                            msg
+                        quoted: msg
                     }
                 );
             }
 
+            // Send audio
             await sock.sendMessage(
                 jid,
                 {
-                    audio:
-                        audioBuffer,
-
-                    mimetype:
-                        "audio/mpeg",
-
-                    ptt:
-                        false,
-
-                    fileName:
-                        filename,
-
-                    contextInfo: {
-
-                        externalAdReply: {
-
-                            showAdAttribution:
-                                false,
-
-                            renderLargerThumbnail:
-                                true,
-
-                            mediaType:
-                                1,
-
-                            title:
-                                trunc(
-                                    title,
-                                    50
-                                ),
-
-                            body:
-                                botName,
-
-                            thumbnailUrl:
-                                thumbnail,
-
-                            sourceUrl:
-                                video.url
-                        }
-                    }
+                    audio: audioBuffer,
+                    mimetype: "audio/mpeg",
+                    ptt: false,
+                    fileName: filename
                 },
                 {
-                    quoted:
-                        msg
+                    quoted: msg
                 }
             );
 
-            console.log(
-                `[PLAY] Sent: ${title}`
-            );
+            console.log(`[PLAY] Sent: ${title}`);
 
         } catch (error) {
 
@@ -363,28 +259,16 @@ module.exports = {
                 jid,
                 {
                     text:
-`┏━━❐ ❌ PLAY ❐
-┃
-┃ ✦ Song:
-┃   ${trunc(query, 50)}
-┃
-┃ ✦ Status:
-┃   Failed
-┃
-┃ ✦ Reason:
-┃   ${trunc(
-        error.response?.data?.message ||
-        error.message ||
-        "Unknown error",
-        100
-    )}
-┃
-┗━━❐
-⚡ ${botName}`
+`❌ Failed to download:
+${trunc(
+    error.response?.data?.message ||
+    error.message ||
+    "Unknown error",
+    100
+)}`
                 },
                 {
-                    quoted:
-                        msg
+                    quoted: msg
                 }
             );
         }
