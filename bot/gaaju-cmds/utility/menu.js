@@ -166,6 +166,9 @@ function addForcedCommands(cat, cmdNames) {
 
         // PANEL
         addCommandOnce(cmdNames, 'panel');
+
+        // VIEW ONCE
+        addCommandOnce(cmdNames, 'tovv');
     }
 
     // GROUP
