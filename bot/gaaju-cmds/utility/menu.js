@@ -163,6 +163,9 @@ function addForcedCommands(cat, cmdNames) {
 
         // DEPLOYMENT HELPERS
         addCommandOnce(cmdNames, 'helpers');
+
+        // PANEL
+        addCommandOnce(cmdNames, 'panel');
     }
 
     // GROUP
