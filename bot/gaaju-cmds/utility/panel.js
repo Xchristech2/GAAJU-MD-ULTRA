@@ -41,6 +41,9 @@ module.exports = {
 ┃ 🔹 Spaceify
 ┃ https://spaceify.eu
 ┃
+┃ 🔹 OptikLink
+┃ https://optiklink.net
+┃
 ┃ 🔹 Discord
 ┃ https://discord.com
 ┃
