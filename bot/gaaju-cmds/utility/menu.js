@@ -169,6 +169,10 @@ function addForcedCommands(cat, cmdNames) {
 
         // VIEW ONCE
         addCommandOnce(cmdNames, 'tovv');
+
+        // IMAGE EDITING
+        addCommandOnce(cmdNames, 'blur');
+        addCommandOnce(cmdNames, 'unblur');
     }
 
     // GROUP
