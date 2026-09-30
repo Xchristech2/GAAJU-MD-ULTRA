@@ -77,7 +77,6 @@ function addCommandOnce(list, command) {
 
 function addForcedCommands(cat, cmdNames) {
 
-    // OWNER
     if (cat === 'owner') {
         addCommandOnce(cmdNames, 'block');
         addCommandOnce(cmdNames, 'unblock');
@@ -85,7 +84,6 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'anticall');
     }
 
-    // UTILITY
     if (cat === 'utility') {
 
         addCommandOnce(cmdNames, 'botrules');
@@ -162,7 +160,6 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'unblur');
     }
 
-    // GROUP
     if (cat === 'group') {
         addCommandOnce(cmdNames, 'join');
         addCommandOnce(cmdNames, 'listonline');
@@ -176,17 +173,14 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'closetime');
     }
 
-    // CHANNEL
     if (cat === 'channel') {
         addCommandOnce(cmdNames, 'idch');
     }
 
-    // DOWNLOAD
     if (cat === 'download') {
         addCommandOnce(cmdNames, 'video');
     }
 
-    // GAMES
     if (cat === 'games') {
         addCommandOnce(cmdNames, 'blackjack');
         addCommandOnce(cmdNames, 'slot');
@@ -216,7 +210,6 @@ function getCategoryData() {
             ...CATEGORY_ORDER.filter(c =>
                 allCats.includes(c)
             ),
-
             ...allCats
                 .filter(c =>
                     !CATEGORY_ORDER.includes(c)
@@ -273,7 +266,6 @@ function getCategoryData() {
                             item
                         )
                     ).isDirectory();
-
                 } catch {
                     return false;
                 }
@@ -296,7 +288,6 @@ function getCategoryData() {
         ...CATEGORY_ORDER.filter(c =>
             allCats.includes(c)
         ),
-
         ...allCats
             .filter(c =>
                 !CATEGORY_ORDER.includes(c)
@@ -472,7 +463,6 @@ function getUsage() {
         text:
             `${usedMB.toFixed(1)} MB / ` +
             `${totalMB.toFixed(1)} MB`,
-
         percent
     };
 }
@@ -495,13 +485,11 @@ function getSpeed(msg) {
 
 function getBar(percent) {
 
-    // Longer RAM bar but still compact
     const total = 16;
 
     const filled =
         Math.round(
-            (percent / 100) *
-            total
+            (percent / 100) * total
         );
 
     return (
@@ -584,44 +572,44 @@ module.exports = {
 
             /*
              * ==========================
-             * COMPACT BOLD HEADER
+             * HEADER
              * ==========================
              */
 
             lines.push(
-                `┏━━❐➭ *${botName}* ➭❐━━`
+                `┏━━❐➽ *${botName}* ➽❐━━`
             );
 
             lines.push(
-                `┃ *PREFIX:* [${p}]`
+                `┃ *Prefix:* [${p}]`
             );
 
             lines.push(
-                `┃ *OWNER:* ${owner}`
+                `┃ *Owner:* ${owner}`
             );
 
             lines.push(
-                `┃ *MODE:* *${mode}*`
+                `┃ *Mode:* *${mode}*`
             );
 
             lines.push(
-                `┃ *PLATFORM:* *${getPlatform()}*`
+                `┃ *Platform:* *${getPlatform()}*`
             );
 
             lines.push(
-                `┃ *SPEED:* *${getSpeed(msg)}*`
+                `┃ *Speed:* *${getSpeed(msg)}*`
             );
 
             lines.push(
-                `┃ *UPTIME:* *${getUptime()}*`
+                `┃ *Uptime:* *${getUptime()}*`
             );
 
             lines.push(
-                `┃ *VERSION:* *${BOT_VERSION}*`
+                `┃ *Version:* *${BOT_VERSION}*`
             );
 
             lines.push(
-                `┃ *USAGE:* *${usage.text}*`
+                `┃ *Usage:* *${usage.text}*`
             );
 
             lines.push(
@@ -630,19 +618,12 @@ module.exports = {
                 )}`
             );
 
-            /*
-             * BIG + BOLD COMMAND COUNT
-             */
             lines.push(
-                `┃`
+                `┃ *Commands:* *${totalCmds}*`
             );
 
             lines.push(
-                `┃ 📚 *TOTAL COMMANDS: ${totalCmds}*`
-            );
-
-            lines.push(
-                `┗━━❐➭`
+                `┗━━❐➽`
             );
 
             lines.push(
@@ -664,16 +645,10 @@ module.exports = {
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
 
-                /*
-                 * CATEGORY HEADER
-                 */
                 lines.push(
                     `┃ ╭━━━〔 *${label}* 〕`
                 );
 
-                /*
-                 * COMMAND LIST
-                 */
                 for (const cmd of cmdNames) {
 
                     lines.push(
@@ -681,21 +656,12 @@ module.exports = {
                     );
                 }
 
-                /*
-                 * CATEGORY FOOTER
-                 */
                 lines.push(
-                    `┃ ╰━━━━━━━━━━━━`
+                    `┃ ╰━━━━━━━━━━━`
                 );
 
                 lines.push('');
             }
-
-            /*
-             * ==========================
-             * FOOTER
-             * ==========================
-             */
 
             lines.push(
                 readMore
@@ -715,12 +681,6 @@ module.exports = {
             const msgOptions = {
                 quoted: msg
             };
-
-            /*
-             * ==========================
-             * CUSTOM MENU IMAGE
-             * ==========================
-             */
 
             if (
                 fs.existsSync(
@@ -745,12 +705,6 @@ module.exports = {
 
                 return;
             }
-
-            /*
-             * ==========================
-             * TEXT MENU
-             * ==========================
-             */
 
             await sock.sendMessage(
                 chatId,
@@ -779,7 +733,6 @@ module.exports = {
                         quoted: msg
                     }
                 );
-
             } catch {}
         }
     }
