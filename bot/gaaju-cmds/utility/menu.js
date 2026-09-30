@@ -25,6 +25,7 @@ try {
     if (pkg.version) {
         BOT_VERSION = `v${pkg.version}`;
     }
+
 } catch {}
 
 const CATEGORY_LABELS = {
@@ -267,10 +268,10 @@ function getCategoryData() {
                             item
                         )
                     ).isDirectory();
+
                 } catch {
                     return false;
                 }
-
             });
 
     } catch (error) {
@@ -508,11 +509,7 @@ function getBar(percent) {
 }
 
 /*
- * WHATSAPP READ MORE SEPARATOR
- *
- * The menu remains ONE message.
- * These separators divide the command
- * list into approximately 9 sections.
+ * WhatsApp Read More separator
  */
 function getReadMore() {
     return String.fromCharCode(8206).repeat(4000);
@@ -636,28 +633,51 @@ module.exports = {
             );
 
             /*
-             * ==========================
-             * COMMAND SECTIONS
+             * =================================
+             * READ MORE #1
              *
-             * Approximately 9 Read More
-             * separators throughout the
-             * SAME WhatsApp message.
-             * ==========================
+             * FIRST READ MORE IS DIRECTLY
+             * UNDER THE MENU HEADER.
+             * =================================
+             */
+
+            lines.push(
+                getReadMore()
+            );
+
+            /*
+             * =================================
+             * COMMAND LIST
+             *
+             * READ MORE #2 - #9 WILL BE
+             * DISTRIBUTED THROUGH THE MENU.
+             * =================================
              */
 
             const totalCategories =
                 catData.length;
 
+            const totalReadMores =
+                9;
+
+            const remainingReadMores =
+                totalReadMores - 1;
+
+            /*
+             * Divide the categories into
+             * approximately 8 sections.
+             */
             const sectionSize =
                 Math.max(
                     1,
                     Math.ceil(
-                        totalCategories / 9
+                        totalCategories /
+                        (remainingReadMores + 1)
                     )
                 );
 
-            let categoryCount = 0;
-            let readMoreCount = 0;
+            let categoryIndex = 0;
+            let readMoreCount = 1;
 
             for (const {
                 cat,
@@ -685,19 +705,18 @@ module.exports = {
 
                 lines.push('');
 
-                categoryCount++;
+                categoryIndex++;
 
                 /*
-                 * Insert Read More after
-                 * each section of categories.
-                 *
-                 * Never add one after the
-                 * final category.
+                 * Add Read More #2 - #9.
                  */
                 if (
-                    categoryCount < totalCategories &&
-                    readMoreCount < 8 &&
-                    categoryCount % sectionSize === 0
+                    categoryIndex <
+                        totalCategories &&
+                    readMoreCount <
+                        totalReadMores &&
+                    categoryIndex %
+                        sectionSize === 0
                 ) {
 
                     lines.push(
@@ -706,27 +725,6 @@ module.exports = {
 
                     readMoreCount++;
                 }
-            }
-
-            /*
-             * If there are enough categories,
-             * ensure the menu has up to 9
-             * Read More separators.
-             */
-
-            while (
-                readMoreCount < 8 &&
-                totalCategories > readMoreCount + 1
-            ) {
-
-                /*
-                 * We intentionally don't add
-                 * extra visible content here.
-                 *
-                 * The separators are distributed
-                 * by the category loop above.
-                 */
-                break;
             }
 
             /*
