@@ -530,6 +530,7 @@ module.exports = {
              * ==========================
              * TOP MENU HEADER
              * ==========================
+             * KEPT AS YOUR ORIGINAL STYLE
              */
 
             lines.push(
@@ -588,142 +589,52 @@ module.exports = {
 
             /*
              * ==========================
-             * SPLIT MENU INTO 3 PARTS
+             * NEW MENU CATEGORY STYLE
              * ==========================
+             *
+             * Example:
+             *
+             * ┃ ╭━━━〔 🔧 UTILITY 〕
+             * ┃ ┃ ➽ .ping
+             * ┃ ┃ ➽ .menu
+             * ┃ ┃ ➽ .runtime
+             * ┃ ╰━━━━━━━━━━━━
              */
 
-            const mid1 =
-                Math.floor(
-                    catData.length / 3
-                );
-
-            const mid2 =
-                Math.floor(
-                    catData.length * 2 / 3
-                );
-
-            /*
-             * ==========================
-             * PART 1
-             * ==========================
-             */
-
-            for (
-                let i = 0;
-                i < mid1;
-                i++
-            ) {
-                const {
-                    cat,
-                    cmdNames
-                } = catData[i];
+            for (const {
+                cat,
+                cmdNames
+            } of catData) {
 
                 const label =
                     CATEGORY_LABELS[cat] ||
                     `📁 ${cat.toUpperCase()}`;
 
+                /*
+                 * CATEGORY HEADER
+                 */
                 lines.push(
-                    `\n┏━━❐ ${label} ❐`
+                    `┃ ╭━━━〔 ${label} 〕`
                 );
 
-                for (
-                    const cmd of cmdNames
-                ) {
+                /*
+                 * COMMANDS
+                 */
+                for (const cmd of cmdNames) {
                     lines.push(
-                        `┃➭ ${cmd}`
+                        `┃ ┃ ➽ ${p}${cmd}`
                     );
                 }
 
+                /*
+                 * CATEGORY BOTTOM
+                 */
                 lines.push(
-                    `┗━━❐`
+                    `┃ ╰━━━━━━━━━━━━`
                 );
+
+                lines.push('');
             }
-
-            lines.push(
-                readMore
-            );
-
-            /*
-             * ==========================
-             * PART 2
-             * ==========================
-             */
-
-            for (
-                let i = mid1;
-                i < mid2;
-                i++
-            ) {
-                const {
-                    cat,
-                    cmdNames
-                } = catData[i];
-
-                const label =
-                    CATEGORY_LABELS[cat] ||
-                    `📁 ${cat.toUpperCase()}`;
-
-                lines.push(
-                    `\n┏━━❐ ${label} ❐`
-                );
-
-                for (
-                    const cmd of cmdNames
-                ) {
-                    lines.push(
-                        `┃➭ ${cmd}`
-                    );
-                }
-
-                lines.push(
-                    `┗━━❐`
-                );
-            }
-
-            lines.push(
-                readMore
-            );
-
-            /*
-             * ==========================
-             * PART 3
-             * ==========================
-             */
-
-            for (
-                let i = mid2;
-                i < catData.length;
-                i++
-            ) {
-                const {
-                    cat,
-                    cmdNames
-                } = catData[i];
-
-                const label =
-                    CATEGORY_LABELS[cat] ||
-                    `📁 ${cat.toUpperCase()}`;
-
-                lines.push(
-                    `\n┏━━❐ ${label} ❐`
-                );
-
-                for (
-                    const cmd of cmdNames
-                ) {
-                    lines.push(
-                        `┃➭ ${cmd}`
-                    );
-                }
-
-                lines.push(
-                    `┗━━❐`
-                );
-            }
-
-            lines.push(
-                readMore
-            );
 
             /*
              * ==========================
@@ -731,7 +642,10 @@ module.exports = {
              * ==========================
              */
 
-            lines.push('');
+            lines.push(
+                readMore
+            );
+
             lines.push('');
 
             lines.push(
