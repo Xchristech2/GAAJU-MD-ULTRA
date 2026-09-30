@@ -485,11 +485,13 @@ function getSpeed(msg) {
 
 function getBar(percent) {
 
-    const total = 16;
+    // Normal / medium RAM bar
+    const total = 12;
 
     const filled =
         Math.round(
-            (percent / 100) * total
+            (percent / 100) *
+            total
         );
 
     return (
@@ -652,12 +654,12 @@ module.exports = {
                 for (const cmd of cmdNames) {
 
                     lines.push(
-                        `┃ ┃ ➽ ${p}${cmd}`
+                        `┃ ➽ ${p}${cmd}`
                     );
                 }
 
                 lines.push(
-                    `┃ ╰━━━━━━━━━━━`
+                    `╰━━━━━━━━━━━`
                 );
 
                 lines.push('');
@@ -682,6 +684,12 @@ module.exports = {
                 quoted: msg
             };
 
+            /*
+             * ==========================
+             * CUSTOM MENU IMAGE
+             * ==========================
+             */
+
             if (
                 fs.existsSync(
                     CUSTOM_MENU_IMAGE
@@ -705,6 +713,12 @@ module.exports = {
 
                 return;
             }
+
+            /*
+             * ==========================
+             * TEXT MENU
+             * ==========================
+             */
 
             await sock.sendMessage(
                 chatId,
