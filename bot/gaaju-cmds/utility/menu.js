@@ -8,755 +8,813 @@ const cfg = require('../../config');
 const CMDS_DIR = path.join(__dirname, '..');
 
 const CUSTOM_MENU_IMAGE = path.join(
-__dirname,
-'../../../assets/menu-image.jpg'
+    __dirname,
+    '../../../assets/menu-image.jpg'
 );
 
 let BOT_VERSION = 'v1.2.0';
 
 try {
-const pkg = JSON.parse(
-fs.readFileSync(
-path.join(__dirname, '../../package.json'),
-'utf8'
-)
-);
+    const pkg = JSON.parse(
+        fs.readFileSync(
+            path.join(__dirname, '../../package.json'),
+            'utf8'
+        )
+    );
 
-if (pkg.version) {  
-    BOT_VERSION = `v${pkg.version}`;  
-}
-
+    if (pkg.version) {
+        BOT_VERSION = `v${pkg.version}`;
+    }
 } catch {}
 
 const CATEGORY_LABELS = {
-ai: '🤖 AI',
-adult: '🔞 ADULT',
-automation: '⚙️ AUTOMATION',
-channel: '📢 CHANNEL',
-download: '📥 DOWNLOAD',
-education: '📚 EDUCATION',
-fun: '😂 FUN',
-games: '🎮 GAMES',
-group: '👥 GROUP',
-image: '🖼️ IMAGE',
-movie: '🎬 MOVIE',
-news: '📰 NEWS',
-owner: '👑 OWNER',
-search: '🔎 SEARCH',
-spiritual: '🕊️ SPIRITUAL',
-sports: '⚽ SPORTS',
-stalker: '🔍 STALKER',
-utility: '🔧 UTILITY'
+    ai: '🤖 AI',
+    adult: '🔞 ADULT',
+    automation: '⚙️ AUTOMATION',
+    channel: '📢 CHANNEL',
+    download: '📥 DOWNLOAD',
+    education: '📚 EDUCATION',
+    fun: '😂 FUN',
+    games: '🎮 GAMES',
+    group: '👥 GROUP',
+    image: '🖼️ IMAGE',
+    movie: '🎬 MOVIE',
+    news: '📰 NEWS',
+    owner: '👑 OWNER',
+    search: '🔎 SEARCH',
+    spiritual: '🕊️ SPIRITUAL',
+    sports: '⚽ SPORTS',
+    stalker: '🔍 STALKER',
+    utility: '🔧 UTILITY'
 };
 
 const CATEGORY_ORDER = [
-'utility',
-'owner',
-'ai',
-'group',
-'automation',
-'channel',
-'download',
-'education',
-'spiritual',
-'fun',
-'sports',
-'news',
-'stalker',
-'image',
-'movie',
-'search',
-'adult',
-'games'
+    'utility',
+    'owner',
+    'ai',
+    'group',
+    'automation',
+    'channel',
+    'download',
+    'education',
+    'spiritual',
+    'fun',
+    'sports',
+    'news',
+    'stalker',
+    'image',
+    'movie',
+    'search',
+    'adult',
+    'games'
 ];
 
 function addCommandOnce(list, command) {
-if (!list.includes(command)) {
-list.push(command);
-}
+    if (!list.includes(command)) {
+        list.push(command);
+    }
 }
 
 function addForcedCommands(cat, cmdNames) {
 
-if (cat === 'owner') {  
-    addCommandOnce(cmdNames, 'block');  
-    addCommandOnce(cmdNames, 'unblock');  
-    addCommandOnce(cmdNames, 'gaaju');  
-    addCommandOnce(cmdNames, 'anticall');  
-}  
+    if (cat === 'owner') {
+        addCommandOnce(cmdNames, 'block');
+        addCommandOnce(cmdNames, 'unblock');
+        addCommandOnce(cmdNames, 'gaaju');
+        addCommandOnce(cmdNames, 'anticall');
+        addCommandOnce(cmdNames, 'setprofile');
+    }
 
-if (cat === 'utility') {  
+    if (cat === 'utility') {
 
-    addCommandOnce(cmdNames, 'botrules');  
-    addCommandOnce(cmdNames, 'support');  
-    addCommandOnce(cmdNames, 'deploy');  
-    addCommandOnce(cmdNames, 'menuimage');  
-    addCommandOnce(cmdNames, 'date');  
-    addCommandOnce(cmdNames, 'code');  
+        addCommandOnce(cmdNames, 'botrules');
+        addCommandOnce(cmdNames, 'support');
+        addCommandOnce(cmdNames, 'deploy');
+        addCommandOnce(cmdNames, 'menuimage');
+        addCommandOnce(cmdNames, 'date');
+        addCommandOnce(cmdNames, 'code');
 
-    addCommandOnce(cmdNames, 'fakenumber');  
-    addCommandOnce(cmdNames, 'receivecode');  
-    addCommandOnce(cmdNames, 'tagcountry');  
-    addCommandOnce(cmdNames, 'muteuser');  
-    addCommandOnce(cmdNames, 'unmuteuser');  
-    addCommandOnce(cmdNames, 'disappearmessage');  
+        addCommandOnce(cmdNames, 'fakenumber');
+        addCommandOnce(cmdNames, 'receivecode');
+        addCommandOnce(cmdNames, 'tagcountry');
+        addCommandOnce(cmdNames, 'muteuser');
+        addCommandOnce(cmdNames, 'unmuteuser');
+        addCommandOnce(cmdNames, 'disappearmessage');
 
-    addCommandOnce(cmdNames, 'userid');  
-    addCommandOnce(cmdNames, 'listblocked');  
-    addCommandOnce(cmdNames, 'readreceipt');  
+        addCommandOnce(cmdNames, 'userid');
+        addCommandOnce(cmdNames, 'listblocked');
+        addCommandOnce(cmdNames, 'readreceipt');
 
-    addCommandOnce(cmdNames, 'randomnumber');  
-    addCommandOnce(cmdNames, 'choose');  
-    addCommandOnce(cmdNames, 'repeat');  
-    addCommandOnce(cmdNames, 'echo');  
-    addCommandOnce(cmdNames, 'say');  
-    addCommandOnce(cmdNames, 'wordcount');  
-    addCommandOnce(cmdNames, 'vowelcount');  
-    addCommandOnce(cmdNames, 'consonantcount');  
+        addCommandOnce(cmdNames, 'randomnumber');
+        addCommandOnce(cmdNames, 'choose');
+        addCommandOnce(cmdNames, 'repeat');
+        addCommandOnce(cmdNames, 'echo');
+        addCommandOnce(cmdNames, 'say');
+        addCommandOnce(cmdNames, 'wordcount');
+        addCommandOnce(cmdNames, 'vowelcount');
+        addCommandOnce(cmdNames, 'consonantcount');
 
-    addCommandOnce(cmdNames, 'binary');  
-    addCommandOnce(cmdNames, 'octal');  
-    addCommandOnce(cmdNames, 'decimal');  
-    addCommandOnce(cmdNames, 'roman');  
-    addCommandOnce(cmdNames, 'hex');  
-    addCommandOnce(cmdNames, 'shuffle');  
-    addCommandOnce(cmdNames, 'sort');  
-    addCommandOnce(cmdNames, 'capitalize');  
-    addCommandOnce(cmdNames, 'trim');  
-    addCommandOnce(cmdNames, 'removeemoji');  
-    addCommandOnce(cmdNames, 'removeextra');  
-    addCommandOnce(cmdNames, 'swapcase');  
-    addCommandOnce(cmdNames, 'isprime');  
-    addCommandOnce(cmdNames, 'fibonacci');  
-    addCommandOnce(cmdNames, 'factorial');  
+        addCommandOnce(cmdNames, 'binary');
+        addCommandOnce(cmdNames, 'octal');
+        addCommandOnce(cmdNames, 'decimal');
+        addCommandOnce(cmdNames, 'roman');
+        addCommandOnce(cmdNames, 'hex');
+        addCommandOnce(cmdNames, 'shuffle');
+        addCommandOnce(cmdNames, 'sort');
+        addCommandOnce(cmdNames, 'capitalize');
+        addCommandOnce(cmdNames, 'trim');
+        addCommandOnce(cmdNames, 'removeemoji');
+        addCommandOnce(cmdNames, 'removeextra');
+        addCommandOnce(cmdNames, 'swapcase');
+        addCommandOnce(cmdNames, 'isprime');
+        addCommandOnce(cmdNames, 'fibonacci');
+        addCommandOnce(cmdNames, 'factorial');
 
-    addCommandOnce(cmdNames, 'edit');  
+        addCommandOnce(cmdNames, 'edit');
 
-    addCommandOnce(cmdNames, 'reverse');  
-    addCommandOnce(cmdNames, 'length');  
-    addCommandOnce(cmdNames, 'uppercase');  
-    addCommandOnce(cmdNames, 'lowercase');  
-    addCommandOnce(cmdNames, 'titlecase');  
-    addCommandOnce(cmdNames, 'repeatword');  
-    addCommandOnce(cmdNames, 'countwords');  
-    addCommandOnce(cmdNames, 'countlines');  
-    addCommandOnce(cmdNames, 'replace');  
-    addCommandOnce(cmdNames, 'remove');  
-    addCommandOnce(cmdNames, 'startswith');  
-    addCommandOnce(cmdNames, 'endswith');  
-    addCommandOnce(cmdNames, 'contains');  
-    addCommandOnce(cmdNames, 'randomword');  
-    addCommandOnce(cmdNames, 'randomletter');  
-    addCommandOnce(cmdNames, 'randomcolor');  
-    addCommandOnce(cmdNames, 'percentage');  
-    addCommandOnce(cmdNames, 'average');  
-    addCommandOnce(cmdNames, 'calculator');  
+        addCommandOnce(cmdNames, 'reverse');
+        addCommandOnce(cmdNames, 'length');
+        addCommandOnce(cmdNames, 'uppercase');
+        addCommandOnce(cmdNames, 'lowercase');
+        addCommandOnce(cmdNames, 'titlecase');
+        addCommandOnce(cmdNames, 'repeatword');
+        addCommandOnce(cmdNames, 'countwords');
+        addCommandOnce(cmdNames, 'countlines');
+        addCommandOnce(cmdNames, 'replace');
+        addCommandOnce(cmdNames, 'remove');
+        addCommandOnce(cmdNames, 'startswith');
+        addCommandOnce(cmdNames, 'endswith');
+        addCommandOnce(cmdNames, 'contains');
+        addCommandOnce(cmdNames, 'randomword');
+        addCommandOnce(cmdNames, 'randomletter');
+        addCommandOnce(cmdNames, 'randomcolor');
+        addCommandOnce(cmdNames, 'percentage');
+        addCommandOnce(cmdNames, 'average');
+        addCommandOnce(cmdNames, 'calculator');
 
-    addCommandOnce(cmdNames, 'pair');  
-    addCommandOnce(cmdNames, 'helpers');  
-    addCommandOnce(cmdNames, 'panel');  
-    addCommandOnce(cmdNames, 'tovv');  
+        addCommandOnce(cmdNames, 'pair');
+        addCommandOnce(cmdNames, 'helpers');
+        addCommandOnce(cmdNames, 'panel');
+        addCommandOnce(cmdNames, 'tovv');
 
-    addCommandOnce(cmdNames, 'blur');  
-    addCommandOnce(cmdNames, 'unblur');  
-}  
+        addCommandOnce(cmdNames, 'blur');
+        addCommandOnce(cmdNames, 'unblur');
+    }
 
-if (cat === 'group') {  
-    addCommandOnce(cmdNames, 'join');  
-    addCommandOnce(cmdNames, 'listonline');  
-    addCommandOnce(cmdNames, 'cancelkick');  
-    addCommandOnce(cmdNames, 'introcard');  
-    addCommandOnce(cmdNames, 'getgrouppic');  
-    addCommandOnce(cmdNames, 'disapproveall');  
-    addCommandOnce(cmdNames, 'editsettings');  
-    addCommandOnce(cmdNames, 'totalmembers');  
-    addCommandOnce(cmdNames, 'opentime');  
-    addCommandOnce(cmdNames, 'closetime');  
-}  
+    if (cat === 'group') {
+        addCommandOnce(cmdNames, 'join');
+        addCommandOnce(cmdNames, 'listonline');
+        addCommandOnce(cmdNames, 'cancelkick');
+        addCommandOnce(cmdNames, 'introcard');
+        addCommandOnce(cmdNames, 'getgrouppic');
+        addCommandOnce(cmdNames, 'disapproveall');
+        addCommandOnce(cmdNames, 'editsettings');
+        addCommandOnce(cmdNames, 'totalmembers');
+        addCommandOnce(cmdNames, 'opentime');
+        addCommandOnce(cmdNames, 'closetime');
+    }
 
-if (cat === 'channel') {  
-    addCommandOnce(cmdNames, 'idch');  
-}  
+    if (cat === 'channel') {
+        addCommandOnce(cmdNames, 'idch');
+    }
 
-if (cat === 'download') {  
-    addCommandOnce(cmdNames, 'video');  
-}  
+    if (cat === 'download') {
+        addCommandOnce(cmdNames, 'video');
+    }
 
-if (cat === 'games') {  
-    addCommandOnce(cmdNames, 'blackjack');  
-    addCommandOnce(cmdNames, 'slot');  
-    addCommandOnce(cmdNames, 'racing');  
-}
-
+    if (cat === 'games') {
+        addCommandOnce(cmdNames, 'blackjack');
+        addCommandOnce(cmdNames, 'slot');
+        addCommandOnce(cmdNames, 'racing');
+    }
 }
 
 function getCategoryData() {
 
-const liveRegistry =  
-    globalThis._botCommandCategories;  
+    const liveRegistry =
+        globalThis._botCommandCategories;
 
-if (  
-    liveRegistry &&  
-    liveRegistry.size > 0  
-) {  
+    if (
+        liveRegistry &&
+        liveRegistry.size > 0
+    ) {
 
-    const allCats = [  
-        ...liveRegistry.keys()  
-    ];  
+        const allCats = [
+            ...liveRegistry.keys()
+        ];
 
-    if (!allCats.includes('games')) {  
-        allCats.push('games');  
-    }  
+        if (!allCats.includes('games')) {
+            allCats.push('games');
+        }
 
-    const ordered = [  
-        ...CATEGORY_ORDER.filter(c =>  
-            allCats.includes(c)  
-        ),  
-        ...allCats  
-            .filter(c =>  
-                !CATEGORY_ORDER.includes(c)  
-            )  
-            .sort()  
-    ];  
+        const ordered = [
+            ...CATEGORY_ORDER.filter(c =>
+                allCats.includes(c)
+            ),
+            ...allCats
+                .filter(c =>
+                    !CATEGORY_ORDER.includes(c)
+                )
+                .sort()
+        ];
 
-    const catData = [];  
-    let totalCmds = 0;  
+        const catData = [];
+        let totalCmds = 0;
 
-    for (const cat of ordered) {  
+        for (const cat of ordered) {
 
-        const cmdNames = [  
-            ...new Set(  
-                liveRegistry.get(cat) || []  
-            )  
-        ];  
+            const cmdNames = [
+                ...new Set(
+                    liveRegistry.get(cat) || []
+                )
+            ];
 
-        addForcedCommands(  
-            cat,  
-            cmdNames  
-        );  
+            addForcedCommands(
+                cat,
+                cmdNames
+            );
 
-        if (!cmdNames.length) {  
-            continue;  
-        }  
+            if (!cmdNames.length) {
+                continue;
+            }
 
-        totalCmds += cmdNames.length;  
+            totalCmds += cmdNames.length;
 
-        catData.push({  
-            cat,  
-            cmdNames  
-        });  
-    }  
+            catData.push({
+                cat,
+                cmdNames
+            });
+        }
 
-    return {  
-        catData,  
-        totalCmds  
-    };  
-}  
+        return {
+            catData,
+            totalCmds
+        };
+    }
 
-let allCats = [];  
+    let allCats = [];
 
-try {  
+    try {
 
-    allCats = fs  
-        .readdirSync(CMDS_DIR)  
-        .filter(item => {  
+        allCats = fs
+            .readdirSync(CMDS_DIR)
+            .filter(item => {
 
-            try {  
-                return fs.statSync(  
-                    path.join(  
-                        CMDS_DIR,  
-                        item  
-                    )  
-                ).isDirectory();  
-            } catch {  
-                return false;  
-            }  
-        });  
+                try {
+                    return fs.statSync(
+                        path.join(
+                            CMDS_DIR,
+                            item
+                        )
+                    ).isDirectory();
+                } catch {
+                    return false;
+                }
 
-} catch (error) {  
+            });
 
-    console.error(  
-        '[MENU] Failed to read commands directory:',  
-        error  
-    );  
+    } catch (error) {
 
-    return {  
-        catData: [],  
-        totalCmds: 0  
-    };  
-}  
+        console.error(
+            '[MENU] Failed to read commands directory:',
+            error
+        );
 
-const ordered = [  
-    ...CATEGORY_ORDER.filter(c =>  
-        allCats.includes(c)  
-    ),  
-    ...allCats  
-        .filter(c =>  
-            !CATEGORY_ORDER.includes(c)  
-        )  
-        .sort()  
-];  
+        return {
+            catData: [],
+            totalCmds: 0
+        };
+    }
 
-const catData = [];  
-let totalCmds = 0;  
+    const ordered = [
+        ...CATEGORY_ORDER.filter(c =>
+            allCats.includes(c)
+        ),
+        ...allCats
+            .filter(c =>
+                !CATEGORY_ORDER.includes(c)
+            )
+            .sort()
+    ];
 
-for (const cat of ordered) {  
+    const catData = [];
+    let totalCmds = 0;
 
-    const names = [];  
+    for (const cat of ordered) {
 
-    try {  
+        const names = [];
 
-        const categoryPath =  
-            path.join(  
-                CMDS_DIR,  
-                cat  
-            );  
+        try {
 
-        const files = fs  
-            .readdirSync(categoryPath)  
-            .filter(file =>  
-                file.endsWith('.js')  
-            );  
+            const categoryPath =
+                path.join(
+                    CMDS_DIR,
+                    cat
+                );
 
-        for (const file of files) {  
+            const files = fs
+                .readdirSync(categoryPath)
+                .filter(file =>
+                    file.endsWith('.js')
+                );
 
-            try {  
+            for (const file of files) {
 
-                const filePath =  
-                    path.join(  
-                        categoryPath,  
-                        file  
-                    );  
+                try {
 
-                const mod =  
-                    require(filePath);  
+                    const filePath =
+                        path.join(
+                            categoryPath,
+                            file
+                        );
 
-                const raw =  
-                    mod.default || mod;  
+                    const mod =
+                        require(filePath);
 
-                const list =  
-                    Array.isArray(raw)  
-                        ? raw  
-                        : raw?.name  
-                            ? [raw]  
-                            : [];  
+                    const raw =
+                        mod.default || mod;
 
-                for (const cmd of list) {  
+                    const list =
+                        Array.isArray(raw)
+                            ? raw
+                            : raw?.name
+                                ? [raw]
+                                : [];
 
-                    if (  
-                        cmd &&  
-                        cmd.name  
-                    ) {  
+                    for (const cmd of list) {
 
-                        addCommandOnce(  
-                            names,  
-                            cmd.name  
-                        );  
-                    }  
-                }  
+                        if (
+                            cmd &&
+                            cmd.name
+                        ) {
 
-            } catch (error) {  
+                            addCommandOnce(
+                                names,
+                                cmd.name
+                            );
+                        }
+                    }
 
-                console.error(  
-                    `[MENU] Failed loading ${cat}/${file}:`,  
-                    error.message  
-                );  
-            }  
-        }  
+                } catch (error) {
 
-    } catch (error) {  
+                    console.error(
+                        `[MENU] Failed loading ${cat}/${file}:`,
+                        error.message
+                    );
+                }
+            }
 
-        console.error(  
-            `[MENU] Failed reading category ${cat}:`,  
-            error.message  
-        );  
-    }  
+        } catch (error) {
 
-    addForcedCommands(  
-        cat,  
-        names  
-    );  
+            console.error(
+                `[MENU] Failed reading category ${cat}:`,
+                error.message
+            );
+        }
 
-    if (!names.length) {  
-        continue;  
-    }  
+        addForcedCommands(
+            cat,
+            names
+        );
 
-    totalCmds += names.length;  
+        if (!names.length) {
+            continue;
+        }
 
-    catData.push({  
-        cat,  
-        cmdNames: names  
-    });  
-}  
+        totalCmds += names.length;
 
-return {  
-    catData,  
-    totalCmds  
-};
+        catData.push({
+            cat,
+            cmdNames: names
+        });
+    }
 
+    return {
+        catData,
+        totalCmds
+    };
 }
 
 function getPlatform() {
 
-if (process.env.DYNO) {  
-    return 'Heroku';  
-}  
+    if (process.env.DYNO) {
+        return 'Heroku';
+    }
 
-if (process.env.RAILWAY_ENVIRONMENT) {  
-    return 'Railway';  
-}  
+    if (process.env.RAILWAY_ENVIRONMENT) {
+        return 'Railway';
+    }
 
-if (process.env.RENDER) {  
-    return 'Render';  
-}  
+    if (process.env.RENDER) {
+        return 'Render';
+    }
 
-return 'VPS';
-
+    return 'VPS';
 }
 
 function getUptime() {
 
-const s =  
-    Math.floor(  
-        process.uptime()  
-    );  
+    const s =
+        Math.floor(
+            process.uptime()
+        );
 
-const h =  
-    Math.floor(  
-        s / 3600  
-    );  
+    const h =
+        Math.floor(
+            s / 3600
+        );
 
-const m =  
-    Math.floor(  
-        (s % 3600) / 60  
-    );  
+    const m =
+        Math.floor(
+            (s % 3600) / 60
+        );
 
-const sec =  
-    s % 60;  
+    const sec =
+        s % 60;
 
-return `${h}h ${m}m ${sec}s`;
-
+    return `${h}h ${m}m ${sec}s`;
 }
 
 function getUsage() {
 
-const memory =  
-    process.memoryUsage();  
+    const memory =
+        process.memoryUsage();
 
-const usedMB =  
-    memory.heapUsed /  
-    1024 /  
-    1024;  
+    const usedMB =
+        memory.heapUsed /
+        1024 /
+        1024;
 
-const totalMB =  
-    memory.heapTotal /  
-    1024 /  
-    1024;  
+    const totalMB =
+        memory.heapTotal /
+        1024 /
+        1024;
 
-const percent =  
-    totalMB > 0  
-        ? Math.min(  
-            100,  
-            Math.max(  
-                0,  
-                (usedMB / totalMB) * 100  
-            )  
-        )  
-        : 0;  
+    const percent =
+        totalMB > 0
+            ? Math.min(
+                100,
+                Math.max(
+                    0,
+                    (usedMB / totalMB) * 100
+                )
+            )
+            : 0;
 
-return {  
-    text:  
-        `${usedMB.toFixed(1)} MB / ` +  
-        `${totalMB.toFixed(1)} MB`,  
-    percent  
-};
-
+    return {
+        text:
+            `${usedMB.toFixed(1)} MB / ` +
+            `${totalMB.toFixed(1)} MB`,
+        percent
+    };
 }
 
 function getSpeed(msg) {
 
-if (  
-    msg &&  
-    msg._botReceivedAt  
-) {  
+    if (
+        msg &&
+        msg._botReceivedAt
+    ) {
 
-    return (  
-        Date.now() -  
-        msg._botReceivedAt  
-    ) + 'ms';  
-}  
+        return (
+            Date.now() -
+            msg._botReceivedAt
+        ) + 'ms';
+    }
 
-return 'N/A';
-
+    return 'N/A';
 }
 
 function getBar(percent) {
 
-// Normal / medium RAM bar  
-const total = 12;  
+    const total = 12;
 
-const filled =  
-    Math.round(  
-        (percent / 100) *  
-        total  
-    );  
+    const filled =
+        Math.round(
+            (percent / 100) *
+            total
+        );
 
-return (  
-    '[' +  
-    '█'.repeat(filled) +  
-    '░'.repeat(  
-        total - filled  
-    ) +  
-    '] ' +  
-    Math.round(percent) +  
-    '%'  
-);
+    return (
+        '[' +
+        '█'.repeat(filled) +
+        '░'.repeat(
+            total - filled
+        ) +
+        '] ' +
+        Math.round(percent) +
+        '%'
+    );
+}
 
+/*
+ * WHATSAPP READ MORE SEPARATOR
+ *
+ * The menu remains ONE message.
+ * These separators divide the command
+ * list into approximately 9 sections.
+ */
+function getReadMore() {
+    return String.fromCharCode(8206).repeat(4000);
 }
 
 module.exports = {
 
-name: 'menu',  
+    name: 'menu',
 
-aliases: [  
-    'help',  
-    'cmds',  
-    'commands',  
-    'list'  
-],  
+    aliases: [
+        'help',
+        'cmds',
+        'commands',
+        'list'
+    ],
 
-description:  
-    'Show all available bot commands',  
+    description:
+        'Show all available bot commands',
 
-category: 'utility',  
+    category: 'utility',
 
-async execute(  
-    sock,  
-    msg,  
-    args,  
-    prefix,  
-    ctx  
-) {  
+    async execute(
+        sock,
+        msg,
+        args,
+        prefix,
+        ctx
+    ) {
 
-    try {  
+        try {
 
-        const chatId =  
-            msg.key.remoteJid;  
+            const chatId =
+                msg.key.remoteJid;
 
-        const botName =  
-            getBotName();  
+            const botName =
+                getBotName();
 
-        const p =  
-            prefix ||  
-            cfg.PREFIX ||  
-            '.';  
+            const p =
+                prefix ||
+                cfg.PREFIX ||
+                '.';
 
-        const owner =  
-            cfg.OWNER_NUMBER  
-                ? `+${cfg.OWNER_NUMBER}`  
-                : (  
-                    cfg.OWNER_NAME ||  
-                    'GAAJU'  
-                );  
+            const owner =
+                cfg.OWNER_NUMBER
+                    ? `+${cfg.OWNER_NUMBER}`
+                    : (
+                        cfg.OWNER_NAME ||
+                        'GAAJU'
+                    );
 
-        const mode =  
-            (  
-                cfg.MODE ||  
-                'public'  
-            ).toUpperCase();  
+            const mode =
+                (
+                    cfg.MODE ||
+                    'public'
+                ).toUpperCase();
 
-        const {  
-            catData,  
-            totalCmds  
-        } = getCategoryData();  
+            const {
+                catData,
+                totalCmds
+            } = getCategoryData();
 
-        const usage =  
-            getUsage();  
+            const usage =
+                getUsage();
 
-        const readMore =  
-            String.fromCharCode(  
-                8206  
-            ).repeat(4000);  
+            const lines = [];
 
-        const lines = [];  
+            /*
+             * ==========================
+             * HEADER
+             * ==========================
+             */
 
-        /*  
-         * ==========================  
-         * HEADER  
-         * ==========================  
-         */  
+            lines.push(
+                `┏━━❐➽ *${botName}* ➽❐━━`
+            );
 
-        lines.push(  
-            `┏━━❐➽ *${botName}* ➽❐━━`  
-        );  
+            lines.push(
+                `┃ *Prefix:* [${p}]`
+            );
 
-        lines.push(  
-            `┃ *Prefix:* [${p}]`  
-        );  
+            lines.push(
+                `┃ *Owner:* ${owner}`
+            );
 
-        lines.push(  
-            `┃ *Owner:* ${owner}`  
-        );  
+            lines.push(
+                `┃ *Mode:* *${mode}*`
+            );
 
-        lines.push(  
-            `┃ *Mode:* *${mode}*`  
-        );  
+            lines.push(
+                `┃ *Platform:* *${getPlatform()}*`
+            );
 
-        lines.push(  
-            `┃ *Platform:* *${getPlatform()}*`  
-        );  
+            lines.push(
+                `┃ *Speed:* *${getSpeed(msg)}*`
+            );
 
-        lines.push(  
-            `┃ *Speed:* *${getSpeed(msg)}*`  
-        );  
+            lines.push(
+                `┃ *Uptime:* *${getUptime()}*`
+            );
 
-        lines.push(  
-            `┃ *Uptime:* *${getUptime()}*`  
-        );  
+            lines.push(
+                `┃ *Version:* *${BOT_VERSION}*`
+            );
 
-        lines.push(  
-            `┃ *Version:* *${BOT_VERSION}*`  
-        );  
+            lines.push(
+                `┃ *Usage:* *${usage.text}*`
+            );
 
-        lines.push(  
-            `┃ *Usage:* *${usage.text}*`  
-        );  
+            lines.push(
+                `┃ *RAM:* ${getBar(
+                    usage.percent
+                )}`
+            );
 
-        lines.push(  
-            `┃ *RAM:* ${getBar(  
-                usage.percent  
-            )}`  
-        );  
+            lines.push(
+                `┃ *Commands:* *${totalCmds}*`
+            );
 
-        lines.push(  
-            `┃ *Commands:* *${totalCmds}*`  
-        );  
+            lines.push(
+                `┗━━❐➽`
+            );
 
-        lines.push(  
-            `┗━━❐➽`  
-        );  
+            /*
+             * ==========================
+             * COMMAND SECTIONS
+             *
+             * Approximately 9 Read More
+             * separators throughout the
+             * SAME WhatsApp message.
+             * ==========================
+             */
 
-        lines.push(  
-            readMore  
-        );  
+            const totalCategories =
+                catData.length;
 
-        /*  
-         * ==========================  
-         * CATEGORY MENU  
-         * ==========================  
-         */  
+            const sectionSize =
+                Math.max(
+                    1,
+                    Math.ceil(
+                        totalCategories / 9
+                    )
+                );
 
-        for (const {  
-            cat,  
-            cmdNames  
-        } of catData) {  
+            let categoryCount = 0;
+            let readMoreCount = 0;
 
-            const label =  
-                CATEGORY_LABELS[cat] ||  
-                `📁 ${cat.toUpperCase()}`;  
+            for (const {
+                cat,
+                cmdNames
+            } of catData) {
 
-            lines.push(  
-                `┃ ╭━━━〔 *${label}* 〕`  
-            );  
+                const label =
+                    CATEGORY_LABELS[cat] ||
+                    `📁 ${cat.toUpperCase()}`;
 
-            for (const cmd of cmdNames) {  
+                lines.push(
+                    `┃ ╭━━━〔 *${label}* 〕`
+                );
 
-                lines.push(  
-                    `┃ ➽ ${p}${cmd}`  
-                );  
-            }  
+                for (const cmd of cmdNames) {
 
-            lines.push(  
-                `╰━━━━━━━━━━━`  
-            );  
+                    lines.push(
+                        `┃ ➽ ${p}${cmd}`
+                    );
+                }
 
-            lines.push('');  
-        }  
+                lines.push(
+                    `╰━━━━━━━━━━━`
+                );
 
-        lines.push(  
-            readMore  
-        );  
+                lines.push('');
 
-        lines.push(  
-            ` ${botName}`  
-        );  
+                categoryCount++;
 
-        lines.push(  
-            '> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ'  
-        );  
+                /*
+                 * Insert Read More after
+                 * each section of categories.
+                 *
+                 * Never add one after the
+                 * final category.
+                 */
+                if (
+                    categoryCount < totalCategories &&
+                    readMoreCount < 8 &&
+                    categoryCount % sectionSize === 0
+                ) {
 
-        const caption =  
-            lines.join('\n');  
+                    lines.push(
+                        getReadMore()
+                    );
 
-        const msgOptions = {  
-            quoted: msg  
-        };  
+                    readMoreCount++;
+                }
+            }
 
-        /*  
-         * ==========================  
-         * CUSTOM MENU IMAGE  
-         * ==========================  
-         */  
+            /*
+             * If there are enough categories,
+             * ensure the menu has up to 9
+             * Read More separators.
+             */
 
-        if (  
-            fs.existsSync(  
-                CUSTOM_MENU_IMAGE  
-            )  
-        ) {  
+            while (
+                readMoreCount < 8 &&
+                totalCategories > readMoreCount + 1
+            ) {
 
-            const img =  
-                fs.readFileSync(  
-                    CUSTOM_MENU_IMAGE  
-                );  
+                /*
+                 * We intentionally don't add
+                 * extra visible content here.
+                 *
+                 * The separators are distributed
+                 * by the category loop above.
+                 */
+                break;
+            }
 
-            await sock.sendMessage(  
-                chatId,  
-                {  
-                    image: img,  
-                    caption,  
-                    mimetype: 'image/jpeg'  
-                },  
-                msgOptions  
-            );  
+            /*
+             * ==========================
+             * FOOTER
+             * ==========================
+             */
 
-            return;  
-        }  
+            lines.push(
+                ` ${botName}`
+            );
 
-        /*  
-         * ==========================  
-         * TEXT MENU  
-         * ==========================  
-         */  
+            lines.push(
+                '> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ'
+            );
 
-        await sock.sendMessage(  
-            chatId,  
-            {  
-                text: caption  
-            },  
-            msgOptions  
-        );  
+            const caption =
+                lines.join('\n');
 
-    } catch (error) {  
+            const msgOptions = {
+                quoted: msg
+            };
 
-        console.error(  
-            '[MENU ERROR]',  
-            error  
-        );  
+            /*
+             * ==========================
+             * CUSTOM MENU IMAGE
+             * ==========================
+             */
 
-        try {  
+            if (
+                fs.existsSync(
+                    CUSTOM_MENU_IMAGE
+                )
+            ) {
 
-            await sock.sendMessage(  
-                msg.key.remoteJid,  
-                {  
-                    text:  
-                        '❌ Menu failed to load. Please check the bot console for the error.'  
-                },  
-                {  
-                    quoted: msg  
-                }  
-            );  
-        } catch {}  
-    }  
-}
+                const img =
+                    fs.readFileSync(
+                        CUSTOM_MENU_IMAGE
+                    );
 
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        image: img,
+                        caption,
+                        mimetype: 'image/jpeg'
+                    },
+                    msgOptions
+                );
+
+                return;
+            }
+
+            /*
+             * ==========================
+             * TEXT MENU
+             * ==========================
+             */
+
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: caption
+                },
+                msgOptions
+            );
+
+        } catch (error) {
+
+            console.error(
+                '[MENU ERROR]',
+                error
+            );
+
+            try {
+
+                await sock.sendMessage(
+                    msg.key.remoteJid,
+                    {
+                        text:
+                            '❌ Menu failed to load. Please check the bot console for the error.'
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
+
+            } catch {}
+        }
+    }
 };
