@@ -505,202 +505,6 @@ function getBar(percent) {
     );
 }
 
-
-/*
- * ==========================================================
- * REAL WHATSAPP READ MORE
- * ==========================================================
- *
- * WhatsApp detects the long invisible character sequence
- * and displays the expandable "Read more" option.
- *
- * Every separate message gets its own Read More.
- */
-
-const READ_MORE_LENGTH = 4000;
-
-function getReadMore() {
-    return String.fromCharCode(8206).repeat(
-        READ_MORE_LENGTH
-    );
-}
-
-
-/*
- * ==========================================================
- * BUILD CATEGORY BLOCK
- * ==========================================================
- */
-
-function buildCategoryBlock(
-    categoryData,
-    prefix
-) {
-
-    const lines = [];
-
-    for (const {
-        cat,
-        cmdNames
-    } of categoryData) {
-
-        const label =
-            CATEGORY_LABELS[cat] ||
-            `📁 ${cat.toUpperCase()}`;
-
-        lines.push(
-            `┃ ╭━━━〔 *${label}* 〕`
-        );
-
-        for (const cmd of cmdNames) {
-
-            lines.push(
-                `┃ ➽ ${prefix}${cmd}`
-            );
-        }
-
-        lines.push(
-            `╰━━━━━━━━━━━`
-        );
-
-        lines.push('');
-    }
-
-    return lines.join('\n');
-}
-
-
-/*
- * ==========================================================
- * SPLIT 19 CATEGORIES INTO EXACTLY 11 PARTS
- * ==========================================================
- *
- * 19 categories:
- *
- * Part 1  = 2 categories
- * Part 2  = 2 categories
- * Part 3  = 2 categories
- * Part 4  = 2 categories
- * Part 5  = 2 categories
- * Part 6  = 2 categories
- * Part 7  = 2 categories
- * Part 8  = 2 categories
- * Part 9  = 1 category
- * Part 10 = 1 category
- * Part 11 = 1 category
- *
- * Total = 19
- */
-
-function splitIntoElevenParts(catData) {
-
-    const parts = [];
-
-    const sizes = [
-        2, 2, 2, 2, 2,
-        2, 2, 2,
-        1, 1, 1
-    ];
-
-    let position = 0;
-
-    for (const size of sizes) {
-
-        const part =
-            catData.slice(
-                position,
-                position + size
-            );
-
-        if (part.length) {
-            parts.push(part);
-        }
-
-        position += size;
-    }
-
-    return parts;
-}
-
-
-/*
- * ==========================================================
- * BUILD HEADER
- * ==========================================================
- */
-
-function buildHeader(
-    botName,
-    p,
-    owner,
-    mode,
-    totalCmds,
-    usage,
-    msg
-) {
-
-    const lines = [];
-
-    lines.push(
-        `┏━━❐➽ *${botName}* ➽❐━━`
-    );
-
-    lines.push(
-        `┃ *Prefix:* [${p}]`
-    );
-
-    lines.push(
-        `┃ *Owner:* ${owner}`
-    );
-
-    lines.push(
-        `┃ *Mode:* *${mode}*`
-    );
-
-    lines.push(
-        `┃ *Platform:* *${getPlatform()}*`
-    );
-
-    lines.push(
-        `┃ *Speed:* *${getSpeed(msg)}*`
-    );
-
-    lines.push(
-        `┃ *Uptime:* *${getUptime()}*`
-    );
-
-    lines.push(
-        `┃ *Version:* *${BOT_VERSION}*`
-    );
-
-    lines.push(
-        `┃ *Usage:* *${usage.text}*`
-    );
-
-    lines.push(
-        `┃ *RAM:* ${getBar(
-            usage.percent
-        )}`
-    );
-
-    lines.push(
-        `┃ *Commands:* *${totalCmds}*`
-    );
-
-    lines.push(
-        `┗━━❐➽`
-    );
-
-    return lines.join('\n');
-}
-
-
-/*
- * ==========================================================
- * MODULE
- * ==========================================================
- */
-
 module.exports = {
 
     name: 'menu',
@@ -761,179 +565,177 @@ module.exports = {
                 getUsage();
 
             /*
-             * Make sure the menu has
-             * exactly the 19 expected
-             * category positions.
-             */
-            const menuParts =
-                splitIntoElevenParts(
-                    catData
-                );
-
-            /*
-             * If there are no commands,
-             * stop here.
-             */
-            if (!menuParts.length) {
-
-                return await sock.sendMessage(
-                    chatId,
-                    {
-                        text:
-                            '❌ No commands available.'
-                    },
-                    {
-                        quoted: msg
-                    }
-                );
-            }
-
-            /*
              * ==================================================
-             * SEND 11 SEPARATE READ MORE MESSAGES
+             * HEADER
              * ==================================================
              */
 
-            for (
-                let i = 0;
-                i < menuParts.length;
-                i++
-            ) {
+            const lines = [];
 
-                const categoryText =
-                    buildCategoryBlock(
-                        menuParts[i],
-                        p
-                    );
+            lines.push(
+                `┏━━❐➽ *${botName}* ➽❐━━`
+            );
 
-                /*
-                 * First part gets the full bot header.
-                 */
-                let visibleText;
+            lines.push(
+                `┃ *Prefix:* [${p}]`
+            );
 
-                if (i === 0) {
+            lines.push(
+                `┃ *Owner:* ${owner}`
+            );
 
-                    visibleText =
-                        buildHeader(
-                            botName,
-                            p,
-                            owner,
-                            mode,
-                            totalCmds,
-                            usage,
-                            msg
-                        );
+            lines.push(
+                `┃ *Mode:* *${mode}*`
+            );
 
-                } else {
+            lines.push(
+                `┃ *Platform:* *${getPlatform()}*`
+            );
 
-                    visibleText =
-                        `┏━━❐➽ *${botName}* ➽❐━━`;
-                }
+            lines.push(
+                `┃ *Speed:* *${getSpeed(msg)}*`
+            );
 
-                /*
-                 * The important part:
-                 *
-                 * visible text
-                 * +
-                 * 4000 invisible characters
-                 * +
-                 * hidden menu content
-                 *
-                 * WhatsApp displays the expandable
-                 * "Read more" behavior.
-                 */
-                const caption =
-                    visibleText +
-                    '\n' +
-                    getReadMore() +
-                    '\n' +
-                    categoryText;
+            lines.push(
+                `┃ *Uptime:* *${getUptime()}*`
+            );
 
-                /*
-                 * First message:
-                 * use your custom menu image.
-                 *
-                 * Remaining 10 messages:
-                 * text only.
-                 */
+            lines.push(
+                `┃ *Version:* *${BOT_VERSION}*`
+            );
 
-                if (
-                    i === 0 &&
-                    fs.existsSync(
-                        CUSTOM_MENU_IMAGE
-                    )
-                ) {
+            lines.push(
+                `┃ *Usage:* *${usage.text}*`
+            );
 
-                    const img =
-                        fs.readFileSync(
-                            CUSTOM_MENU_IMAGE
-                        );
+            lines.push(
+                `┃ *RAM:* ${getBar(
+                    usage.percent
+                )}`
+            );
 
-                    await sock.sendMessage(
-                        chatId,
-                        {
-                            image: img,
-                            caption,
-                            mimetype: 'image/jpeg'
-                        },
-                        {
-                            quoted: msg
-                        }
-                    );
+            lines.push(
+                `┃ *Commands:* *${totalCmds}*`
+            );
 
-                } else {
-
-                    await sock.sendMessage(
-                        chatId,
-                        {
-                            text: caption
-                        },
-                        {
-                            quoted: msg
-                        }
-                    );
-                }
-
-                /*
-                 * Small delay between messages.
-                 * This helps prevent the 11 messages
-                 * from being fired at exactly the
-                 * same moment.
-                 */
-                if (
-                    i <
-                    menuParts.length - 1
-                ) {
-
-                    await new Promise(
-                        resolve =>
-                            setTimeout(
-                                resolve,
-                                350
-                            )
-                    );
-                }
-            }
+            lines.push(
+                `┗━━❐➽`
+            );
 
             /*
              * ==================================================
-             * FINAL FOOTER MESSAGE
+             * ONE SINGLE READ MORE
              * ==================================================
              *
-             * Kept separate so the actual menu messages
-             * remain focused on the 19 categories.
+             * Everything below this point remains in
+             * the SAME WhatsApp message.
+             */
+
+            const readMore =
+                String.fromCharCode(
+                    8206
+                ).repeat(4000);
+
+            lines.push(
+                readMore
+            );
+
+            /*
+             * ==================================================
+             * ALL 19 CATEGORIES
+             * ==================================================
+             */
+
+            for (const {
+                cat,
+                cmdNames
+            } of catData) {
+
+                const label =
+                    CATEGORY_LABELS[cat] ||
+                    `📁 ${cat.toUpperCase()}`;
+
+                lines.push(
+                    `┃ ╭━━━〔 *${label}* 〕`
+                );
+
+                for (const cmd of cmdNames) {
+
+                    lines.push(
+                        `┃ ➽ ${p}${cmd}`
+                    );
+                }
+
+                lines.push(
+                    `╰━━━━━━━━━━━`
+                );
+
+                lines.push('');
+            }
+
+            /*
+             * ==================================================
+             * FOOTER
+             * ==================================================
+             */
+
+            lines.push(
+                ` ${botName}`
+            );
+
+            lines.push(
+                '> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ'
+            );
+
+            const caption =
+                lines.join('\n');
+
+            const msgOptions = {
+                quoted: msg
+            };
+
+            /*
+             * ==================================================
+             * CUSTOM MENU IMAGE
+             * ==================================================
+             */
+
+            if (
+                fs.existsSync(
+                    CUSTOM_MENU_IMAGE
+                )
+            ) {
+
+                const img =
+                    fs.readFileSync(
+                        CUSTOM_MENU_IMAGE
+                    );
+
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        image: img,
+                        caption,
+                        mimetype: 'image/jpeg'
+                    },
+                    msgOptions
+                );
+
+                return;
+            }
+
+            /*
+             * ==================================================
+             * TEXT MENU
+             * ==================================================
              */
 
             await sock.sendMessage(
                 chatId,
                 {
-                    text:
-                        ` ${botName}\n` +
-                        '> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ'
+                    text: caption
                 },
-                {
-                    quoted: msg
-                }
+                msgOptions
             );
 
         } catch (error) {
@@ -955,7 +757,6 @@ module.exports = {
                         quoted: msg
                     }
                 );
-
             } catch {}
         }
     }
