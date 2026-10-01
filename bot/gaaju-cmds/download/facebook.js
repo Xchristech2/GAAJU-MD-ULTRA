@@ -1,9 +1,6 @@
 'use strict';
 
 const {
-  casperGet,
-  keithTry,
-  extractUrl,
   dlBuffer
 } = require("../../lib/keithapi");
 
@@ -38,58 +35,60 @@ module.exports = {
 
     try {
 
-      let downloadUrl;
-      let title;
-      let quality;
+      // ================= GZ FACEBOOK API
+      const apiUrl =
+        `https://gzapis.vercel.app/api/facebook?apikey=Godszeal&url=${encodeURIComponent(url)}`;
 
-      // ================= CASPER API
-      try {
+      const response = await fetch(apiUrl);
 
-        const result = await casperGet("/api/downloader/fb", {
-          url: url
-        });
-
-        if (!result.success) {
-          throw new Error(result.error || "Casper: no result");
-        }
-
-        downloadUrl =
-          result.primaryDownload ||
-          result.downloads?.[0]?.url;
-
-        title =
-          result.title ||
-          "Facebook Video";
-
-        quality =
-          result.downloads?.[0]?.quality ||
-          "HD";
-
-        if (!downloadUrl) {
-          throw new Error("Casper: no download URL");
-        }
-
-      } catch {
-
-        // ================= KEITH FALLBACK
-        const result = await keithTry(
-          ["/download/fbdl", "/download/fbdown"],
-          {
-            url: url
-          }
-        );
-
-        downloadUrl = extractUrl(result.result);
-        title = "Facebook Video";
-        quality = "HD";
-
-        if (!downloadUrl) {
-          throw new Error("No download URL found");
-        }
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
       }
 
-      // ================= DOWNLOAD
+      const result = await response.json();
+
+      if (!result || result.status !== "success") {
+        throw new Error(
+          result?.message ||
+          result?.error ||
+          "Facebook API returned no result"
+        );
+      }
+
+      // ================= GET DOWNLOAD URL
+      const downloadUrl =
+        result.download ||
+        result.downloadUrl ||
+        result.url ||
+        result.video ||
+        result.hd ||
+        result.hd_url ||
+        result.links?.hd ||
+        result.links?.["720p"] ||
+        result.data?.download ||
+        result.data?.hd;
+
+      const title =
+        result.title ||
+        result.caption ||
+        result.data?.title ||
+        "Facebook Video";
+
+      const quality =
+        result.quality ||
+        result.data?.quality ||
+        "HD";
+
+      if (!downloadUrl) {
+        throw new Error("No Facebook video download URL found");
+      }
+
+      // ================= DOWNLOAD VIDEO
       const buffer = await dlBuffer(downloadUrl);
+
+      if (!buffer || !buffer.length) {
+        throw new Error("Failed to download Facebook video");
+      }
 
       const size =
         (buffer.length / 1024 / 1024).toFixed(2);
@@ -113,6 +112,8 @@ module.exports = {
       });
 
     } catch (error) {
+
+      console.error("[FB ERROR]", error);
 
       // ================= ERROR
       await sock.sendMessage(chatId, {
