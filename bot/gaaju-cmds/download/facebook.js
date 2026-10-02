@@ -35,9 +35,9 @@ module.exports = {
 
     try {
 
-      // ================= GZ FACEBOOK API
+      // ================= NOVA FACEBOOK API
       const apiUrl =
-        `https://gzapis.vercel.app/api/facebook?apikey=Godszeal&url=${encodeURIComponent(url)}`;
+        `https://api-red-iota-56.vercel.app/downloader/fbdl?apikey=nova_510035&url=${encodeURIComponent(url)}`;
 
       const response = await fetch(apiUrl);
 
@@ -47,36 +47,28 @@ module.exports = {
 
       const result = await response.json();
 
-      if (!result || result.status !== "success") {
-        throw new Error(
-          result?.message ||
-          result?.error ||
-          "Facebook API returned no result"
-        );
-      }
-
       // ================= GET DOWNLOAD URL
       const downloadUrl =
-        result.download ||
-        result.downloadUrl ||
-        result.url ||
-        result.video ||
-        result.hd ||
-        result.hd_url ||
-        result.links?.hd ||
-        result.links?.["720p"] ||
-        result.data?.download ||
-        result.data?.hd;
+        result?.answer?.url ||
+        result?.url ||
+        result?.download ||
+        result?.downloadUrl ||
+        result?.video ||
+        result?.hd;
 
       const title =
-        result.title ||
-        result.caption ||
-        result.data?.title ||
+        result?.answer?.title ||
+        result?.title ||
         "Facebook Video";
 
+      const thumbnail =
+        result?.answer?.thumbnail ||
+        result?.thumbnail ||
+        null;
+
       const quality =
-        result.quality ||
-        result.data?.quality ||
+        result?.answer?.quality ||
+        result?.quality ||
         "HD";
 
       if (!downloadUrl) {
@@ -106,7 +98,8 @@ module.exports = {
       // ================= SEND VIDEO
       await sock.sendMessage(chatId, {
         video: buffer,
-        caption: caption
+        caption: caption,
+        ...(thumbnail ? { jpegThumbnail: await dlBuffer(thumbnail).catch(() => null) } : {})
       }, {
         quoted: msg
       });
