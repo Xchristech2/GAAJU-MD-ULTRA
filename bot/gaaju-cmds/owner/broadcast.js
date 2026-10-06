@@ -10,22 +10,13 @@ module.exports = {
   description: "Broadcast a message to groups, chats and WhatsApp status",
   category: "owner",
 
+  ownerOnly: true,
+  sudoAllowed: false,
+
   async execute(sock, msg, args, prefix, ctx) {
 
     const chatId = msg.key.remoteJid;
     const botName = getBotName();
-
-    // ================= OWNER =================
-    if (!ctx.isOwner()) {
-      return sock.sendMessage(chatId, {
-        text: `╭━━━〔 🚫 ACCESS DENIED 〕━━━╮
-┃
-┃  This command is restricted
-┃  to the bot owner.
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯`
-      }, { quoted: msg });
-    }
 
     // ================= TARGET =================
     const target = (args[0] || '').toLowerCase();
@@ -191,18 +182,11 @@ module.exports = {
 
       // ================= PROGRESS =================
       const progress = await sock.sendMessage(chatId, {
-        text: `╭━━━〔 📡 LIVE BROADCAST 〕━━━╮
-┃
-┃  🎯 Target
-┃     ${targetName.toUpperCase()}
-┃
-┃  📬 Recipients
-┃     ${recipients.length} chat(s)
-┃
-┃  ⚡ Status
-┃     Broadcasting...
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯`
+        text: `📡 *Broadcasting…*
+
+🎯 Target: *${targetName}*
+📬 Sending to *${recipients.length}* chat(s)
+⏳ Please wait…`
       }, { quoted: msg });
 
       // ================= MESSAGE =================
