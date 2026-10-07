@@ -1,287 +1,292 @@
 'use strict';
 
-const {
-  getBotName
-} = require("../../lib/botname");
+const SEND_DELAY = 1500;
+
+const sleep = (ms) =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+async function getGroupJids(sock) {
+    const groups =
+        await sock.groupFetchAllParticipating();
+
+    return Object.keys(groups || {});
+}
+
+function getChatJids(sock) {
+    const contacts =
+        sock.store?.contacts || {};
+
+    return Object.keys(contacts).filter(
+        jid =>
+            jid.endsWith('@s.whatsapp.net') &&
+            jid !== 'status@broadcast'
+    );
+}
 
 module.exports = {
-  name: "broadcast",
-  aliases: ["bc", "bcast"],
-  description: "Broadcast a message to groups, chats and WhatsApp status",
-  category: "owner",
+    name: 'broadcast',
 
-  ownerOnly: true,
-  sudoAllowed: false,
+    aliases: [
+        'bc',
+        'bcast',
+        'sendall'
+    ],
 
-  async execute(sock, msg, args, prefix, ctx) {
+    description:
+        'Broadcast a text message to groups or chats',
 
-    const chatId = msg.key.remoteJid;
-    const botName = getBotName();
+    category: 'owner',
 
-    // ================= TARGET =================
-    const target = (args[0] || '').toLowerCase();
+    ownerOnly: true,
 
-    if (!['groups', 'group', 'chats', 'chat', 'all'].includes(target)) {
-      return sock.sendMessage(chatId, {
-        text: `╭━━━〔 📡 BROADCAST CENTER 〕━━━╮
+    async execute(
+        sock,
+        msg,
+        args,
+        prefix,
+        ctx
+    ) {
+        const chatId =
+            msg.key.remoteJid;
+
+        const reply = async (text) => {
+            return sock.sendMessage(
+                chatId,
+                { text },
+                { quoted: msg }
+            );
+        };
+
+        const HELP =
+`╭━━━〔 📡 *BROADCAST* 〕
 ┃
-┃  ${prefix}broadcast groups <text>
-┃  ${prefix}broadcast chats <text>
-┃  ${prefix}broadcast all <text>
+┃ *Usage:*
+┃ ➽ ${prefix}broadcast groups <message>
+┃ ➽ ${prefix}broadcast chats <message>
+┃ ➽ ${prefix}broadcast all <message>
 ┃
-┃  ◉ GROUPS
-┃    Send to all groups
+┃ *Targets:*
+┃ ➽ groups — All groups
+┃ ➽ chats — All private chats
+┃ ➽ all — Groups + private chats
 ┃
-┃  ◉ CHATS
-┃    Send to private chats
-┃
-┃  ◉ ALL
-┃    Groups + private chats
-┃
-╰━━━━━━〔 ⚡ ${botName} 〕━━━━━━╯`
-      }, { quoted: msg });
-    }
+╰━━━━━━━━━━━`;
 
-    const targetName =
-      target === 'group' ? 'groups' :
-      target === 'chat' ? 'chats' :
-      target;
-
-    // ================= MESSAGE =================
-    const broadcastText = args.slice(1).join(" ").trim();
-
-    if (!broadcastText) {
-      return sock.sendMessage(chatId, {
-        text: `╭━━━〔 ⚠️ BROADCAST CENTER 〕━━━╮
-┃
-┃  Message not provided.
-┃
-┃  Example:
-┃  ${prefix}broadcast groups Hello
-┃
-╰━━━━━━━━━━━━━━━━━━━━╯`
-      }, { quoted: msg });
-    }
-
-    try {
-
-      // ================= GROUPS =================
-      let groupChats = [];
-
-      try {
-        const groups = await sock.groupFetchAllParticipating();
-        groupChats = Object.keys(groups || {});
-      } catch {}
-
-      // ================= PRIVATE CHATS =================
-      let privateChats = [];
-
-      try {
-
-        const stores = [
-          sock.store?.chats,
-          sock.chats,
-          globalThis.store?.chats,
-          globalThis.chatStore?.chats,
-          globalThis._chatStore?.chats
-        ];
-
-        for (const source of stores) {
-
-          if (!source) continue;
-
-          if (typeof source.all === 'function') {
-
-            for (const chat of source.all() || []) {
-
-              const id =
-                chat?.id ||
-                chat?.jid ||
-                chat?.key?.remoteJid;
-
-              if (
-                id &&
-                !id.endsWith('@g.us') &&
-                !id.endsWith('@broadcast') &&
-                id !== 'status@broadcast'
-              ) {
-                privateChats.push(id);
-              }
-            }
-
-          } else if (source instanceof Map) {
-
-            for (const [id, chat] of source.entries()) {
-
-              const jid = chat?.id || id;
-
-              if (
-                jid &&
-                !jid.endsWith('@g.us') &&
-                !jid.endsWith('@broadcast') &&
-                jid !== 'status@broadcast'
-              ) {
-                privateChats.push(jid);
-              }
-            }
-
-          } else if (typeof source === 'object') {
-
-            for (const [id, chat] of Object.entries(source)) {
-
-              const jid = chat?.id || id;
-
-              if (
-                jid &&
-                !jid.endsWith('@g.us') &&
-                !jid.endsWith('@broadcast') &&
-                jid !== 'status@broadcast'
-              ) {
-                privateChats.push(jid);
-              }
-            }
-          }
+        if (args.length < 2) {
+            return reply(HELP);
         }
 
-      } catch {}
+        const target =
+            args[0]
+                .toLowerCase()
+                .trim();
 
-      groupChats = [...new Set(groupChats)];
-      privateChats = [...new Set(privateChats)];
+        const message =
+            args
+                .slice(1)
+                .join(' ')
+                .trim();
 
-      // ================= RECIPIENTS =================
-      let recipients = [];
+        if (
+            ![
+                'groups',
+                'chats',
+                'all'
+            ].includes(target)
+        ) {
+            return reply(HELP);
+        }
 
-      if (targetName === 'groups') {
-        recipients = groupChats;
-      }
+        if (!message) {
+            return reply(
+`❌ *MESSAGE EMPTY*
 
-      if (targetName === 'chats') {
-        recipients = privateChats;
-      }
+Please provide a message.
 
-      if (targetName === 'all') {
-        recipients = [
-          ...new Set([
-            ...groupChats,
-            ...privateChats
-          ])
-        ];
-      }
+${HELP}`
+            );
+        }
 
-      if (!recipients.length) {
-        return sock.sendMessage(chatId, {
-          text: `╭━━━〔 📡 BROADCAST 〕━━━╮
-┃
-┃  ⚠️ No recipients found.
-┃
-┃  Target: ${targetName.toUpperCase()}
-┃
-╰━━━━━━〔 ${botName} 〕━━━━━━╯`
-        }, { quoted: msg });
-      }
+        // Processing reaction
+        try {
+            await sock.sendMessage(
+                chatId,
+                {
+                    react: {
+                        text: '⏳',
+                        key: msg.key
+                    }
+                }
+            );
+        } catch {}
 
-      // ================= PROGRESS =================
-      const progress = await sock.sendMessage(chatId, {
-        text: `📡 *Broadcasting…*
-
-🎯 Target: *${targetName}*
-📬 Sending to *${recipients.length}* chat(s)
-⏳ Please wait…`
-      }, { quoted: msg });
-
-      // ================= MESSAGE =================
-      const broadcastMessage = `╭━━〔 📢 ANNOUNCEMENT 〕━━╮
-
-${broadcastText}
-
-╰━━〔 ${botName} 〕━━╯`;
-
-      let sent = 0;
-      let failed = 0;
-
-      // ================= SEND =================
-      for (const jid of recipients) {
+        // Collect targets
+        let jids = [];
 
         try {
+            if (
+                target === 'groups' ||
+                target === 'all'
+            ) {
+                const groupJids =
+                    await getGroupJids(sock);
 
-          await sock.sendMessage(jid, {
-            text: broadcastMessage
-          });
+                jids.push(
+                    ...groupJids
+                );
+            }
 
-          sent++;
+            if (
+                target === 'chats' ||
+                target === 'all'
+            ) {
+                const chatJids =
+                    getChatJids(sock);
 
-          await new Promise(resolve =>
-            setTimeout(resolve, 800)
-          );
+                jids.push(
+                    ...chatJids
+                );
+            }
+        } catch (error) {
+            try {
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        react: {
+                            text: '❌',
+                            key: msg.key
+                        }
+                    }
+                );
+            } catch {}
 
-        } catch {
+            return reply(
+`❌ *FAILED TO GET TARGETS*
 
-          failed++;
+${error.message}`
+            );
         }
-      }
 
-      // ================= STATUS =================
-      let statusSent = false;
+        // Remove duplicates, bot's own JID and current chat
+        const selfJid =
+            sock.user?.id;
 
-      try {
-
-        await sock.sendMessage(
-          'status@broadcast',
-          {
-            text: broadcastMessage
-          }
+        jids = [
+            ...new Set(jids)
+        ].filter(
+            jid =>
+                jid !== selfJid &&
+                jid !== chatId
         );
 
-        statusSent = true;
+        if (jids.length === 0) {
+            try {
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        react: {
+                            text: '❌',
+                            key: msg.key
+                        }
+                    }
+                );
+            } catch {}
 
-      } catch {}
+            return reply(
+`❌ *NO TARGETS FOUND*
 
-      // ================= RESULT =================
-      const result = `╭━━━〔 📡 BROADCAST REPORT 〕━━━╮
+No chats were found for:
+*${target}*`
+            );
+        }
+
+        // Status message
+        let statusMsg;
+
+        try {
+            statusMsg =
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+`╭━━━〔 📡 *BROADCASTING* 〕
 ┃
-┃  🎯 Target   : ${targetName.toUpperCase()}
-┃  📬 Delivered: ${sent}
-┃  ❌ Failed   : ${failed}
-┃  📱 Status   : ${statusSent ? 'ONLINE ✅' : 'FAILED ❌'}
+┃ 🎯 *Target:* ${target}
+┃ 📬 *Recipients:* ${jids.length}
 ┃
-╰━━━〔 ⚡ ${botName} 〕━━━╯`;
-
-      try {
-
-        await sock.sendMessage(chatId, {
-          text: result,
-          edit: progress.key
-        });
-
-      } catch {
-
-        await sock.sendMessage(chatId, {
-          text: result
-        }, { quoted: msg });
-      }
-
-      try {
-
-        await sock.sendMessage(chatId, {
-          react: {
-            text: "📡",
-            key: msg.key
-          }
-        });
-
-      } catch {}
-
-    } catch (error) {
-
-      console.error("[BROADCAST ERROR]", error);
-
-      await sock.sendMessage(chatId, {
-        text: `╭━━━〔 ❌ BROADCAST ERROR 〕━━━╮
+┃ ⏳ Please wait...
 ┃
-┃  ${error.message}
+╰━━━━━━━━━━━`
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
+        } catch {}
+
+        let sent = 0;
+        let failed = 0;
+
+        // Send to each target
+        for (const jid of jids) {
+            try {
+                await sock.sendMessage(
+                    jid,
+                    {
+                        text: message
+                    }
+                );
+
+                sent++;
+            } catch (error) {
+                failed++;
+            }
+
+            await sleep(
+                SEND_DELAY
+            );
+        }
+
+        // Final report
+        const summary =
+`╭━━━〔 📡 *BROADCAST COMPLETE* 〕
 ┃
-╰━━━━━━━━━━━━━━━━━━━━╯`
-      }, { quoted: msg });
+┃ 🎯 *Target:* ${target}
+┃ 📬 *Total:* ${jids.length}
+┃
+┃ ✅ *Sent:* ${sent}
+┃ ❌ *Failed:* ${failed}
+┃
+╰━━━━━━━━━━━`;
+
+        // Try editing status message
+        if (statusMsg?.key) {
+            try {
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        text: summary,
+                        edit: statusMsg.key
+                    }
+                );
+            } catch {
+                await reply(summary);
+            }
+        } else {
+            await reply(summary);
+        }
+
+        // Success reaction
+        try {
+            await sock.sendMessage(
+                chatId,
+                {
+                    react: {
+                        text: '✅',
+                        key: msg.key
+                    }
+                }
+            );
+        } catch {}
     }
-  }
 };
