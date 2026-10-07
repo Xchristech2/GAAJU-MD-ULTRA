@@ -25,7 +25,6 @@ try {
     if (pkg.version) {
         BOT_VERSION = `v${pkg.version}`;
     }
-
 } catch {}
 
 const CATEGORY_LABELS = {
@@ -84,28 +83,28 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'gaaju');
         addCommandOnce(cmdNames, 'anticall');
         addCommandOnce(cmdNames, 'setprofile');
+
+        addCommandOnce(cmdNames, 'addjid');
+        addCommandOnce(cmdNames, 'lastseen');
+        addCommandOnce(cmdNames, 'anticallmessage');
     }
 
     if (cat === 'utility') {
-
         addCommandOnce(cmdNames, 'botrules');
         addCommandOnce(cmdNames, 'support');
         addCommandOnce(cmdNames, 'deploy');
         addCommandOnce(cmdNames, 'menuimage');
         addCommandOnce(cmdNames, 'date');
         addCommandOnce(cmdNames, 'code');
-
         addCommandOnce(cmdNames, 'fakenumber');
         addCommandOnce(cmdNames, 'receivecode');
         addCommandOnce(cmdNames, 'tagcountry');
         addCommandOnce(cmdNames, 'muteuser');
         addCommandOnce(cmdNames, 'unmuteuser');
         addCommandOnce(cmdNames, 'disappearmessage');
-
         addCommandOnce(cmdNames, 'userid');
         addCommandOnce(cmdNames, 'listblocked');
         addCommandOnce(cmdNames, 'readreceipt');
-
         addCommandOnce(cmdNames, 'randomnumber');
         addCommandOnce(cmdNames, 'choose');
         addCommandOnce(cmdNames, 'repeat');
@@ -114,7 +113,6 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'wordcount');
         addCommandOnce(cmdNames, 'vowelcount');
         addCommandOnce(cmdNames, 'consonantcount');
-
         addCommandOnce(cmdNames, 'binary');
         addCommandOnce(cmdNames, 'octal');
         addCommandOnce(cmdNames, 'decimal');
@@ -130,9 +128,7 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'isprime');
         addCommandOnce(cmdNames, 'fibonacci');
         addCommandOnce(cmdNames, 'factorial');
-
         addCommandOnce(cmdNames, 'edit');
-
         addCommandOnce(cmdNames, 'reverse');
         addCommandOnce(cmdNames, 'length');
         addCommandOnce(cmdNames, 'uppercase');
@@ -152,14 +148,15 @@ function addForcedCommands(cat, cmdNames) {
         addCommandOnce(cmdNames, 'percentage');
         addCommandOnce(cmdNames, 'average');
         addCommandOnce(cmdNames, 'calculator');
-
         addCommandOnce(cmdNames, 'pair');
         addCommandOnce(cmdNames, 'helpers');
         addCommandOnce(cmdNames, 'panel');
         addCommandOnce(cmdNames, 'tovv');
-
         addCommandOnce(cmdNames, 'blur');
         addCommandOnce(cmdNames, 'unblur');
+
+        addCommandOnce(cmdNames, 'hosting');
+        addCommandOnce(cmdNames, 'checkbotname');
     }
 
     if (cat === 'group') {
@@ -508,9 +505,6 @@ function getBar(percent) {
     );
 }
 
-/*
- * WhatsApp Read More separator
- */
 function getReadMore() {
     return String.fromCharCode(8206).repeat(4000);
 }
@@ -576,12 +570,6 @@ module.exports = {
 
             const lines = [];
 
-            /*
-             * ==========================
-             * HEADER
-             * ==========================
-             */
-
             lines.push(
                 `┏━━❐➽ *${botName}* ➽❐━━`
             );
@@ -632,27 +620,9 @@ module.exports = {
                 `┗━━❐➽`
             );
 
-            /*
-             * =================================
-             * READ MORE #1
-             *
-             * FIRST READ MORE IS DIRECTLY
-             * UNDER THE MENU HEADER.
-             * =================================
-             */
-
             lines.push(
                 getReadMore()
             );
-
-            /*
-             * =================================
-             * COMMAND LIST
-             *
-             * READ MORE #2 - #9 WILL BE
-             * DISTRIBUTED THROUGH THE MENU.
-             * =================================
-             */
 
             const totalCategories =
                 catData.length;
@@ -663,10 +633,6 @@ module.exports = {
             const remainingReadMores =
                 totalReadMores - 1;
 
-            /*
-             * Divide the categories into
-             * approximately 8 sections.
-             */
             const sectionSize =
                 Math.max(
                     1,
@@ -694,8 +660,9 @@ module.exports = {
 
                 for (const cmd of cmdNames) {
 
+                    // Prefix removed from menu display
                     lines.push(
-                        `┃ ➽ ${p}${cmd}`
+                        `┃ ➽ ${cmd}`
                     );
                 }
 
@@ -707,9 +674,6 @@ module.exports = {
 
                 categoryIndex++;
 
-                /*
-                 * Add Read More #2 - #9.
-                 */
                 if (
                     categoryIndex <
                         totalCategories &&
@@ -727,12 +691,6 @@ module.exports = {
                 }
             }
 
-            /*
-             * ==========================
-             * FOOTER
-             * ==========================
-             */
-
             lines.push(
                 ` ${botName}`
             );
@@ -747,12 +705,6 @@ module.exports = {
             const msgOptions = {
                 quoted: msg
             };
-
-            /*
-             * ==========================
-             * CUSTOM MENU IMAGE
-             * ==========================
-             */
 
             if (
                 fs.existsSync(
@@ -777,12 +729,6 @@ module.exports = {
 
                 return;
             }
-
-            /*
-             * ==========================
-             * TEXT MENU
-             * ==========================
-             */
 
             await sock.sendMessage(
                 chatId,
