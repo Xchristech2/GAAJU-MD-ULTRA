@@ -1,139 +1,110 @@
 'use strict';
 
-const {
-  getBotName
-} = require("../../lib/botname");
-const path = require("path");
-const fs = require("fs");
-let LOCAL = {};
-try {
-  LOCAL = JSON.parse(fs.readFileSync(path.join(__dirname, "../../data/quotes.json"), "utf-8"));
-} catch {}
-const ALL_CATS = Object.keys(LOCAL);
-function pickLocal(_0x3851b0) {
-  if (!_0x3851b0) {
-    const _0x4b695e = ALL_CATS[Math.floor(Math.random() * ALL_CATS.length)];
-    const _0x3800ed = LOCAL[_0x4b695e];
-    return _0x3800ed[Math.floor(Math.random() * _0x3800ed.length)];
-  }
-  const _0x573f2b = _0x3851b0.toLowerCase();
-  const _0x1856b8 = ALL_CATS.find(_0x3b1d53 => _0x3b1d53 === _0x573f2b);
-  if (_0x1856b8) {
-    const _0x52851d = LOCAL[_0x1856b8];
-    return _0x52851d[Math.floor(Math.random() * _0x52851d.length)];
-  }
-  const _0x1c864a = ALL_CATS.find(_0x9581ce => _0x9581ce.includes(_0x573f2b) || _0x573f2b.includes(_0x9581ce));
-  if (_0x1c864a) {
-    const _0x209cb4 = LOCAL[_0x1c864a];
-    return _0x209cb4[Math.floor(Math.random() * _0x209cb4.length)];
-  }
-  const _0x111a86 = [];
-  for (const _0x4486da of Object.values(LOCAL)) {
-    for (const _0xbc9fc3 of _0x4486da) {
-      if (_0xbc9fc3.q.toLowerCase().includes(_0x573f2b) || _0xbc9fc3.a.toLowerCase().includes(_0x573f2b)) {
-        _0x111a86.push(_0xbc9fc3);
-      }
-    }
-  }
-  if (_0x111a86.length) {
-    return _0x111a86[Math.floor(Math.random() * _0x111a86.length)];
-  }
-  return null;
-}
-async function fetchApiQuote(_0x42600a) {
-  const _0x3a54fa = _0x42600a ? "https://zenquotes.io/api/quotes/" + encodeURIComponent(_0x42600a) : "https://zenquotes.io/api/random";
-  const _0x43a554 = await fetch(_0x3a54fa, {
-    headers: {
-      "User-Agent": "TOOSII-XD-Bot/1.0"
+const { getBotName } = require('../../lib/botname.js');
+
+const quotes = [
+    "🔥 Greatness begins when you stop waiting for permission to succeed.",
+    "💯 Your background may explain your beginning, but it doesn't decide your ending.",
+    "🎯 Move in silence, work with purpose, and let your results speak.",
+    "💭 Not every delay is a denial. Sometimes life is preparing you for more.",
+    "🚀 Small steps every day can take you to places you once only dreamed of.",
+    "🖤 Never let a temporary struggle make you doubt your permanent potential.",
+    "💪 The strongest people are often fighting battles nobody knows about.",
+    "🌍 You don't need everybody to believe in you. You need to believe in yourself.",
+    "💎 Protect your peace, respect your journey, and stay true to your purpose.",
+    "🙏 Pray like everything depends on God, and work like your dreams depend on you.",
+    "⚡ Don't compete with another person's timeline. Build your own story.",
+    "🛤️ Sometimes walking alone is better than following people going nowhere.",
+    "💰 Chase your purpose first; build something valuable, and let the rewards follow.",
+    "🧠 A focused mind can turn an ordinary opportunity into an extraordinary future.",
+    "🌱 Never be ashamed of starting small. Every big tree was once a seed.",
+    "👑 Real confidence doesn't need an audience.",
+    "🔥 Let your pain teach you, your mistakes guide you, and your dreams push you.",
+    "🕊️ Peace is valuable. Stop trading it for things that don't matter.",
+    "💯 You may not be where you want to be, but be proud that you haven't given up.",
+    "🌟 Your future needs your discipline more than your excuses.",
+    "🙏 When nobody understands your journey, remember why you started.",
+    "💪 Don't let one bad chapter convince you that your whole story is finished.",
+    "🎯 Focus on becoming better, not on proving yourself to everybody.",
+    "💎 Stay humble when things are good and stay hopeful when things are hard.",
+    "🚶 Every successful journey begins with the courage to take the first step.",
+    "🖤 Some lessons hurt, but they teach you what comfort never could.",
+    "🌅 Every new day is another chance to become the person you promised yourself you'd be.",
+    "⚡ Your consistency will take you further than motivation ever could.",
+    "👑 Be the person your younger self needed and your future self will thank.",
+    "🔥 The dream is free, but the discipline to achieve it comes at a price.",
+    "🌍 Don't measure your progress by applause. Some of the biggest victories happen quietly.",
+    "🙏 Keep God in your plans, gratitude in your heart, and hard work in your routine.",
+    "💭 Sometimes the right path feels lonely because not everybody is meant to walk it with you.",
+    "💪 You survived days you thought you couldn't. Give yourself credit for that.",
+    "🎵 Turn your struggles into lessons and your experiences into something meaningful.",
+    "🚀 Your opportunity may come unexpectedly, so prepare before it arrives.",
+    "💯 Never sacrifice your future just to impress people who won't build it with you.",
+    "🌱 Growth begins when you accept that you still have something to learn.",
+    "🖤 Be kind, but don't let kindness make you forget your boundaries.",
+    "🔥 One day, the work you're doing in private may become the story that inspires others."
+];
+
+const borders = [
+    {
+        top: '┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓',
+        bottom: '┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛'
     },
-    signal: AbortSignal.timeout(10000)
-  });
-  if (!_0x43a554.ok) {
-    throw new Error("API " + _0x43a554.status);
-  }
-  const _0x36a594 = await _0x43a554.json();
-  if (!Array.isArray(_0x36a594) || !_0x36a594.length || !_0x36a594[0]?.q) {
-    throw new Error("No quotes");
-  }
-  const _0x4ca991 = _0x36a594[Math.floor(Math.random() * _0x36a594.length)];
-  return {
-    q: _0x4ca991.q,
-    a: _0x4ca991.a || "Unknown"
-  };
-}
-function totalQuotes() {
-  return Object.values(LOCAL).reduce((_0x1a32fa, _0x1cb082) => _0x1a32fa + _0x1cb082.length, 0);
-}
+    {
+        top: '╭──────────────────────────╮',
+        bottom: '╰──────────────────────────╯'
+    },
+    {
+        top: '═══════ ✦ ✧ ✦ ═══════',
+        bottom: '═══════ ✦ ✧ ✦ ═══════'
+    }
+];
+
 module.exports = {
-  name: "quote",
-  aliases: ["randomquote", "inspire", "motivation", "qod"],
-  description: "Get an inspirational quote (300+ local quotes)",
-  category: "utility",
-  async execute(_0x22334c, _0x11781d, _0x1fdb88, _0x496520, _0x2d187a) {
-    const _0x3e04d9 = _0x11781d.key.remoteJid;
-    const _0x143507 = getBotName();
-    const _0x53edf = _0x1fdb88.join(" ").trim().toLowerCase() || null;
-    const _0x17c758 = "╔═|〔  💬 QUOTE 〕";
-    const _0x1acc48 = "╚═|〔 " + _0x143507 + " 〕";
-    if (_0x53edf === "list" || _0x53edf === "categories") {
-      const _0x1be58d = ALL_CATS.map((_0x21936d, _0xcc41a7) => "║  " + (_0xcc41a7 + 1) + ". " + _0x21936d + " (" + LOCAL[_0x21936d].length + ")").join("\n");
-      return _0x22334c.sendMessage(_0x3e04d9, {
-        text: [_0x17c758, "║", "║ ▸ *Total* : " + totalQuotes() + " quotes", "║ ▸ *Categories* :", _0x1be58d, "║", "║  Usage: " + _0x496520 + "quote <category>", "║", _0x1acc48].join("\n")
-      }, {
-        quoted: _0x11781d
-      });
-    }
-    try {
-      await _0x22334c.sendMessage(_0x3e04d9, {
-        react: {
-          text: "💬",
-          key: _0x11781d.key
-        }
-      });
-      let _0x5d3e1f = pickLocal(_0x53edf);
-      let _0xcb1e11 = "local";
-      if (!_0x5d3e1f) {
+    name: 'quote',
+    aliases: ['dailyquote', 'motivation', 'inspire'],
+    description: 'Get an original motivational quote',
+    category: 'fun',
+    ownerOnly: false,
+
+    async execute(sock, msg) {
+        const jid = msg.key.remoteJid;
+
         try {
-          const _0x462c7c = await fetchApiQuote(_0x53edf);
-          _0x5d3e1f = {
-            q: _0x462c7c.q,
-            a: _0x462c7c.a
-          };
-          _0xcb1e11 = "api";
-        } catch {
-          _0x5d3e1f = pickLocal(null);
-          _0xcb1e11 = "local";
+            const quote = quotes[
+                Math.floor(Math.random() * quotes.length)
+            ];
+
+            const border = borders[
+                Math.floor(Math.random() * borders.length)
+            ];
+
+            await sock.sendMessage(
+                jid,
+                {
+                    text:
+                        `✨ *A WORD TO REMEMBER*\n\n` +
+                        `${border.top}\n` +
+                        `${quote}\n` +
+                        `${border.bottom}\n\n` +
+                        `_Take the lesson. Trust the process._\n\n` +
+                        `_Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ_`
+                },
+                { quoted: msg }
+            );
+        } catch (error) {
+            console.error('[QUOTE] Error:', error);
+
+            await sock.sendMessage(
+                jid,
+                {
+                    text:
+                        `❌ *QUOTE ERROR*\n\n` +
+                        `I couldn't generate a quote right now. Please try again later.\n\n` +
+                        `_Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ_`
+                },
+                { quoted: msg }
+            );
         }
-      }
-      const _0x18f62f = [_0x17c758, "║", "║  _\"" + _0x5d3e1f.q + "\"_", "║", "║ ▸ *Author*  : " + _0x5d3e1f.a];
-      if (_0x53edf && _0x53edf !== "list") {
-        _0x18f62f.push("║ ▸ *Topic*   : " + _0x53edf);
-      }
-      _0x18f62f.push("║ ▸ *Library* : " + totalQuotes() + " quotes");
-      _0x18f62f.push("║", _0x1acc48);
-      await _0x22334c.sendMessage(_0x3e04d9, {
-        text: _0x18f62f.join("\n")
-      }, {
-        quoted: _0x11781d
-      });
-      await _0x22334c.sendMessage(_0x3e04d9, {
-        react: {
-          text: "✅",
-          key: _0x11781d.key
-        }
-      });
-    } catch (_0x37c395) {
-      await _0x22334c.sendMessage(_0x3e04d9, {
-        react: {
-          text: "❌",
-          key: _0x11781d.key
-        }
-      });
-      await _0x22334c.sendMessage(_0x3e04d9, {
-        text: [_0x17c758, "║", "║ ▸ *Status* : ❌ Failed", "║ ▸ *Reason* : " + _0x37c395.message, "║", _0x1acc48].join("\n")
-      }, {
-        quoted: _0x11781d
-      });
     }
-  }
 };
