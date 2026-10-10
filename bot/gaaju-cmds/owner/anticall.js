@@ -2,621 +2,415 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getFooter } = require('../../lib/menuHelper.js');
 
-const antiCallFile = path.join(process.cwd(), 'anticall.json');
+const DATA_DIR = path.join(process.cwd(), 'data');
+const CONFIG_PATH = path.join(DATA_DIR, 'anticall.json');
 
-const DEFAULT_MESSAGE =
-    "Sorry, I don't accept calls. Please message me instead.";
+const DEFAULT_CONFIG = {
+    mode: 'off',
+    message: "My owner is currently unavailable or busy. Please send a message instead."
+};
 
-let antiCallListenerAttached = false;
-let activeSocket = null;
+function ensureConfig() {
+    try {
+        if (!fs.existsSync(DATA_DIR)) {
+            fs.mkdirSync(DATA_DIR, { recursive: true });
+        }
 
-const handledCalls = new Map();
-const sentMessages = new Map();
-
-let lastAutoClearTime = Date.now();
-let cacheInterval = null;
-
-// ==================== STORAGE ====================
-
-function ensureAntiCallFile() {
-    if (!fs.existsSync(antiCallFile)) {
-        saveAntiCall({
-            settings: {},
-            callLogs: [],
-            blockedNumbers: [],
-            lastCacheClear: new Date().toISOString()
-        });
+        if (!fs.existsSync(CONFIG_PATH)) {
+            fs.writeFileSync(
+                CONFIG_PATH,
+                JSON.stringify(DEFAULT_CONFIG, null, 2)
+            );
+        }
+    } catch (error) {
+        console.error('[ANTICALL] Config initialization failed:', error);
     }
 }
 
-function loadAntiCall() {
-    ensureAntiCallFile();
+function getConfig() {
+    ensureConfig();
 
     try {
-        const data = JSON.parse(
-            fs.readFileSync(antiCallFile, 'utf8')
-        );
-
         return {
-            settings: data.settings || {},
-            callLogs: Array.isArray(data.callLogs)
-                ? data.callLogs
-                : [],
-            blockedNumbers: Array.isArray(data.blockedNumbers)
-                ? data.blockedNumbers
-                : [],
-            lastCacheClear:
-                data.lastCacheClear ||
-                new Date().toISOString()
+            ...DEFAULT_CONFIG,
+            ...JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
         };
     } catch (error) {
-        console.error('[ANTICALL] Failed to load settings:', error);
-
-        return {
-            settings: {},
-            callLogs: [],
-            blockedNumbers: [],
-            lastCacheClear: new Date().toISOString()
-        };
+        console.error('[ANTICALL] Config read failed:', error);
+        return { ...DEFAULT_CONFIG };
     }
 }
 
-function saveAntiCall(data) {
+function saveConfig(config) {
+    ensureConfig();
+
     try {
         fs.writeFileSync(
-            antiCallFile,
-            JSON.stringify(data, null, 2)
+            CONFIG_PATH,
+            JSON.stringify(
+                { ...DEFAULT_CONFIG, ...config },
+                null,
+                2
+            )
         );
 
         return true;
     } catch (error) {
-        console.error('[ANTICALL] Failed to save settings:', error);
+        console.error('[ANTICALL] Config save failed:', error);
         return false;
     }
 }
 
-// ==================== JID HELPERS ====================
-
-function cleanJid(jid) {
-    if (!jid || typeof jid !== 'string') {
-        return '';
-    }
-
-    return jid.split(':')[0];
+function getCaller(call) {
+    return call?.from || call?.peerJid || call?.callerPn || null;
 }
 
-function getBotJid(sock) {
-    return cleanJid(sock.user?.id);
+function getCallId(call) {
+    return call?.id || call?.callId || null;
 }
 
-function getCallerJid(call) {
-    const from = call?.from || call?.peerJid;
-
-    if (!from) {
-        return '';
-    }
-
-    return cleanJid(from);
+function getCallStatus(call) {
+    return String(call?.status || '').toLowerCase();
 }
 
-// ==================== CACHE CLEANUP ====================
-
-function startCacheCleanup() {
-    if (cacheInterval) {
-        return;
-    }
-
-    cacheInterval = setInterval(() => {
-        const now = Date.now();
-        const fiveMinutes = 5 * 60 * 1000;
-
-        for (const [id, timestamp] of handledCalls.entries()) {
-            if (now - timestamp > fiveMinutes) {
-                handledCalls.delete(id);
-            }
-        }
-
-        for (const [id, timestamp] of sentMessages.entries()) {
-            if (now - timestamp > fiveMinutes) {
-                sentMessages.delete(id);
-            }
-        }
-
-        const twentyFourHours = 24 * 60 * 60 * 1000;
-
-        if (now - lastAutoClearTime >= twentyFourHours) {
-            handledCalls.clear();
-            sentMessages.clear();
-
-            lastAutoClearTime = now;
-
-            const data = loadAntiCall();
-            data.lastCacheClear = new Date().toISOString();
-            saveAntiCall(data);
-
-            console.log('[ANTICALL] Daily cache cleared.');
-        }
-    }, 60000);
-
-    if (typeof cacheInterval.unref === 'function') {
-        cacheInterval.unref();
-    }
+function isIncomingOffer(call) {
+    return getCallStatus(call) === 'offer';
 }
 
-startCacheCleanup();
+function normalizeNumber(jid) {
+    if (!jid) return null;
 
-// ==================== CALL LISTENER ====================
+    return jid
+        .split('@')[0]
+        .split(':')[0];
+}
 
-function setupAntiCallListener(sock) {
-    if (!sock?.ev || typeof sock.ev.on !== 'function') {
-        console.error('[ANTICALL] Invalid socket; listener not attached.');
+const processedCalls = new Map();
+const initializedSockets = new WeakSet();
+
+/**
+ * Registers the incoming-call listener.
+ *
+ * This function must be called with the active WhatsApp socket.
+ */
+function initAntiCall(sock) {
+    if (!sock || !sock.ev || typeof sock.ev.on !== 'function') {
+        console.error('[ANTICALL] Invalid WhatsApp socket.');
         return false;
     }
 
-    // Prevent duplicate listeners on the same socket.
-    if (activeSocket === sock && antiCallListenerAttached) {
+    if (initializedSockets.has(sock)) {
         return true;
     }
 
-    activeSocket = sock;
-    antiCallListenerAttached = true;
+    initializedSockets.add(sock);
 
-    console.log('[ANTICALL] Attaching call listener...');
+    console.log('[ANTICALL] Incoming-call listener registered.');
 
-    sock.ev.on('call', async (callArray) => {
-        const calls = Array.isArray(callArray)
-            ? callArray
-            : [callArray];
+    sock.ev.on('call', async (events) => {
+        try {
+            const calls = Array.isArray(events) ? events : [events];
 
-        for (const call of calls) {
-            try {
-                if (!call) continue;
+            for (const call of calls) {
+                if (!call || !isIncomingOffer(call)) continue;
 
-                console.log(
-                    '[ANTICALL] Call event:',
-                    call.status,
-                    call.from || call.peerJid || 'unknown caller'
-                );
+                const config = getConfig();
 
-                const status = String(call.status || '').toLowerCase();
+                if (config.mode === 'off') continue;
 
-                // Only process incoming call offers.
-                if (status !== 'offer') {
-                    continue;
-                }
+                const callId = getCallId(call);
+                const caller = getCaller(call);
 
-                const callId = call.id;
-                const fromJid = getCallerJid(call);
-                const botJid = getBotJid(sock);
-
-                if (!callId || !fromJid || !botJid) {
+                if (!callId || !caller) {
                     console.warn(
-                        '[ANTICALL] Missing call ID, caller JID, or bot JID.'
+                        '[ANTICALL] Incoming call is missing its ID or caller JID.'
                     );
                     continue;
                 }
 
-                if (handledCalls.has(callId)) {
-                    continue;
-                }
+                if (processedCalls.has(callId)) continue;
 
-                const data = loadAntiCall();
-                const settings = data.settings || {};
-                const userSettings = settings[botJid];
+                processedCalls.set(callId, Date.now());
 
-                if (!userSettings?.enabled) {
-                    continue;
-                }
+                console.log(
+                    `[ANTICALL] Incoming call from ${caller}; mode=${config.mode}`
+                );
 
-                handledCalls.set(callId, Date.now());
-
-                let actionTaken = 'decline';
-
+                // Reject the call first.
                 try {
-                    if (typeof sock.rejectCall !== 'function') {
-                        throw new Error(
-                            'sock.rejectCall is unavailable in this Baileys version.'
+                    if (typeof sock.rejectCall === 'function') {
+                        await sock.rejectCall(callId, caller);
+                    } else {
+                        console.error(
+                            '[ANTICALL] This socket has no rejectCall method. ' +
+                            'Check the installed Baileys version.'
+                        );
+                        continue;
+                    }
+                } catch (error) {
+                    console.error(
+                        '[ANTICALL] Failed to reject call:',
+                        error.message
+                    );
+
+                    // Do not block or message someone if rejection failed.
+                    continue;
+                }
+
+                console.log('[ANTICALL] Call rejected.');
+
+                // DECLINE ONLY
+                if (config.mode === 'decline') {
+                    continue;
+                }
+
+                // DECLINE + BLOCK
+                if (config.mode === 'declineblock') {
+                    try {
+                        if (typeof sock.updateBlockStatus !== 'function') {
+                            console.error(
+                                '[ANTICALL] updateBlockStatus is unavailable.'
+                            );
+                            continue;
+                        }
+
+                        await sock.updateBlockStatus(caller, 'block');
+
+                        console.log(`[ANTICALL] Blocked ${caller}.`);
+                    } catch (error) {
+                        console.error(
+                            '[ANTICALL] Failed to block caller:',
+                            error.message
                         );
                     }
 
-                    await sock.rejectCall(callId, fromJid);
+                    continue;
+                }
 
-                    console.log(
-                        `[ANTICALL] Declined call from ${fromJid}`
-                    );
-                } catch (error) {
-                    handledCalls.delete(callId);
+                // BLOCK ONLY
+                // WhatsApp calls are rejected first, then the caller is blocked.
+                if (config.mode === 'block') {
+                    try {
+                        if (typeof sock.updateBlockStatus !== 'function') {
+                            console.error(
+                                '[ANTICALL] updateBlockStatus is unavailable.'
+                            );
+                            continue;
+                        }
 
-                    console.error(
-                        '[ANTICALL] Call rejection failed:',
-                        error
-                    );
+                        await sock.updateBlockStatus(caller, 'block');
+
+                        console.log(`[ANTICALL] Blocked ${caller}.`);
+                    } catch (error) {
+                        console.error(
+                            '[ANTICALL] Failed to block caller:',
+                            error.message
+                        );
+                    }
 
                     continue;
                 }
 
-                // Record the call.
-                const log = {
-                    callId,
-                    from: fromJid,
-                    action: actionTaken,
-                    reason: 'anti_call_enabled',
-                    timestamp: new Date().toISOString(),
-                    messageSent: false,
-                    status,
-                    mode: userSettings.mode || 'decline'
-                };
+                // DECLINE + TEXT
+                if (config.mode === 'declinetext') {
+                    try {
+                        const number = normalizeNumber(caller);
 
-                data.callLogs.push(log);
+                        const message = String(
+                            config.message ||
+                            DEFAULT_CONFIG.message
+                        ).replace(/@\{caller\}/gi, `@${number}`);
 
-                // Keep the latest 1000 logs.
-                if (data.callLogs.length > 1000) {
-                    data.callLogs.splice(
-                        0,
-                        data.callLogs.length - 1000
-                    );
-                }
+                        const options = number
+                            ? { mentions: [caller] }
+                            : {};
 
-                saveAntiCall(data);
-
-                // Optional auto-reply.
-                if (
-                    userSettings.autoMessage &&
-                    userSettings.message &&
-                    !sentMessages.has(callId)
-                ) {
-                    // Mark before scheduling to prevent duplicate replies.
-                    sentMessages.set(callId, Date.now());
-
-                    setTimeout(async () => {
-                        try {
-                            await sock.sendMessage(fromJid, {
-                                text: userSettings.message
-                            });
-
-                            const updatedData = loadAntiCall();
-                            const matchingLog = updatedData.callLogs.find(
-                                entry => entry.callId === callId
-                            );
-
-                            if (matchingLog) {
-                                matchingLog.messageSent = true;
-                                saveAntiCall(updatedData);
+                        await sock.sendMessage(
+                            caller,
+                            {
+                                text: message,
+                                ...options
                             }
+                        );
 
-                            console.log(
-                                `[ANTICALL] Auto-reply sent to ${fromJid}`
-                            );
-                        } catch (error) {
-                            sentMessages.delete(callId);
-
-                            console.error(
-                                '[ANTICALL] Auto-reply failed:',
-                                error
-                            );
-                        }
-                    }, 1000);
+                        console.log(
+                            `[ANTICALL] Automatic message sent to ${caller}.`
+                        );
+                    } catch (error) {
+                        console.error(
+                            '[ANTICALL] Failed to send automatic message:',
+                            error.message
+                        );
+                    }
                 }
-            } catch (error) {
-                console.error(
-                    '[ANTICALL] Error processing call:',
-                    error
-                );
             }
+        } catch (error) {
+            console.error('[ANTICALL] Call listener error:', error);
         }
     });
 
-    console.log('[ANTICALL] Call listener attached.');
     return true;
 }
 
-// Optional startup hook. Your main bot file must call this on connection.
-globalThis._anticallInit = (sock) => {
-    return setupAntiCallListener(sock);
-};
+// Clean up processed call IDs periodically.
+const cleanupTimer = setInterval(() => {
+    const expiry = Date.now() - 60_000;
 
-// ==================== COMMAND ====================
+    for (const [id, timestamp] of processedCalls.entries()) {
+        if (timestamp < expiry) {
+            processedCalls.delete(id);
+        }
+    }
+}, 30_000);
+
+if (typeof cleanupTimer.unref === 'function') {
+    cleanupTimer.unref();
+}
 
 module.exports = {
     name: 'anticall',
-    aliases: ['callblock', 'blockcall'],
-    description: 'Manage automatic call handling and blocking',
+
+    aliases: ['ac'],
+
+    description: 'Manage incoming call protection',
+
     category: 'owner',
-    ownerOnly: true,
 
-    async execute(sock, msg, args, PREFIX, extra) {
+    /**
+     * The command registers the listener as a fallback.
+     * Startup registration is still required for protection
+     * immediately after a bot restart.
+     */
+    async execute(sock, msg, args, prefix, ctx) {
         const chatId = msg.key.remoteJid;
-        const botJid = getBotJid(sock);
-        const prefix = PREFIX || '.';
+        const mode = String(args?.[0] || '').toLowerCase();
+        const current = getConfig();
 
-        const reply = (text) => {
+        // Register listener when this command is used.
+        initAntiCall(sock);
+
+        if (!mode || mode === 'status') {
+            const currentConfig = getConfig();
+
             return sock.sendMessage(
                 chatId,
-                { text },
+                {
+                    text:
+`┏━━❐◁ *ANTICALL SETTINGS*
+┃
+┃ *Status:* ${currentConfig.mode === 'off' ? 'DISABLED' : 'ENABLED'}
+┃ *Mode:* ${currentConfig.mode.toUpperCase()}
+┃
+┃➽ ${prefix}anticall decline
+┃➽ ${prefix}anticall block
+┃➽ ${prefix}anticall declineblock
+┃➽ ${prefix}anticall declinetext
+┃➽ ${prefix}anticall message <text>
+┃➽ ${prefix}anticall off
+┃➽ ${prefix}anticall status
+┗━━❐◁`
+                },
                 { quoted: msg }
             );
-        };
-
-        if (!botJid) {
-            return reply(
-                '❌ Unable to identify the bot account. Please reconnect the bot.'
-            );
         }
 
-        // Ensure the listener is attached when the command runs.
-        setupAntiCallListener(sock);
+        const allowedModes = [
+            'decline',
+            'block',
+            'declineblock',
+            'declinetext',
+            'off'
+        ];
 
-        const data = loadAntiCall();
-        const settings = data.settings;
-        const blockedNumbers = data.blockedNumbers;
-        const callLogs = data.callLogs;
-
-        const subCommand = String(args[0] || '').toLowerCase();
-        const action = String(args[1] || '').toLowerCase();
-
-        // ==================== STATUS ====================
-
-        if (subCommand === 'status') {
-            const userSettings = settings[botJid] || {
-                enabled: false,
-                mode: 'decline',
-                autoMessage: false,
-                message: DEFAULT_MESSAGE
-            };
-
-            const lastClear = Date.parse(data.lastCacheClear);
-            const nextClear = (
-                Number.isFinite(lastClear) ? lastClear : Date.now()
-            ) + 24 * 60 * 60 * 1000;
-
-            const remaining = Math.max(0, nextClear - Date.now());
-            const hours = Math.floor(remaining / 3600000);
-            const minutes = Math.floor(
-                (remaining % 3600000) / 60000
-            );
-
-            let text = `╭─⌈ 📞 *ANTICALL STATUS* ⌋\n`;
-            text += `│\n`;
-            text += `├─⊷ *Status:* ${userSettings.enabled ? '🟢 ON' : '🔴 OFF'}\n`;
-            text += `├─⊷ *Mode:* ${(userSettings.mode || 'decline').toUpperCase()}\n`;
-            text += `├─⊷ *Auto-reply:* ${userSettings.autoMessage ? '✅ ON' : '❌ OFF'}\n`;
-
-            if (userSettings.autoMessage && userSettings.message) {
-                text += `├─⊷ *Message:* ${userSettings.message.substring(0, 40)}${userSettings.message.length > 40 ? '…' : ''}\n`;
-            }
-
-            text += `│\n`;
-            text += `├─⊷ *Calls handled:* ${callLogs.length}\n`;
-            text += `├─⊷ *Blocked list entries:* ${blockedNumbers.length}\n`;
-            text += `├─⊷ *Tracked calls:* ${handledCalls.size}\n`;
-            text += `├─⊷ *Next cache clear:* ${hours}h ${minutes}m\n`;
-
-            if (callLogs.length) {
-                text += `│\n├─⊷ *Recent calls:*\n`;
-
-                callLogs.slice(-3).reverse().forEach((log, index) => {
-                    const time = new Date(log.timestamp).toLocaleTimeString();
-
-                    text += `│  ${index + 1}. ${log.from?.split('@')[0] || 'Unknown'} — ${log.action} (${time})\n`;
-                });
-            }
-
-            text += `╰⊷ *Listener:* ${antiCallListenerAttached ? '✅ Active' : '❌ Inactive'}`;
-
-            return reply(text);
-        }
-
-        // ==================== ENABLE ====================
-
-        if (subCommand === 'enable') {
-            if (action === 'block') {
-                return reply(
-                    `╭─⌈ 📞 *ANTICALL* ⌋\n│\n` +
-                    `├─⊷ Block mode is not enabled in this version.\n` +
-                    `├─⊷ Use: *${prefix}anticall enable decline*\n` +
-                    `╰⊷ Incoming calls will be declined.`
-                );
-            }
-
-            if (action !== 'decline') {
-                return reply(
-                    `╭─⌈ 📞 *ANTICALL SETUP* ⌋\n│\n` +
-                    `├─⊷ *${prefix}anticall enable decline*\n` +
-                    `│  └⊷ Automatically decline calls\n` +
-                    `╰⊷ Choose the decline mode.`
-                );
-            }
-
-            settings[botJid] = {
-                enabled: true,
-                mode: 'decline',
-                autoMessage: settings[botJid]?.autoMessage || false,
-                message: settings[botJid]?.message || DEFAULT_MESSAGE,
-                lastUpdated: new Date().toISOString()
-            };
-
-            data.settings = settings;
-            saveAntiCall(data);
-
-            return reply(
-                `╭─⌈ 📞 *ANTICALL* ⌋\n│\n` +
-                `├─⊷ *Status:* 🟢 ON\n` +
-                `├─⊷ *Mode:* DECLINE\n` +
-                `╰⊷ Incoming calls will be declined while the listener is active.`
-            );
-        }
-
-        // ==================== DISABLE ====================
-
-        if (subCommand === 'disable') {
-            if (settings[botJid]?.enabled) {
-                settings[botJid].enabled = false;
-                settings[botJid].lastUpdated = new Date().toISOString();
-
-                data.settings = settings;
-                saveAntiCall(data);
-
-                return reply(
-                    `╭─⌈ 📞 *ANTICALL* ⌋\n│\n` +
-                    `├─⊷ *Status:* 🔴 OFF\n` +
-                    `╰⊷ Incoming calls will no longer be automatically declined.`
-                );
-            }
-
-            return reply(
-                `╭─⌈ 📞 *ANTICALL* ⌋\n│\n` +
-                `╰⊷ Anti-call is already disabled.`
-            );
-        }
-
-        // ==================== AUTO-REPLY ====================
-
-        if (subCommand === 'message') {
-            const messageText = args.slice(1).join(' ').trim();
-
-            if (!messageText) {
-                return reply(
-                    `╭─⌈ 📞 *ANTICALL* ⌋\n│\n` +
-                    `├─⊷ *${prefix}anticall message [text]*\n` +
-                    `│  └⊷ Set your auto-reply\n` +
-                    `╰⊷ Example: ${prefix}anticall message I can't take calls`
-                );
-            }
-
-            if (!settings[botJid]) {
-                settings[botJid] = {
-                    enabled: false,
-                    mode: 'decline',
-                    autoMessage: true,
-                    message: messageText,
-                    lastUpdated: new Date().toISOString()
-                };
-            } else {
-                settings[botJid].autoMessage = true;
-                settings[botJid].message = messageText;
-                settings[botJid].lastUpdated = new Date().toISOString();
-            }
-
-            data.settings = settings;
-            saveAntiCall(data);
-
-            return reply(
-                `╭─⌈ 📞 *ANTICALL* ⌋\n│\n` +
-                `├─⊷ *Auto-reply:* ✅ ON\n` +
-                `├─⊷ *Message:* ${messageText.substring(0, 60)}${messageText.length > 60 ? '…' : ''}\n` +
-                `╰⊷ The message will be sent after a call is declined.`
-            );
-        }
-
-        // ==================== DISABLE AUTO-REPLY ====================
-
-        if (subCommand === 'nomessage') {
-            if (!settings[botJid]) {
-                settings[botJid] = {
-                    enabled: false,
-                    mode: 'decline',
-                    autoMessage: false,
-                    message: DEFAULT_MESSAGE,
-                    lastUpdated: new Date().toISOString()
-                };
-            } else {
-                settings[botJid].autoMessage = false;
-                settings[botJid].lastUpdated = new Date().toISOString();
-            }
-
-            data.settings = settings;
-            saveAntiCall(data);
-
-            return reply(
-                `╭─⌈ 📞 *ANTICALL* ⌋\n│\n` +
-                `├─⊷ *Auto-reply:* ❌ OFF\n` +
-                `╰⊷ No auto-reply will be sent after calls.`
-            );
-        }
-
-        // ==================== CLEAR CACHE ====================
-
-        if (subCommand === 'clearhandled') {
-            handledCalls.clear();
-            sentMessages.clear();
-
-            lastAutoClearTime = Date.now();
-            data.lastCacheClear = new Date().toISOString();
-
-            saveAntiCall(data);
-
-            return reply(
-                `╭─⌈ 📞 *ANTICALL* ⌋\n│\n` +
-                `├─⊷ *Cache cleared:* ✅\n` +
-                `╰⊷ Next automatic cleanup in 24 hours.`
-            );
-        }
-
-        // ==================== CALL LOGS ====================
-
-        if (subCommand === 'logs') {
-            const parsedLimit = parseInt(args[1], 10);
-            const limit = Number.isFinite(parsedLimit)
-                ? Math.min(100, Math.max(1, parsedLimit))
-                : 10;
-
-            const recent = callLogs.slice(-limit).reverse();
-
-            if (!recent.length) {
-                return reply(
-                    `╭─⌈ 📞 *CALL LOGS* ⌋\n│\n` +
-                    `╰⊷ No calls have been handled yet.`
-                );
-            }
-
-            let text = `╭─⌈ 📞 *CALL LOGS* ⌋\n│\n`;
-
-            recent.forEach((log, index) => {
-                const time = new Date(log.timestamp).toLocaleString();
-
-                text += `├─⊷ ${index + 1}. ${log.from?.split('@')[0] || 'Unknown'}\n`;
-                text += `│  └⊷ ${(log.action || 'unknown').toUpperCase()} • ${time}\n`;
+        if (allowedModes.includes(mode)) {
+            const saved = saveConfig({
+                ...current,
+                mode
             });
 
-            text += `╰⊷ Total: ${callLogs.length} call(s)`;
+            if (!saved) {
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text: '❌ Failed to save AntiCall settings. Check the bot console.'
+                    },
+                    { quoted: msg }
+                );
+            }
 
-            return reply(text);
+            const descriptions = {
+                decline: 'Incoming calls will be rejected.',
+                block: 'Incoming calls will be rejected and callers blocked.',
+                declineblock: 'Incoming calls will be rejected and callers blocked.',
+                declinetext: 'Incoming calls will be rejected and an automatic message sent.',
+                off: 'Automatic call handling is disabled.'
+            };
+
+            return sock.sendMessage(
+                chatId,
+                {
+                    text:
+`┏━━❐◁ *ANTICALL UPDATED*
+┃
+┃ *Mode:* ${mode.toUpperCase()}
+┃
+┃ ${descriptions[mode]}
+┗━━❐◁`
+                },
+                { quoted: msg }
+            );
         }
 
-        // ==================== DEBUG ====================
+        if (mode === 'message') {
+            const text = (args || []).slice(1).join(' ').trim();
 
-        if (subCommand === 'debug') {
-            const userSettings = settings[botJid];
+            if (!text) {
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text:
+`❌ Provide an automatic message.
 
-            let text = `╭─⌈ 🔍 *ANTICALL DEBUG* ⌋\n│\n`;
-            text += `├─⊷ *Bot JID:* ${botJid}\n`;
-            text += `├─⊷ *Listener attached:* ${antiCallListenerAttached}\n`;
-            text += `├─⊷ *Tracked calls:* ${handledCalls.size}\n`;
-            text += `├─⊷ *Tracked replies:* ${sentMessages.size}\n`;
-            text += `├─⊷ *Enabled:* ${Boolean(userSettings?.enabled)}\n`;
-            text += `├─⊷ *Mode:* ${userSettings?.mode || 'not set'}\n`;
-            text += `├─⊷ *Auto-reply:* ${Boolean(userSettings?.autoMessage)}\n`;
-            text += `├─⊷ *Call logs:* ${callLogs.length}\n`;
-            text += `╰⊷ *Blocked list:* ${blockedNumbers.length}`;
+Example:
+${prefix}anticall message Hello, I'm busy. Please text me.`
+                    },
+                    { quoted: msg }
+                );
+            }
 
-            return reply(text);
+            const saved = saveConfig({
+                ...current,
+                message: text
+            });
+
+            return sock.sendMessage(
+                chatId,
+                {
+                    text: saved
+                        ? '✅ AntiCall automatic message updated.'
+                        : '❌ Could not save the automatic message.'
+                },
+                { quoted: msg }
+            );
         }
 
-        // ==================== HELP ====================
+        return sock.sendMessage(
+            chatId,
+            {
+                text:
+`❌ Unknown AntiCall option.
 
-        return reply(
-            `╭─⌈ 📞 *ANTICALL* ⌋\n│\n` +
-            `├─⊷ *${prefix}anticall enable decline*\n│  └⊷ Enable automatic call rejection\n` +
-            `├─⊷ *${prefix}anticall disable*\n│  └⊷ Disable anti-call\n` +
-            `├─⊷ *${prefix}anticall status*\n│  └⊷ View settings and statistics\n` +
-            `├─⊷ *${prefix}anticall message [text]*\n│  └⊷ Set auto-reply\n` +
-            `├─⊷ *${prefix}anticall nomessage*\n│  └⊷ Disable auto-reply\n` +
-            `├─⊷ *${prefix}anticall logs [number]*\n│  └⊷ View recent call logs\n` +
-            `├─⊷ *${prefix}anticall debug*\n│  └⊷ Inspect listener/settings\n` +
-            `├─⊷ *${prefix}anticall clearhandled*\n│  └⊷ Clear tracking cache\n` +
-            `╰⊷ ${getFooter(msg.key.participant || msg.key.remoteJid)}`
+Use:
+${prefix}anticall
+${prefix}anticall decline
+${prefix}anticall block
+${prefix}anticall declineblock
+${prefix}anticall declinetext
+${prefix}anticall message <text>
+${prefix}anticall off`
+            },
+            { quoted: msg }
         );
     }
 };
