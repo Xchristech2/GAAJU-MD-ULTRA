@@ -19,69 +19,125 @@ module.exports = {
         const chatId = msg.key.remoteJid;
 
         try {
-            const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+            const contextInfo =
+                msg.message?.extendedTextMessage?.contextInfo ||
+                msg.message?.imageMessage?.contextInfo ||
+                msg.message?.videoMessage?.contextInfo;
 
-            if (!quoted?.imageMessage) {
-                return await sock.sendMessage(
+            const quoted = contextInfo?.quotedMessage;
+
+            const quotedImage =
+                quoted?.imageMessage ||
+                quoted?.viewOnceMessage?.message?.imageMessage ||
+                quoted?.viewOnceMessageV2?.message?.imageMessage ||
+                quoted?.viewOnceMessageV2Extension?.message?.imageMessage;
+
+            if (!quotedImage) {
+                return sock.sendMessage(
                     chatId,
                     {
                         text:
-`╔══〔 SET MENU IMAGE 〕
-║
-║ ❌ Reply to a photo with
-║    ${prefix}setmenuimage
-║
-╚══════════════`
+                            `❌ *SET MENU IMAGE*\n\n` +
+                            `Reply directly to a photo with:\n` +
+                            `${prefix}setmenuimage\n\n` +
+                            `The photo must be an image, not a video.`
                     },
                     { quoted: msg }
                 );
             }
 
             await sock.sendMessage(chatId, {
-                react: {
-                    text: '⏳',
-                    key: msg.key
-                }
+                react: { text: '⏳', key: msg.key }
             });
 
             const fakeMessage = {
-                key: msg.key,
+                key: {
+                    remoteJid: chatId,
+                    id: contextInfo.stanzaId,
+                    participant: contextInfo.participant
+                },
                 message: quoted
             };
 
             const buffer = await downloadMediaMessage(
                 fakeMessage,
                 'buffer',
-                {}
+                {},
+                {
+                    logger: console,
+                    reuploadRequest: sock.updateMediaMessage
+                        ? sock.updateMediaMessage.bind(sock)
+                        : undefined
+                }
             );
 
-            if (!buffer || !buffer.length) {
-                throw new Error('Could not download the image.');
+            if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+                throw new Error('The image could not be downloaded.');
+            }
+
+            // Detect the actual image format.
+            let extension;
+
+            if (
+                buffer.length >= 3 &&
+                buffer[0] === 0xFF &&
+                buffer[1] === 0xD8 &&
+                buffer[2] === 0xFF
+            ) {
+                extension = 'jpg';
+            } else if (
+                buffer.length >= 8 &&
+                buffer.subarray(0, 8).equals(
+                    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+                )
+            ) {
+                extension = 'png';
+            } else if (
+                buffer.toString('ascii', 0, 4) === 'RIFF' &&
+                buffer.toString('ascii', 8, 12) === 'WEBP'
+            ) {
+                extension = 'webp';
+            } else {
+                throw new Error(
+                    'Unsupported or unrecognized image format. Please try another photo.'
+                );
             }
 
             fs.mkdirSync(MENU_IMAGE_DIR, { recursive: true });
 
-            fs.writeFileSync(MENU_IMAGE_PATH, buffer);
+            // Save the file using its real extension.
+            const savedPath = path.join(
+                MENU_IMAGE_DIR,
+                `menu-image.${extension}`
+            );
+
+            fs.writeFileSync(savedPath, buffer);
+
+            // Remove older menu image variants.
+            for (const ext of ['jpg', 'jpeg', 'png', 'webp']) {
+                const oldPath = path.join(
+                    MENU_IMAGE_DIR,
+                    `menu-image.${ext}`
+                );
+
+                if (oldPath !== savedPath && fs.existsSync(oldPath)) {
+                    fs.unlinkSync(oldPath);
+                }
+            }
 
             await sock.sendMessage(chatId, {
-                react: {
-                    text: '✅',
-                    key: msg.key
-                }
+                react: { text: '✅', key: msg.key }
             });
 
             await sock.sendMessage(
                 chatId,
                 {
                     text:
-`╔══〔 SET MENU IMAGE 〕
-║
-║ ✅ Menu image updated!
-║
-║ Your replied photo is now
-║ being used by the menu.
-║
-╚══════════════`
+                        `✅ *MENU IMAGE UPDATED*\n\n` +
+                        `📁 File: menu-image.${extension}\n` +
+                        `📦 Size: ${(buffer.length / 1024).toFixed(1)} KB\n\n` +
+                        `Now run ${prefix}menu to see the updated image.\n\n` +
+                        `_Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ_`
                 },
                 { quoted: msg }
             );
@@ -92,7 +148,10 @@ module.exports = {
             await sock.sendMessage(
                 chatId,
                 {
-                    text: `❌ Failed to set menu image.\n\n${error.message}`
+                    text:
+                        `❌ *FAILED TO UPDATE MENU IMAGE*\n\n` +
+                        `${error.message}\n\n` +
+                        `Please try replying to the photo again.`
                 },
                 { quoted: msg }
             );
