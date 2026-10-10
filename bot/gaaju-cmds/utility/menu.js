@@ -69,6 +69,16 @@ const CATEGORY_ORDER = [
     'games'
 ];
 
+/* =========================
+   LOADING SETTINGS
+========================= */
+
+const LOADING_DURATION = 2500;
+const LOADING_STEPS = 10;
+
+const sleep = ms =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
 function addCommandOnce(list, command) {
     if (!list.includes(command)) {
         list.push(command);
@@ -76,100 +86,51 @@ function addCommandOnce(list, command) {
 }
 
 function addForcedCommands(cat, cmdNames) {
-
     if (cat === 'owner') {
         addCommandOnce(cmdNames, 'block');
         addCommandOnce(cmdNames, 'unblock');
         addCommandOnce(cmdNames, 'gaaju');
         addCommandOnce(cmdNames, 'anticall');
         addCommandOnce(cmdNames, 'setprofile');
-
         addCommandOnce(cmdNames, 'addjid');
         addCommandOnce(cmdNames, 'lastseen');
         addCommandOnce(cmdNames, 'anticallmessage');
     }
 
     if (cat === 'utility') {
-        addCommandOnce(cmdNames, 'botrules');
-        addCommandOnce(cmdNames, 'support');
-        addCommandOnce(cmdNames, 'deploy');
-        addCommandOnce(cmdNames, 'menuimage');
-        addCommandOnce(cmdNames, 'date');
-        addCommandOnce(cmdNames, 'code');
-        addCommandOnce(cmdNames, 'fakenumber');
-        addCommandOnce(cmdNames, 'receivecode');
-        addCommandOnce(cmdNames, 'tagcountry');
-        addCommandOnce(cmdNames, 'muteuser');
-        addCommandOnce(cmdNames, 'unmuteuser');
-        addCommandOnce(cmdNames, 'disappearmessage');
-        addCommandOnce(cmdNames, 'userid');
-        addCommandOnce(cmdNames, 'listblocked');
-        addCommandOnce(cmdNames, 'readreceipt');
-        addCommandOnce(cmdNames, 'randomnumber');
-        addCommandOnce(cmdNames, 'choose');
-        addCommandOnce(cmdNames, 'repeat');
-        addCommandOnce(cmdNames, 'echo');
-        addCommandOnce(cmdNames, 'say');
-        addCommandOnce(cmdNames, 'wordcount');
-        addCommandOnce(cmdNames, 'vowelcount');
-        addCommandOnce(cmdNames, 'consonantcount');
-        addCommandOnce(cmdNames, 'binary');
-        addCommandOnce(cmdNames, 'octal');
-        addCommandOnce(cmdNames, 'decimal');
-        addCommandOnce(cmdNames, 'roman');
-        addCommandOnce(cmdNames, 'hex');
-        addCommandOnce(cmdNames, 'shuffle');
-        addCommandOnce(cmdNames, 'sort');
-        addCommandOnce(cmdNames, 'capitalize');
-        addCommandOnce(cmdNames, 'trim');
-        addCommandOnce(cmdNames, 'removeemoji');
-        addCommandOnce(cmdNames, 'removeextra');
-        addCommandOnce(cmdNames, 'swapcase');
-        addCommandOnce(cmdNames, 'isprime');
-        addCommandOnce(cmdNames, 'fibonacci');
-        addCommandOnce(cmdNames, 'factorial');
-        addCommandOnce(cmdNames, 'edit');
-        addCommandOnce(cmdNames, 'reverse');
-        addCommandOnce(cmdNames, 'length');
-        addCommandOnce(cmdNames, 'uppercase');
-        addCommandOnce(cmdNames, 'lowercase');
-        addCommandOnce(cmdNames, 'titlecase');
-        addCommandOnce(cmdNames, 'repeatword');
-        addCommandOnce(cmdNames, 'countwords');
-        addCommandOnce(cmdNames, 'countlines');
-        addCommandOnce(cmdNames, 'replace');
-        addCommandOnce(cmdNames, 'remove');
-        addCommandOnce(cmdNames, 'startswith');
-        addCommandOnce(cmdNames, 'endswith');
-        addCommandOnce(cmdNames, 'contains');
-        addCommandOnce(cmdNames, 'randomword');
-        addCommandOnce(cmdNames, 'randomletter');
-        addCommandOnce(cmdNames, 'randomcolor');
-        addCommandOnce(cmdNames, 'percentage');
-        addCommandOnce(cmdNames, 'average');
-        addCommandOnce(cmdNames, 'calculator');
-        addCommandOnce(cmdNames, 'pair');
-        addCommandOnce(cmdNames, 'helpers');
-        addCommandOnce(cmdNames, 'panel');
-        addCommandOnce(cmdNames, 'tovv');
-        addCommandOnce(cmdNames, 'blur');
-        addCommandOnce(cmdNames, 'unblur');
-
-        addCommandOnce(cmdNames, 'hosting');
-        addCommandOnce(cmdNames, 'checkbotname');
+        [
+            'botrules', 'support', 'deploy', 'menuimage',
+            'date', 'code', 'fakenumber', 'receivecode',
+            'tagcountry', 'muteuser', 'unmuteuser',
+            'disappearmessage', 'userid', 'listblocked',
+            'readreceipt', 'randomnumber', 'choose',
+            'repeat', 'echo', 'say', 'wordcount',
+            'vowelcount', 'consonantcount', 'binary',
+            'octal', 'decimal', 'roman', 'hex',
+            'shuffle', 'sort', 'capitalize', 'trim',
+            'removeemoji', 'removeextra', 'swapcase',
+            'isprime', 'fibonacci', 'factorial', 'edit',
+            'reverse', 'length', 'uppercase', 'lowercase',
+            'titlecase', 'repeatword', 'countwords',
+            'countlines', 'replace', 'remove', 'startswith',
+            'endswith', 'contains', 'randomword',
+            'randomletter', 'randomcolor', 'percentage',
+            'average', 'calculator', 'pair', 'helpers',
+            'panel', 'tovv', 'blur', 'unblur',
+            'hosting', 'checkbotname'
+        ].forEach(command =>
+            addCommandOnce(cmdNames, command)
+        );
     }
 
     if (cat === 'group') {
-        addCommandOnce(cmdNames, 'join');
-        addCommandOnce(cmdNames, 'listonline');
-        addCommandOnce(cmdNames, 'cancelkick');
-        addCommandOnce(cmdNames, 'introcard');
-        addCommandOnce(cmdNames, 'getgrouppic');
-        addCommandOnce(cmdNames, 'disapproveall');
-        addCommandOnce(cmdNames, 'editsettings');
-        addCommandOnce(cmdNames, 'totalmembers');
-        addCommandOnce(cmdNames, 'opentime');
-        addCommandOnce(cmdNames, 'closetime');
+        [
+            'join', 'listonline', 'cancelkick', 'introcard',
+            'getgrouppic', 'disapproveall', 'editsettings',
+            'totalmembers', 'opentime', 'closetime'
+        ].forEach(command =>
+            addCommandOnce(cmdNames, command)
+        );
     }
 
     if (cat === 'channel') {
@@ -181,327 +142,191 @@ function addForcedCommands(cat, cmdNames) {
     }
 
     if (cat === 'games') {
-        addCommandOnce(cmdNames, 'blackjack');
-        addCommandOnce(cmdNames, 'slot');
-        addCommandOnce(cmdNames, 'racing');
+        ['blackjack', 'slot', 'racing'].forEach(command =>
+            addCommandOnce(cmdNames, command)
+        );
     }
 }
 
 function getCategoryData() {
+    const liveRegistry = globalThis._botCommandCategories;
 
-    const liveRegistry =
-        globalThis._botCommandCategories;
-
-    if (
-        liveRegistry &&
-        liveRegistry.size > 0
-    ) {
-
-        const allCats = [
-            ...liveRegistry.keys()
-        ];
+    if (liveRegistry && liveRegistry.size > 0) {
+        const allCats = [...liveRegistry.keys()];
 
         if (!allCats.includes('games')) {
             allCats.push('games');
         }
 
         const ordered = [
-            ...CATEGORY_ORDER.filter(c =>
-                allCats.includes(c)
-            ),
-            ...allCats
-                .filter(c =>
-                    !CATEGORY_ORDER.includes(c)
-                )
-                .sort()
+            ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
+            ...allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
         ];
 
         const catData = [];
         let totalCmds = 0;
 
         for (const cat of ordered) {
-
             const cmdNames = [
-                ...new Set(
-                    liveRegistry.get(cat) || []
-                )
+                ...new Set(liveRegistry.get(cat) || [])
             ];
 
-            addForcedCommands(
-                cat,
-                cmdNames
-            );
+            addForcedCommands(cat, cmdNames);
 
-            if (!cmdNames.length) {
-                continue;
-            }
+            if (!cmdNames.length) continue;
 
             totalCmds += cmdNames.length;
-
-            catData.push({
-                cat,
-                cmdNames
-            });
+            catData.push({ cat, cmdNames });
         }
 
-        return {
-            catData,
-            totalCmds
-        };
+        return { catData, totalCmds };
     }
 
     let allCats = [];
 
     try {
-
-        allCats = fs
-            .readdirSync(CMDS_DIR)
-            .filter(item => {
-
-                try {
-                    return fs.statSync(
-                        path.join(
-                            CMDS_DIR,
-                            item
-                        )
-                    ).isDirectory();
-
-                } catch {
-                    return false;
-                }
-            });
-
+        allCats = fs.readdirSync(CMDS_DIR).filter(item => {
+            try {
+                return fs.statSync(
+                    path.join(CMDS_DIR, item)
+                ).isDirectory();
+            } catch {
+                return false;
+            }
+        });
     } catch (error) {
-
         console.error(
             '[MENU] Failed to read commands directory:',
             error
         );
 
-        return {
-            catData: [],
-            totalCmds: 0
-        };
+        return { catData: [], totalCmds: 0 };
     }
 
     const ordered = [
-        ...CATEGORY_ORDER.filter(c =>
-            allCats.includes(c)
-        ),
-        ...allCats
-            .filter(c =>
-                !CATEGORY_ORDER.includes(c)
-            )
-            .sort()
+        ...CATEGORY_ORDER.filter(c => allCats.includes(c)),
+        ...allCats.filter(c => !CATEGORY_ORDER.includes(c)).sort()
     ];
 
     const catData = [];
     let totalCmds = 0;
 
     for (const cat of ordered) {
-
         const names = [];
 
         try {
+            const categoryPath = path.join(CMDS_DIR, cat);
 
-            const categoryPath =
-                path.join(
-                    CMDS_DIR,
-                    cat
-                );
-
-            const files = fs
-                .readdirSync(categoryPath)
-                .filter(file =>
-                    file.endsWith('.js')
-                );
+            const files = fs.readdirSync(categoryPath)
+                .filter(file => file.endsWith('.js'));
 
             for (const file of files) {
-
                 try {
+                    const filePath = path.join(categoryPath, file);
+                    const mod = require(filePath);
+                    const raw = mod.default || mod;
 
-                    const filePath =
-                        path.join(
-                            categoryPath,
-                            file
-                        );
-
-                    const mod =
-                        require(filePath);
-
-                    const raw =
-                        mod.default || mod;
-
-                    const list =
-                        Array.isArray(raw)
-                            ? raw
-                            : raw?.name
-                                ? [raw]
-                                : [];
+                    const list = Array.isArray(raw)
+                        ? raw
+                        : raw?.name
+                            ? [raw]
+                            : [];
 
                     for (const cmd of list) {
-
-                        if (
-                            cmd &&
-                            cmd.name
-                        ) {
-
-                            addCommandOnce(
-                                names,
-                                cmd.name
-                            );
+                        if (cmd && cmd.name) {
+                            addCommandOnce(names, cmd.name);
                         }
                     }
-
                 } catch (error) {
-
                     console.error(
                         `[MENU] Failed loading ${cat}/${file}:`,
                         error.message
                     );
                 }
             }
-
         } catch (error) {
-
             console.error(
                 `[MENU] Failed reading category ${cat}:`,
                 error.message
             );
         }
 
-        addForcedCommands(
-            cat,
-            names
-        );
+        addForcedCommands(cat, names);
 
-        if (!names.length) {
-            continue;
-        }
+        if (!names.length) continue;
 
         totalCmds += names.length;
-
-        catData.push({
-            cat,
-            cmdNames: names
-        });
+        catData.push({ cat, cmdNames: names });
     }
 
-    return {
-        catData,
-        totalCmds
-    };
+    return { catData, totalCmds };
 }
 
 function getPlatform() {
-
-    if (process.env.DYNO) {
-        return 'Heroku';
-    }
-
-    if (process.env.RAILWAY_ENVIRONMENT) {
-        return 'Railway';
-    }
-
-    if (process.env.RENDER) {
-        return 'Render';
-    }
-
+    if (process.env.DYNO) return 'Heroku';
+    if (process.env.RAILWAY_ENVIRONMENT) return 'Railway';
+    if (process.env.RENDER) return 'Render';
     return 'VPS';
 }
 
 function getUptime() {
-
-    const s =
-        Math.floor(
-            process.uptime()
-        );
-
-    const h =
-        Math.floor(
-            s / 3600
-        );
-
-    const m =
-        Math.floor(
-            (s % 3600) / 60
-        );
-
-    const sec =
-        s % 60;
+    const s = Math.floor(process.uptime());
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
 
     return `${h}h ${m}m ${sec}s`;
 }
 
 function getUsage() {
+    const memory = process.memoryUsage();
 
-    const memory =
-        process.memoryUsage();
+    const usedMB = memory.heapUsed / 1024 / 1024;
+    const totalMB = memory.heapTotal / 1024 / 1024;
 
-    const usedMB =
-        memory.heapUsed /
-        1024 /
-        1024;
-
-    const totalMB =
-        memory.heapTotal /
-        1024 /
-        1024;
-
-    const percent =
-        totalMB > 0
-            ? Math.min(
-                100,
-                Math.max(
-                    0,
-                    (usedMB / totalMB) * 100
-                )
-            )
-            : 0;
+    const percent = totalMB > 0
+        ? Math.min(100, Math.max(0, (usedMB / totalMB) * 100))
+        : 0;
 
     return {
-        text:
-            `${usedMB.toFixed(1)} MB / ` +
-            `${totalMB.toFixed(1)} MB`,
+        text: `${usedMB.toFixed(1)} MB / ${totalMB.toFixed(1)} MB`,
         percent
     };
 }
 
 function getSpeed(msg) {
-
-    if (
-        msg &&
-        msg._botReceivedAt
-    ) {
-
-        return (
-            Date.now() -
-            msg._botReceivedAt
-        ) + 'ms';
+    if (msg && msg._botReceivedAt) {
+        return `${Date.now() - msg._botReceivedAt}ms`;
     }
 
     return 'N/A';
 }
 
 function getBar(percent) {
-
     const total = 12;
 
-    const filled =
-        Math.round(
-            (percent / 100) *
-            total
-        );
+    const filled = Math.round(
+        (percent / 100) * total
+    );
 
     return (
         '[' +
         '█'.repeat(filled) +
-        '░'.repeat(
-            total - filled
-        ) +
+        '░'.repeat(total - filled) +
         '] ' +
         Math.round(percent) +
         '%'
+    );
+}
+
+function getLoadingBar(percent) {
+    const total = 10;
+    const filled = Math.round((percent / 100) * total);
+
+    return (
+        '▰'.repeat(filled) +
+        '▱'.repeat(total - filled) +
+        ` ${percent}%`
     );
 }
 
@@ -509,8 +334,104 @@ function getReadMore() {
     return String.fromCharCode(8206).repeat(4000);
 }
 
-module.exports = {
+/* =========================
+   BUILD THE NORMAL MENU
+========================= */
 
+function buildMenu(botName, prefix, owner, mode, msg) {
+    const { catData, totalCmds } = getCategoryData();
+    const usage = getUsage();
+    const lines = [];
+
+    lines.push(`┏━━❐◁ *${botName}*`);
+    lines.push(`┃ *ᴘʀᴇꜰɪx:* [${prefix}]`);
+    lines.push(`┃ *ᴏᴡɴᴇʀ:* ${owner}`);
+    lines.push(`┃ *ᴍᴏᴅᴇ:* ${mode}`);
+    lines.push(`┃ *ᴘʟᴀᴛꜰᴏʀᴍ:* ${getPlatform()}`);
+    lines.push(`┃ *ꜱᴘᴇᴇᴅ:* ${getSpeed(msg)}`);
+    lines.push(`┃ *ᴜᴘᴛɪᴍᴇ:* ${getUptime()}`);
+    lines.push(`┃ *ᴠᴇʀꜱɪᴏɴ:* ${BOT_VERSION}`);
+    lines.push(`┃ *ᴜꜱᴀɢᴇ:* ${usage.text}`);
+    lines.push(`┃ *ʀᴀᴍ:* ${getBar(usage.percent)}`);
+    lines.push(`┃ *ᴄᴏᴍᴍᴀɴᴅꜱ:* ${totalCmds}`);
+    lines.push('┗━━❐◁');
+
+    lines.push(getReadMore());
+
+    const totalCategories = catData.length;
+    const totalReadMores = 9;
+    const sectionSize = Math.max(
+        1,
+        Math.ceil(totalCategories / totalReadMores)
+    );
+
+    let categoryIndex = 0;
+    let readMoreCount = 1;
+
+    for (const { cat, cmdNames } of catData) {
+        const label = CATEGORY_LABELS[cat] || cat.toUpperCase();
+
+        lines.push(`┏━━❐◁ *${label}*`);
+
+        for (const cmd of cmdNames) {
+            lines.push(`┃➽ ${cmd}`);
+        }
+
+        lines.push('┗━━❐◁');
+
+        categoryIndex++;
+
+        if (
+            categoryIndex < totalCategories &&
+            readMoreCount < totalReadMores &&
+            categoryIndex % sectionSize === 0
+        ) {
+            lines.push(getReadMore());
+            readMoreCount++;
+        }
+    }
+
+    lines.push(` ${botName}`);
+    lines.push('> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ');
+
+    return lines.join('\n');
+}
+
+/* =========================
+   SEND NORMAL MENU
+========================= */
+
+async function sendNormalMenu(sock, chatId, msg, caption) {
+    const msgOptions = { quoted: msg };
+
+    if (fs.existsSync(CUSTOM_MENU_IMAGE)) {
+        const img = fs.readFileSync(CUSTOM_MENU_IMAGE);
+
+        await sock.sendMessage(
+            chatId,
+            {
+                image: img,
+                caption,
+                mimetype: 'image/jpeg'
+            },
+            msgOptions
+        );
+
+        return;
+    }
+
+    await sock.sendMessage(
+        chatId,
+        { text: caption },
+        msgOptions
+    );
+}
+
+/* =========================
+   MENU COMMAND
+========================= */
+
+module.exports = {
     name: 'menu',
 
     aliases: [
@@ -520,242 +441,119 @@ module.exports = {
         'list'
     ],
 
-    description:
-        'Show all available bot commands',
-
+    description: 'Show all available bot commands',
     category: 'utility',
 
-    async execute(
-        sock,
-        msg,
-        args,
-        prefix,
-        ctx
-    ) {
+    async execute(sock, msg, args, prefix, ctx) {
+        const chatId = msg.key.remoteJid;
+        let loadingMessage;
 
         try {
+            const botName = getBotName();
+            const p = prefix || cfg.PREFIX || '.';
+            const owner = cfg.OWNER_NAME || 'Chris Gaaju';
+            const mode = (cfg.MODE || 'public').toUpperCase();
 
-            const chatId =
-                msg.key.remoteJid;
-
-            const botName =
-                getBotName();
-
-            const p =
-                prefix ||
-                cfg.PREFIX ||
-                '.';
-
-            const owner =
-                cfg.OWNER_NAME ||
-                'Chris Gaaju';
-
-            const mode =
-                (
-                    cfg.MODE ||
-                    'public'
-                ).toUpperCase();
-
-            const {
-                catData,
-                totalCmds
-            } = getCategoryData();
-
-            const usage =
-                getUsage();
-
-            const lines = [];
-
-            // MAIN HEADER
-            lines.push(
-                `┏━━❐◁ *${botName}*`
+            /*
+             * Send a small temporary loading message.
+             */
+            loadingMessage = await sock.sendMessage(
+                chatId,
+                {
+                    text:
+                        `GAAJU-ULTRA LOADING... ` +
+                        getLoadingBar(1)
+                },
+                { quoted: msg }
             );
 
-            lines.push(
-                `┃ *ᴘʀᴇꜰɪx:* [${p}]`
-            );
+            /*
+             * Progress from 1% to 100%.
+             * The same WhatsApp message is edited.
+             */
+            for (let step = 1; step <= LOADING_STEPS; step++) {
+                const percent = step * 10;
 
-            lines.push(
-                `┃ *ᴏᴡɴᴇʀ:* ${owner}`
-            );
-
-            lines.push(
-                `┃ *ᴍᴏᴅᴇ:* ${mode}`
-            );
-
-            lines.push(
-                `┃ *ᴘʟᴀᴛꜰᴏʀᴍ:* ${getPlatform()}`
-            );
-
-            lines.push(
-                `┃ *ꜱᴘᴇᴇᴅ:* ${getSpeed(msg)}`
-            );
-
-            lines.push(
-                `┃ *ᴜᴘᴛɪᴍᴇ:* ${getUptime()}`
-            );
-
-            lines.push(
-                `┃ *ᴠᴇʀꜱɪᴏɴ:* ${BOT_VERSION}`
-            );
-
-            lines.push(
-                `┃ *ᴜꜱᴀɢᴇ:* ${usage.text}`
-            );
-
-            lines.push(
-                `┃ *ʀᴀᴍ:* ${getBar(
-                    usage.percent
-                )}`
-            );
-
-            lines.push(
-                `┃ *ᴄᴏᴍᴍᴀɴᴅꜱ:* ${totalCmds}`
-            );
-
-            lines.push(
-                `┗━━❐◁`
-            );
-
-            // REAL WHATSAPP READ MORE
-            lines.push(
-                getReadMore()
-            );
-
-            const totalCategories =
-                catData.length;
-
-            const totalReadMores =
-                9;
-
-            const remainingReadMores =
-                totalReadMores - 1;
-
-            const sectionSize =
-                Math.max(
-                    1,
-                    Math.ceil(
-                        totalCategories /
-                        (remainingReadMores + 1)
-                    )
-                );
-
-            let categoryIndex = 0;
-            let readMoreCount = 1;
-
-            for (const {
-                cat,
-                cmdNames
-            } of catData) {
-
-                const label =
-                    CATEGORY_LABELS[cat] ||
-                    cat.toUpperCase();
-
-                // CATEGORY HEADER
-                lines.push(
-                    `┏━━❐◁ *${label}*`
-                );
-
-                // COMMANDS
-                for (const cmd of cmdNames) {
-
-                    lines.push(
-                        `┃➽ ${cmd}`
+                if (step > 1) {
+                    await sleep(
+                        LOADING_DURATION / LOADING_STEPS
                     );
                 }
-
-                // CATEGORY FOOTER
-                lines.push(
-                    `┗━━❐◁`
-                );
-
-                categoryIndex++;
-
-                if (
-                    categoryIndex <
-                        totalCategories &&
-                    readMoreCount <
-                        totalReadMores &&
-                    categoryIndex %
-                        sectionSize === 0
-                ) {
-
-                    lines.push(
-                        getReadMore()
-                    );
-
-                    readMoreCount++;
-                }
-            }
-
-            lines.push(
-                ` ${botName}`
-            );
-
-            lines.push(
-                '> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ'
-            );
-
-            const caption =
-                lines.join('\n');
-
-            const msgOptions = {
-                quoted: msg
-            };
-
-            if (
-                fs.existsSync(
-                    CUSTOM_MENU_IMAGE
-                )
-            ) {
-
-                const img =
-                    fs.readFileSync(
-                        CUSTOM_MENU_IMAGE
-                    );
 
                 await sock.sendMessage(
                     chatId,
                     {
-                        image: img,
-                        caption,
-                        mimetype: 'image/jpeg'
-                    },
-                    msgOptions
+                        text:
+                            `GAAJU-ULTRA LOADING... ` +
+                            getLoadingBar(percent),
+                        edit: loadingMessage.key
+                    }
                 );
-
-                return;
             }
 
-            await sock.sendMessage(
+            /*
+             * Remove the loading message.
+             */
+            try {
+                await sock.sendMessage(
+                    chatId,
+                    {
+                        delete: loadingMessage.key
+                    }
+                );
+            } catch (deleteError) {
+                console.error(
+                    '[MENU] Could not delete loading message:',
+                    deleteError.message
+                );
+            }
+
+            /*
+             * Display the complete original menu.
+             */
+            const caption = buildMenu(
+                botName,
+                p,
+                owner,
+                mode,
+                msg
+            );
+
+            await sendNormalMenu(
+                sock,
                 chatId,
-                {
-                    text: caption
-                },
-                msgOptions
+                msg,
+                caption
             );
 
         } catch (error) {
+            console.error('[MENU ERROR]', error);
 
-            console.error(
-                '[MENU ERROR]',
-                error
-            );
+            /*
+             * Try to remove the temporary loading message
+             * if an error occurs.
+             */
+            if (loadingMessage) {
+                try {
+                    await sock.sendMessage(
+                        chatId,
+                        {
+                            delete: loadingMessage.key
+                        }
+                    );
+                } catch {}
+            }
 
             try {
-
                 await sock.sendMessage(
-                    msg.key.remoteJid,
+                    chatId,
                     {
                         text:
-                            '❌ Menu failed to load. Please check the bot console for the error.'
+                            '❌ Menu failed to load. ' +
+                            'Please check the bot console for the error.'
                     },
-                    {
-                        quoted: msg
-                    }
+                    { quoted: msg }
                 );
-
             } catch {}
         }
     }
