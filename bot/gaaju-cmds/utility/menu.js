@@ -121,25 +121,72 @@ function addForcedCommands(cat, cmdNames) {
 
     if (cat === 'utility') {
         [
-            'botrules', 'support', 'deploy', 'menuimage',
-            'date', 'code', 'fakenumber', 'receivecode',
-            'tagcountry', 'muteuser', 'unmuteuser',
-            'disappearmessage', 'userid', 'listblocked',
-            'readreceipt', 'randomnumber', 'choose',
-            'repeat', 'echo', 'say', 'wordcount',
-            'vowelcount', 'consonantcount', 'binary',
-            'octal', 'decimal', 'roman', 'hex',
-            'shuffle', 'sort', 'capitalize', 'trim',
-            'removeemoji', 'removeextra', 'swapcase',
-            'isprime', 'fibonacci', 'factorial', 'edit',
-            'reverse', 'length', 'uppercase', 'lowercase',
-            'titlecase', 'repeatword', 'countwords',
-            'countlines', 'replace', 'remove', 'startswith',
-            'endswith', 'contains', 'randomword',
-            'randomletter', 'randomcolor', 'percentage',
-            'average', 'calculator', 'pair', 'helpers',
-            'panel', 'tovv', 'blur', 'unblur',
-            'hosting', 'checkbotname'
+            'botrules',
+            'support',
+            'deploy',
+            'menuimage',
+            'date',
+            'code',
+            'fakenumber',
+            'receivecode',
+            'tagcountry',
+            'muteuser',
+            'unmuteuser',
+            'disappearmessage',
+            'userid',
+            'listblocked',
+            'readreceipt',
+            'randomnumber',
+            'choose',
+            'repeat',
+            'echo',
+            'say',
+            'wordcount',
+            'vowelcount',
+            'consonantcount',
+            'binary',
+            'octal',
+            'decimal',
+            'roman',
+            'hex',
+            'shuffle',
+            'sort',
+            'capitalize',
+            'trim',
+            'removeemoji',
+            'removeextra',
+            'swapcase',
+            'isprime',
+            'fibonacci',
+            'factorial',
+            'edit',
+            'reverse',
+            'length',
+            'uppercase',
+            'lowercase',
+            'titlecase',
+            'repeatword',
+            'countwords',
+            'countlines',
+            'replace',
+            'remove',
+            'startswith',
+            'endswith',
+            'contains',
+            'randomword',
+            'randomletter',
+            'randomcolor',
+            'percentage',
+            'average',
+            'calculator',
+            'pair',
+            'helpers',
+            'panel',
+            'tovv',
+            'blur',
+            'unblur',
+            'hosting',
+            'checkbotname'
         ].forEach(command =>
             addCommandOnce(cmdNames, command)
         );
@@ -147,9 +194,16 @@ function addForcedCommands(cat, cmdNames) {
 
     if (cat === 'group') {
         [
-            'join', 'listonline', 'cancelkick', 'introcard',
-            'getgrouppic', 'disapproveall', 'editsettings',
-            'totalmembers', 'opentime', 'closetime'
+            'join',
+            'listonline',
+            'cancelkick',
+            'introcard',
+            'getgrouppic',
+            'disapproveall',
+            'editsettings',
+            'totalmembers',
+            'opentime',
+            'closetime'
         ].forEach(command =>
             addCommandOnce(cmdNames, command)
         );
@@ -164,7 +218,11 @@ function addForcedCommands(cat, cmdNames) {
     }
 
     if (cat === 'games') {
-        ['blackjack', 'slot', 'racing'].forEach(command =>
+        [
+            'blackjack',
+            'slot',
+            'racing'
+        ].forEach(command =>
             addCommandOnce(cmdNames, command)
         );
     }
@@ -235,7 +293,10 @@ function getCategoryData() {
             error
         );
 
-        return { catData: [], totalCmds: 0 };
+        return {
+            catData: [],
+            totalCmds: 0
+        };
     }
 
     for (const cat of ['owner', 'fun']) {
@@ -297,16 +358,23 @@ function getCategoryData() {
         if (!names.length) continue;
 
         totalCmds += names.length;
-        catData.push({ cat, cmdNames: names });
+        catData.push({
+            cat,
+            cmdNames: names
+        });
     }
 
-    return { catData, totalCmds };
+    return {
+        catData,
+        totalCmds
+    };
 }
 
 function getPlatform() {
     if (process.env.DYNO) return 'Heroku';
     if (process.env.RAILWAY_ENVIRONMENT) return 'Railway';
     if (process.env.RENDER) return 'Render';
+
     return 'VPS';
 }
 
@@ -326,7 +394,10 @@ function getUsage() {
     const totalMB = memory.heapTotal / 1024 / 1024;
 
     const percent = totalMB > 0
-        ? Math.min(100, Math.max(0, (usedMB / totalMB) * 100))
+        ? Math.min(
+            100,
+            Math.max(0, (usedMB / totalMB) * 100)
+        )
         : 0;
 
     return {
@@ -362,7 +433,10 @@ function getBar(percent) {
 
 function getLoadingBar(percent) {
     const total = 10;
-    const filled = Math.round((percent / 100) * total);
+
+    const filled = Math.round(
+        (percent / 100) * total
+    );
 
     return (
         '▰'.repeat(filled) +
@@ -468,32 +542,86 @@ function getMenuButtons() {
     ];
 }
 
+/*
+ * FIXED MENU SENDER
+ *
+ * Sends the custom image directly through Baileys,
+ * then sends the interactive menu with four buttons.
+ */
 async function sendNormalMenu(sock, chatId, msg, caption) {
     const buttons = getMenuButtons();
+    const msgOptions = { quoted: msg };
+
+    let menuImage = null;
 
     /*
-     * Use wolfbtns for interactive buttons.
+     * Load the custom menu image.
+     */
+    try {
+        if (fs.existsSync(CUSTOM_MENU_IMAGE)) {
+            menuImage = fs.readFileSync(CUSTOM_MENU_IMAGE);
+
+            console.log(
+                `[MENU] Custom image loaded: ${CUSTOM_MENU_IMAGE}`
+            );
+        } else {
+            console.error(
+                `[MENU] Custom image not found: ${CUSTOM_MENU_IMAGE}`
+            );
+        }
+    } catch (error) {
+        console.error(
+            '[MENU] Failed to read custom image:',
+            error.message
+        );
+    }
+
+    /*
+     * Send the image separately.
+     * Do not depend on wolfbtns to render the image.
+     */
+    if (menuImage) {
+        try {
+            await sock.sendMessage(
+                chatId,
+                {
+                    image: menuImage,
+                    caption:
+                        `🖼️ *GAAJU-MD-ULTRA MENU*\n\n` +
+                        `_Your command menu is below._`,
+                    mimetype: 'image/jpeg'
+                },
+                msgOptions
+            );
+
+            console.log(
+                '[MENU] Custom menu image sent successfully.'
+            );
+        } catch (error) {
+            console.error(
+                '[MENU] Image send failed:',
+                error.message
+            );
+        }
+    }
+
+    /*
+     * Send the interactive command menu.
      */
     if (giftedBtns?.sendInteractiveMessage) {
         try {
-            const payload = {
-                text: caption,
-                footer: 'Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ',
-                interactiveButtons: buttons
-            };
-
-            /*
-             * If an image exists, attach it to the
-             * interactive message when supported.
-             */
-            if (fs.existsSync(CUSTOM_MENU_IMAGE)) {
-                payload.image = fs.readFileSync(CUSTOM_MENU_IMAGE);
-            }
-
             await giftedBtns.sendInteractiveMessage(
                 sock,
                 chatId,
-                payload
+                {
+                    text: caption,
+                    footer: 'Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ',
+                    interactiveButtons: buttons
+                }
+            );
+
+            console.log(
+                '[MENU] Interactive menu sent successfully.'
             );
 
             return;
@@ -506,8 +634,8 @@ async function sendNormalMenu(sock, chatId, msg, caption) {
     }
 
     /*
-     * Fallback: show the menu and all links as
-     * ordinary clickable URLs.
+     * Fallback if interactive buttons are unavailable.
+     * The repository and other links remain accessible.
      */
     const fallbackCaption =
         caption +
@@ -523,26 +651,16 @@ async function sendNormalMenu(sock, chatId, msg, caption) {
         `${CHANNEL_URL}\n` +
         '╰━━━━━━━━━━━━━━';
 
-    const msgOptions = { quoted: msg };
-
-    if (fs.existsSync(CUSTOM_MENU_IMAGE)) {
-        await sock.sendMessage(
-            chatId,
-            {
-                image: fs.readFileSync(CUSTOM_MENU_IMAGE),
-                caption: fallbackCaption,
-                mimetype: 'image/jpeg'
-            },
-            msgOptions
-        );
-
-        return;
-    }
-
     await sock.sendMessage(
         chatId,
-        { text: fallbackCaption },
+        {
+            text: fallbackCaption
+        },
         msgOptions
+    );
+
+    console.log(
+        '[MENU] Fallback text menu sent successfully.'
     );
 }
 
@@ -564,11 +682,20 @@ module.exports = {
         let loadingMessage;
 
         try {
-            const botName = getBotName() || 'GAAJU-MD-ULTRA';
-            const p = prefix || cfg.PREFIX || '.';
-            const owner = cfg.OWNER_NAME || 'Chris Gaaju';
-            const mode = (cfg.MODE || 'public').toUpperCase();
+            const botName =
+                getBotName() || 'GAAJU-MD-ULTRA';
 
+            const p = prefix || cfg.PREFIX || '.';
+
+            const owner =
+                cfg.OWNER_NAME || 'Chris Gaaju';
+
+            const mode =
+                (cfg.MODE || 'public').toUpperCase();
+
+            /*
+             * Loading message.
+             */
             loadingMessage = await sock.sendMessage(
                 chatId,
                 {
@@ -579,7 +706,14 @@ module.exports = {
                 { quoted: msg }
             );
 
-            for (let step = 1; step <= LOADING_STEPS; step++) {
+            /*
+             * Loading animation.
+             */
+            for (
+                let step = 1;
+                step <= LOADING_STEPS;
+                step++
+            ) {
                 const percent = step * 10;
 
                 if (step > 1) {
@@ -599,6 +733,9 @@ module.exports = {
                 );
             }
 
+            /*
+             * Delete the loading message.
+             */
             try {
                 await sock.sendMessage(
                     chatId,
@@ -613,6 +750,9 @@ module.exports = {
                 );
             }
 
+            /*
+             * Build and send the menu.
+             */
             const caption = buildMenu(
                 botName,
                 p,
@@ -629,7 +769,10 @@ module.exports = {
             );
 
         } catch (error) {
-            console.error('[MENU ERROR]', error);
+            console.error(
+                '[MENU ERROR]',
+                error
+            );
 
             if (loadingMessage) {
                 try {
