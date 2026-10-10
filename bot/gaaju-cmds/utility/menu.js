@@ -542,89 +542,51 @@ function getMenuButtons() {
     ];
 }
 
-/*
- * FIXED MENU SENDER
- *
- * Sends the custom image directly through Baileys,
- * then sends the interactive menu with four buttons.
- */
 async function sendNormalMenu(sock, chatId, msg, caption) {
     const buttons = getMenuButtons();
     const msgOptions = { quoted: msg };
 
     let menuImage = null;
 
-    /*
-     * Load the custom menu image.
-     */
     try {
         if (fs.existsSync(CUSTOM_MENU_IMAGE)) {
             menuImage = fs.readFileSync(CUSTOM_MENU_IMAGE);
 
-            console.log(
-                `[MENU] Custom image loaded: ${CUSTOM_MENU_IMAGE}`
-            );
+            console.log('[MENU] Custom image loaded.');
         } else {
-            console.error(
-                `[MENU] Custom image not found: ${CUSTOM_MENU_IMAGE}`
-            );
+            console.warn('[MENU] Custom menu image not found.');
         }
     } catch (error) {
         console.error(
-            '[MENU] Failed to read custom image:',
+            '[MENU] Image loading failed:',
             error.message
         );
     }
 
-    /*
-     * Send the image separately.
-     * Do not depend on wolfbtns to render the image.
-     */
-    if (menuImage) {
-        try {
-            await sock.sendMessage(
-                chatId,
-                {
-                    image: menuImage,
-                    caption:
-                        `🖼️ *GAAJU-MD-ULTRA MENU*\n\n` +
-                        `_Your command menu is below._`,
-                    mimetype: 'image/jpeg'
-                },
-                msgOptions
-            );
-
-            console.log(
-                '[MENU] Custom menu image sent successfully.'
-            );
-        } catch (error) {
-            console.error(
-                '[MENU] Image send failed:',
-                error.message
-            );
-        }
-    }
-
-    /*
-     * Send the interactive command menu.
-     */
     if (giftedBtns?.sendInteractiveMessage) {
         try {
+            const interactivePayload = {
+                text: caption,
+                footer: 'Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ',
+                interactiveButtons: buttons
+            };
+
+            if (menuImage) {
+                interactivePayload.image = menuImage;
+                interactivePayload.caption = caption;
+                interactivePayload.mimetype = 'image/jpeg';
+            }
+
             await giftedBtns.sendInteractiveMessage(
                 sock,
                 chatId,
-                {
-                    text: caption,
-                    footer: 'Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ',
-                    interactiveButtons: buttons
-                }
+                interactivePayload,
+                msgOptions
             );
 
-            console.log(
-                '[MENU] Interactive menu sent successfully.'
-            );
-
+            console.log('[MENU] Interactive menu sent.');
             return;
+
         } catch (error) {
             console.error(
                 '[MENU] Interactive menu failed:',
@@ -633,23 +595,39 @@ async function sendNormalMenu(sock, chatId, msg, caption) {
         }
     }
 
-    /*
-     * Fallback if interactive buttons are unavailable.
-     * The repository and other links remain accessible.
-     */
+    if (menuImage) {
+        try {
+            await sock.sendMessage(
+                chatId,
+                {
+                    image: menuImage,
+                    caption: '🖼️ *GAAJU-MD-ULTRA MENU*',
+                    mimetype: 'image/jpeg'
+                },
+                msgOptions
+            );
+        } catch (error) {
+            console.error(
+                '[MENU] Image fallback failed:',
+                error.message
+            );
+        }
+    }
+
     const fallbackCaption =
         caption +
         '\n\n' +
-        '╭━━━〔 🔗 QUICK LINKS 〕\n' +
-        '┃ 📂 *OPEN REPOSITORY*\n' +
-        `${REPO_URL}\n\n` +
-        '┃ 📦 *DOWNLOAD ZIP*\n' +
-        `${ZIP_URL}\n\n` +
-        '┃ 👑 *MESSAGE OWNER*\n' +
-        `https://wa.me/${OWNER_NUMBER}\n\n` +
-        '┃ 📢 *VISIT CHANNEL*\n' +
-        `${CHANNEL_URL}\n` +
-        '╰━━━━━━━━━━━━━━';
+        '📂 *OPEN REPOSITORY*\n' +
+        REPO_URL +
+        '\n\n' +
+        '📦 *DOWNLOAD ZIP*\n' +
+        ZIP_URL +
+        '\n\n' +
+        '👑 *MESSAGE OWNER*\n' +
+        `https://wa.me/${OWNER_NUMBER}` +
+        '\n\n' +
+        '📢 *VISIT CHANNEL*\n' +
+        CHANNEL_URL;
 
     await sock.sendMessage(
         chatId,
@@ -659,9 +637,7 @@ async function sendNormalMenu(sock, chatId, msg, caption) {
         msgOptions
     );
 
-    console.log(
-        '[MENU] Fallback text menu sent successfully.'
-    );
+    console.log('[MENU] Fallback text menu sent.');
 }
 
 module.exports = {
@@ -693,9 +669,6 @@ module.exports = {
             const mode =
                 (cfg.MODE || 'public').toUpperCase();
 
-            /*
-             * Loading message.
-             */
             loadingMessage = await sock.sendMessage(
                 chatId,
                 {
@@ -706,9 +679,6 @@ module.exports = {
                 { quoted: msg }
             );
 
-            /*
-             * Loading animation.
-             */
             for (
                 let step = 1;
                 step <= LOADING_STEPS;
@@ -733,9 +703,6 @@ module.exports = {
                 );
             }
 
-            /*
-             * Delete the loading message.
-             */
             try {
                 await sock.sendMessage(
                     chatId,
@@ -750,9 +717,6 @@ module.exports = {
                 );
             }
 
-            /*
-             * Build and send the menu.
-             */
             const caption = buildMenu(
                 botName,
                 p,
@@ -769,10 +733,7 @@ module.exports = {
             );
 
         } catch (error) {
-            console.error(
-                '[MENU ERROR]',
-                error
-            );
+            console.error('[MENU ERROR]', error);
 
             if (loadingMessage) {
                 try {
