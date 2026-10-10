@@ -3,52 +3,67 @@
 const fs = require('fs');
 const path = require('path');
 
-const ANTICALL_FILE = path.join(process.cwd(), 'anticall.json');
+const ANTICALL_FILE = path.join(
+    process.cwd(),
+    'data',
+    'anticall.json'
+);
 
 function loadAntiCall() {
     try {
-        return JSON.parse(
+        if (!fs.existsSync(ANTICALL_FILE)) {
+            return {
+                mode: 'off',
+                message: "My owner is currently unavailable or busy. Please send a message instead."
+            };
+        }
+
+        const data = JSON.parse(
             fs.readFileSync(ANTICALL_FILE, 'utf8')
         );
-    } catch {
+
         return {
-            settings: {},
-            callLogs: [],
-            blockedNumbers: []
+            mode: data.mode || 'off',
+            message: data.message ||
+                "My owner is currently unavailable or busy. Please send a message instead."
+        };
+    } catch (error) {
+        console.error(
+            '[ANTICALL MESSAGE] Load error:',
+            error.message
+        );
+
+        return {
+            mode: 'off',
+            message: "My owner is currently unavailable or busy. Please send a message instead."
         };
     }
 }
 
-function saveAntiCall(data) {
+function saveAntiCall(settings) {
     try {
+        const directory = path.dirname(ANTICALL_FILE);
+
+        if (!fs.existsSync(directory)) {
+            fs.mkdirSync(directory, {
+                recursive: true
+            });
+        }
+
         fs.writeFileSync(
             ANTICALL_FILE,
-            JSON.stringify(data, null, 2)
+            JSON.stringify(settings, null, 2)
         );
-    } catch (e) {
+
+        return true;
+    } catch (error) {
         console.error(
-            '[anticallmessage] save error:',
-            e.message
+            '[ANTICALL MESSAGE] Save error:',
+            error.message
         );
+
+        return false;
     }
-}
-
-function cleanJid(jid) {
-    if (!jid) return jid;
-
-    const clean = jid.split(':')[0];
-
-    return clean.includes('@')
-        ? clean
-        : clean + '@s.whatsapp.net';
-}
-
-function shortMessage(message) {
-    if (!message) return '';
-
-    return message.length > 50
-        ? message.substring(0, 50) + '…'
-        : message;
 }
 
 module.exports = {
@@ -60,156 +75,151 @@ module.exports = {
     ],
 
     description:
-        'Set or view the auto-reply message sent when a call is rejected.',
+        'Set, view, or reset the AntiCall auto-reply message.',
 
     category: 'owner',
 
     ownerOnly: true,
 
-    async execute(
-        sock,
-        msg,
-        args,
-        prefix,
-        ctx
-    ) {
+    async execute(sock, msg, args, prefix, ctx) {
         const jid = msg.key.remoteJid;
+        const sub = (args[0] || '').toLowerCase();
+        const settings = loadAntiCall();
 
-        const botJid = cleanJid(
-            sock.user?.id
-        );
-
-        const sub = args[0]?.toLowerCase();
-
-        const data = loadAntiCall();
-
-        if (!data.settings[botJid]) {
-            data.settings[botJid] = {
-                enabled: false,
-                mode: 'decline',
-                autoMessage: false,
-                message:
-                    "Sorry, I don't accept calls. Please send a text message instead.",
-                lastUpdated: new Date().toISOString()
-            };
-        }
-
-        const s = data.settings[botJid];
-
-        // SET MESSAGE
+        // SET A CUSTOM MESSAGE
         if (
             !sub ||
-            (
-                sub !== 'off' &&
-                sub !== 'view' &&
-                sub !== 'clear'
-            )
+            !['view', 'off', 'clear'].includes(sub)
         ) {
-            const newMsg = args
-                .join(' ')
-                .trim();
+            const newMessage = args.join(' ').trim();
 
-            if (!newMsg) {
-                const helpText =
-`┏━━❐➽ *ANTICALL MESSAGE* ➽❐━━
-┃
-┃ ➽ *${prefix}anticallmessage [text]*
-┃   ➽ Set auto-reply message
-┃
-┃ ➽ *${prefix}anticallmessage view*
-┃   ➽ View current message
-┃
-┃ ➽ *${prefix}anticallmessage off*
-┃   ➽ Disable auto-reply
-┃
-┃ ➽ *STATUS:* ${s.autoMessage ? '✅ ON' : '❌ OFF'}
-${
-    s.autoMessage
-        ? `┃ ➽ *MESSAGE:* _${shortMessage(s.message)}_`
-        : ''
-}
-┗━━━━━━━━━━━`;
-
+            if (!newMessage) {
                 return sock.sendMessage(
                     jid,
-                    { text: helpText },
+                    {
+                        text:
+`┏━━❐◁ *ANTICALL MESSAGE* ◁❐━━
+
+┃ ◁ *${prefix}anticallmessage <text>*
+┃   Set your custom auto-reply.
+┃
+┃ ◁ *${prefix}anticallmessage view*
+┃   View your current message.
+┃
+┃ ◁ *${prefix}anticallmessage off*
+┃   Disable custom auto-replies.
+┃
+┃ ◁ *${prefix}anticallmessage clear*
+┃   Reset to the default message.
+┃
+┃ ◁ *AUTO-REPLY:* ${settings.autoMessage === false ? '❌ OFF' : '✅ ON'}
+┃ ◁ *ANTICALL MODE:* ${settings.mode}
+┗━━━━━━━━━━━━━━━━━━`
+                    },
                     { quoted: msg }
                 );
             }
 
-            s.autoMessage = true;
-            s.message = newMsg;
-            s.lastUpdated = new Date().toISOString();
+            settings.message = newMessage;
+            settings.autoMessage = true;
 
-            data.settings[botJid] = s;
-
-            saveAntiCall(data);
-
-            const reply =
-`┏━━❐➽ *ANTICALL MESSAGE* ➽❐━━
-┃
-┃ ➽ *AUTO-REPLY:* ✅ ON
-┃ ➽ *MESSAGE:* _${shortMessage(newMsg)}_
-┃
-┃ ➽ Sent after every rejected call
-┃ ➽ Use *${prefix}anticall enable*
-┃   to activate anticall.
-┗━━━━━━━━━━━`;
+            if (!saveAntiCall(settings)) {
+                return sock.sendMessage(
+                    jid,
+                    {
+                        text: '❌ Failed to save your AntiCall message. Check the bot console.'
+                    },
+                    { quoted: msg }
+                );
+            }
 
             return sock.sendMessage(
                 jid,
-                { text: reply },
+                {
+                    text:
+`┏━━❐◁ *ANTICALL MESSAGE UPDATED* ◁❐━━
+
+┃ ◁ *STATUS:* ✅ SAVED
+┃ ◁ *MESSAGE:*
+┃ ${newMessage.split('\n').join('\n┃ ')}
+┃
+┃ ◁ The custom message is saved.
+┃ ◁ Use *${prefix}anticall declinetext*
+┃   to enable message mode.
+┗━━━━━━━━━━━━━━━━━━`
+                },
                 { quoted: msg }
             );
         }
 
-        // VIEW MESSAGE
+        // VIEW CURRENT MESSAGE
         if (sub === 'view') {
-            const reply =
-`┏━━❐➽ *ANTICALL MESSAGE* ➽❐━━
-┃
-┃ ➽ *AUTO-REPLY:* ${
-    s.autoMessage ? '✅ ON' : '❌ OFF'
-}
-${
-    s.autoMessage
-        ? `┃ ➽ *MESSAGE:* _${shortMessage(s.message)}_`
-        : `┃ ➽ No message has been set.`
-}
-┃
-┗━━━━━━━━━━━`;
-
             return sock.sendMessage(
                 jid,
-                { text: reply },
+                {
+                    text:
+`┏━━❐◁ *ANTICALL MESSAGE* ◁❐━━
+
+┃ ◁ *STATUS:* ${settings.autoMessage === false ? '❌ OFF' : '✅ ON'}
+┃ ◁ *MODE:* ${settings.mode}
+┃
+┃ ◁ *MESSAGE:*
+┃ ${(settings.message || 'No custom message set.').split('\n').join('\n┃ ')}
+┗━━━━━━━━━━━━━━━━━━`
+                },
                 { quoted: msg }
             );
         }
 
-        // OFF / CLEAR
-        if (
-            sub === 'off' ||
-            sub === 'clear'
-        ) {
-            s.autoMessage = false;
-            s.lastUpdated = new Date().toISOString();
+        // DISABLE CUSTOM MESSAGE
+        if (sub === 'off') {
+            settings.autoMessage = false;
 
-            data.settings[botJid] = s;
-
-            saveAntiCall(data);
-
-            const reply =
-`┏━━❐➽ *ANTICALL MESSAGE* ➽❐━━
-┃
-┃ ➽ *AUTO-REPLY:* ❌ OFF
-┃
-┃ ➽ No message will be sent
-┃   after rejected calls.
-┗━━━━━━━━━━━`;
+            if (!saveAntiCall(settings)) {
+                return sock.sendMessage(
+                    jid,
+                    { text: '❌ Could not save the change.' },
+                    { quoted: msg }
+                );
+            }
 
             return sock.sendMessage(
                 jid,
-                { text: reply },
+                {
+                    text:
+`✅ *ANTICALL AUTO-REPLY DISABLED*
+
+Your custom message is saved, but the auto-reply is switched off.`
+                },
+                { quoted: msg }
+            );
+        }
+
+        // CLEAR CUSTOM MESSAGE
+        if (sub === 'clear') {
+            settings.message =
+                "My owner is currently unavailable or busy. Please send a message instead.";
+
+            settings.autoMessage = true;
+
+            if (!saveAntiCall(settings)) {
+                return sock.sendMessage(
+                    jid,
+                    { text: '❌ Could not reset the message.' },
+                    { quoted: msg }
+                );
+            }
+
+            return sock.sendMessage(
+                jid,
+                {
+                    text:
+`✅ *ANTICALL MESSAGE RESET*
+
+Your message has been reset to the default AntiCall message.
+
+Use *${prefix}anticall declinetext* to enable message mode.`
+                },
                 { quoted: msg }
             );
         }
