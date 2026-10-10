@@ -32,9 +32,13 @@ function getConfig() {
     ensureConfig();
 
     try {
+        const saved = JSON.parse(
+            fs.readFileSync(CONFIG_PATH, 'utf8')
+        );
+
         return {
             ...DEFAULT_CONFIG,
-            ...JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
+            ...saved
         };
     } catch (error) {
         console.error('[ANTICALL] Config read failed:', error.message);
@@ -76,21 +80,21 @@ function isIncomingOffer(call) {
     return String(call?.status || '').toLowerCase() === 'offer';
 }
 
-function normalizeNumber(jid) {
-    if (!jid) return null;
-    return jid.split('@')[0].split(':')[0];
-}
-
 const processedCalls = new Map();
 const initializedSockets = new WeakSet();
 
+/**
+ * Register incoming-call handling on the active WhatsApp socket.
+ */
 function initAntiCall(sock) {
     if (!sock?.ev || typeof sock.ev.on !== 'function') {
         console.error('[ANTICALL] Invalid WhatsApp socket.');
         return false;
     }
 
-    if (initializedSockets.has(sock)) return true;
+    if (initializedSockets.has(sock)) {
+        return true;
+    }
 
     initializedSockets.add(sock);
 
@@ -111,17 +115,19 @@ function initAntiCall(sock) {
                 const caller = getCaller(call);
 
                 if (!callId || !caller) {
-                    console.warn('[ANTICALL] Missing call ID or caller.');
+                    console.warn('[ANTICALL] Missing call ID or caller JID.');
                     continue;
                 }
 
                 if (processedCalls.has(callId)) continue;
+
                 processedCalls.set(callId, Date.now());
 
                 console.log(
                     `[ANTICALL] Incoming call from ${caller}; mode=${config.mode}`
                 );
 
+                // Reject the incoming call.
                 try {
                     if (typeof sock.rejectCall !== 'function') {
                         console.error('[ANTICALL] rejectCall is unavailable.');
@@ -129,6 +135,7 @@ function initAntiCall(sock) {
                     }
 
                     await sock.rejectCall(callId, caller);
+
                     console.log('[ANTICALL] Call rejected.');
                 } catch (error) {
                     console.error(
@@ -138,79 +145,78 @@ function initAntiCall(sock) {
                     continue;
                 }
 
-                if (config.mode === 'decline') continue;
+                // Decline silently.
+                if (config.mode === 'decline') {
+                    continue;
+                }
 
+                // Decline and block.
                 if (
                     config.mode === 'block' ||
                     config.mode === 'declineblock'
                 ) {
                     try {
-                        if (typeof sock.updateBlockStatus === 'function') {
-                            await sock.updateBlockStatus(caller, 'block');
-                            console.log(`[ANTICALL] Blocked ${caller}.`);
-                        } else {
-                            console.error('[ANTICALL] updateBlockStatus unavailable.');
+                        if (typeof sock.updateBlockStatus !== 'function') {
+                            console.error(
+                                '[ANTICALL] updateBlockStatus is unavailable.'
+                            );
+                            continue;
                         }
+
+                        await sock.updateBlockStatus(caller, 'block');
+
+                        console.log(`[ANTICALL] Blocked ${caller}.`);
                     } catch (error) {
-                        console.error('[ANTICALL] Block failed:', error.message);
+                        console.error(
+                            '[ANTICALL] Block failed:',
+                            error.message
+                        );
                     }
 
                     continue;
                 }
 
+                // Decline and send the saved custom message.
                 if (config.mode === 'declinetext') {
-                    try {
-                        const message = String(
-                            config.message || DEFAULT_CONFIG.message
-                        );
+                    const message = String(
+                        config.message || DEFAULT_CONFIG.message
+                    );
 
-                        // Try the caller JID first, then the phone-number JID
-                        // if the call event provides one.
-                        const candidates = [
-                            call.callerPn,
-                            call.from,
-                            call.peerJid,
-                            caller
-                        ].filter(Boolean);
+                    const candidates = [
+                        call.callerPn,
+                        call.from,
+                        call.peerJid,
+                        caller
+                    ].filter(
+                        jid => typeof jid === 'string' && jid.includes('@')
+                    );
 
-                        const recipients = [...new Set(
-                            candidates
-                                .filter(jid => typeof jid === 'string' && jid.includes('@'))
-                        )];
+                    const recipients = [...new Set(candidates)];
 
-                        let sent = false;
-                        let lastError;
+                    let sent = false;
 
-                        for (const recipient of recipients) {
-                            try {
-                                await sock.sendMessage(recipient, {
-                                    text: message
-                                });
+                    for (const recipient of recipients) {
+                        try {
+                            await sock.sendMessage(recipient, {
+                                text: message
+                            });
 
-                                console.log(
-                                    `[ANTICALL] Automatic message sent to ${recipient}.`
-                                );
+                            console.log(
+                                `[ANTICALL] Automatic message sent to ${recipient}.`
+                            );
 
-                                sent = true;
-                                break;
-                            } catch (error) {
-                                lastError = error;
-                                console.warn(
-                                    `[ANTICALL] Could not message ${recipient}: ${error.message}`
-                                );
-                            }
-                        }
-
-                        if (!sent) {
-                            console.error(
-                                '[ANTICALL] Could not send automatic message.',
-                                lastError?.message || 'No usable recipient JID.'
+                            sent = true;
+                            break;
+                        } catch (error) {
+                            console.warn(
+                                `[ANTICALL] Could not message ${recipient}: ${error.message}`
                             );
                         }
-                    } catch (error) {
+                    }
+
+                    if (!sent) {
                         console.error(
-                            '[ANTICALL] Automatic message failed:',
-                            error.message
+                            '[ANTICALL] Failed to deliver automatic message.'
                         );
                     }
                 }
@@ -223,11 +229,14 @@ function initAntiCall(sock) {
     return true;
 }
 
+// Remove old call IDs periodically.
 const cleanupTimer = setInterval(() => {
     const expiry = Date.now() - 60_000;
 
     for (const [id, timestamp] of processedCalls.entries()) {
-        if (timestamp < expiry) processedCalls.delete(id);
+        if (timestamp < expiry) {
+            processedCalls.delete(id);
+        }
     }
 }, 30_000);
 
@@ -248,9 +257,10 @@ module.exports = {
         const input = String(args?.[0] || '').toLowerCase();
         const current = getConfig();
 
+        // Register listener as a fallback.
         initAntiCall(sock);
 
-        // DISPLAY HELP
+        // Display help or current status.
         if (!input || input === 'status') {
             const config = getConfig();
 
@@ -264,9 +274,10 @@ module.exports = {
 ┃ *Mode:* ${config.mode.toUpperCase()}
 ┃
 ┃ ◁ ${prefix}anticall decline
-┃ ◁ ${prefix}anticall decline <text>
 ┃ ◁ ${prefix}anticall declinetext
 ┃ ◁ ${prefix}anticall message <text>
+┃ ◁ ${prefix}anticall message view
+┃ ◁ ${prefix}anticall message reset
 ┃ ◁ ${prefix}anticall block
 ┃ ◁ ${prefix}anticall declineblock
 ┃ ◁ ${prefix}anticall status
@@ -277,37 +288,49 @@ module.exports = {
             );
         }
 
-        // CUSTOM MESSAGE THROUGH DECLINE <TEXT>
-        if (input === 'decline' && args.length > 1) {
-            const customMessage = args.slice(1).join(' ').trim();
+        // Custom message options.
+        if (input === 'message') {
+            const action = String(args?.[1] || '').toLowerCase();
 
-            if (!customMessage) {
+            // View saved message.
+            if (action === 'view') {
+                const config = getConfig();
+
                 return sock.sendMessage(
                     chatId,
-                    { text: `Usage: ${prefix}anticall decline <your message>` },
+                    {
+                        text:
+`┏━━❐◁ *ANTICALL MESSAGE* ◁❐━━
+┃
+┃ *Mode:* ${config.mode.toUpperCase()}
+┃
+┃ *Saved message:*
+┃ ${String(config.message).split('\n').join('\n┃ ')}
+┗━━━━━━━━━━━━━━━━━━━━`
+                    },
                     { quoted: msg }
                 );
             }
 
-            const saved = saveConfig({
-                ...current,
-                mode: 'declinetext',
-                message: customMessage
-            });
+            // Reset message to default.
+            if (action === 'reset') {
+                const saved = saveConfig({
+                    ...current,
+                    message: DEFAULT_CONFIG.message
+                });
 
-            return sock.sendMessage(
-                chatId,
-                {
-                    text: saved
-                        ? `✅ *ANTICALL MESSAGE SAVED*\n\n*Mode:* DECLINETEXT\n*Message:* ${customMessage}\n\nIncoming calls will be rejected and the saved message will be sent.`
-                        : '❌ Could not save your custom message.'
-                },
-                { quoted: msg }
-            );
-        }
+                return sock.sendMessage(
+                    chatId,
+                    {
+                        text: saved
+                            ? `✅ *ANTICALL MESSAGE RESET*\n\n${DEFAULT_CONFIG.message}`
+                            : '❌ Could not reset the message.'
+                    },
+                    { quoted: msg }
+                );
+            }
 
-        // CHANGE THE MESSAGE WITHOUT CHANGING THE MODE
-        if (input === 'message') {
+            // Set custom message.
             const customMessage = args.slice(1).join(' ').trim();
 
             if (!customMessage) {
@@ -315,12 +338,16 @@ module.exports = {
                     chatId,
                     {
                         text:
-`*Current AntiCall message:*
+`❌ Please enter your custom message.
 
-${current.message}
+Example:
+${prefix}anticall message Don't call me, please text me instead.
 
-To change it, use:
-${prefix}anticall message <your message>`
+View message:
+${prefix}anticall message view
+
+Reset message:
+${prefix}anticall message reset`
                     },
                     { quoted: msg }
                 );
@@ -335,13 +362,14 @@ ${prefix}anticall message <your message>`
                 chatId,
                 {
                     text: saved
-                        ? `✅ Custom AntiCall message updated.\n\n${customMessage}`
+                        ? `✅ *CUSTOM ANTICALL MESSAGE UPDATED*\n\n${customMessage}\n\nUse ${prefix}anticall declinetext to activate it.`
                         : '❌ Could not save your custom message.'
                 },
                 { quoted: msg }
             );
         }
 
+        // Supported modes.
         const allowedModes = [
             'decline',
             'block',
@@ -359,7 +387,9 @@ ${prefix}anticall message <your message>`
             if (!saved) {
                 return sock.sendMessage(
                     chatId,
-                    { text: '❌ Could not save AntiCall settings.' },
+                    {
+                        text: '❌ Could not save AntiCall settings.'
+                    },
                     { quoted: msg }
                 );
             }
@@ -381,7 +411,7 @@ ${prefix}anticall message <your message>`
 ┃ *Mode:* ${input.toUpperCase()}
 ┃
 ┃ ${descriptions[input]}
-┗━━━━━━━━━━━━━━━━`
+┗━━━━━━━━━━━━━━━━━━━━`
                 },
                 { quoted: msg }
             );
@@ -390,10 +420,7 @@ ${prefix}anticall message <your message>`
         return sock.sendMessage(
             chatId,
             {
-                text:
-`❌ Unknown option.
-
-Use ${prefix}anticall to view the AntiCall menu.`
+                text: `❌ Unknown option.\n\nUse ${prefix}anticall to view the available commands.`
             },
             { quoted: msg }
         );
