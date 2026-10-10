@@ -5,12 +5,31 @@ const fs = require('fs');
 const { getBotName } = require('../../lib/botname');
 const cfg = require('../../config');
 
+let giftedBtns;
+
+try {
+    giftedBtns = require('wolfbtns');
+} catch (error) {
+    console.error('[MENU] wolfbtns is unavailable:', error.message);
+}
+
 const CMDS_DIR = path.join(__dirname, '..');
 
 const CUSTOM_MENU_IMAGE = path.join(
     __dirname,
     '../../../assets/menu-image.jpg'
 );
+
+const REPO_URL =
+    'https://github.com/Xchristech2/GAAJU-MD-ULTRA';
+
+const ZIP_URL =
+    'https://github.com/Xchristech2/GAAJU-MD-ULTRA/archive/refs/heads/main.zip';
+
+const OWNER_NUMBER = '2348069675806';
+
+const CHANNEL_URL =
+    'https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z';
 
 let BOT_VERSION = 'v1.2.0';
 
@@ -68,10 +87,6 @@ const CATEGORY_ORDER = [
     'adult',
     'games'
 ];
-
-/* =========================
-   LOADING SETTINGS
-========================= */
 
 const LOADING_DURATION = 2500;
 const LOADING_STEPS = 10;
@@ -172,16 +187,10 @@ function getCategoryData() {
     if (liveRegistry && liveRegistry.size > 0) {
         const allCats = [...liveRegistry.keys()];
 
-        if (!allCats.includes('games')) {
-            allCats.push('games');
-        }
-
-        if (!allCats.includes('owner')) {
-            allCats.push('owner');
-        }
-
-        if (!allCats.includes('fun')) {
-            allCats.push('fun');
+        for (const cat of ['games', 'owner', 'fun']) {
+            if (!allCats.includes(cat)) {
+                allCats.push(cat);
+            }
         }
 
         const ordered = [
@@ -366,10 +375,6 @@ function getReadMore() {
     return String.fromCharCode(8206).repeat(4000);
 }
 
-/* =========================
-   BUILD THE NORMAL MENU
-========================= */
-
 function buildMenu(botName, prefix, owner, mode, msg) {
     const { catData, totalCmds } = getCategoryData();
     const usage = getUsage();
@@ -392,6 +397,7 @@ function buildMenu(botName, prefix, owner, mode, msg) {
 
     const totalCategories = catData.length;
     const totalReadMores = 9;
+
     const sectionSize = Math.max(
         1,
         Math.ceil(totalCategories / totalReadMores)
@@ -406,7 +412,7 @@ function buildMenu(botName, prefix, owner, mode, msg) {
         lines.push(`┏━━❐◁ *${label}*`);
 
         for (const cmd of cmdNames) {
-            lines.push(`┃➽ ${cmd}`);
+            lines.push(`┃➽ ${prefix}${cmd}`);
         }
 
         lines.push('┗━━❐◁');
@@ -429,21 +435,102 @@ function buildMenu(botName, prefix, owner, mode, msg) {
     return lines.join('\n');
 }
 
-/* =========================
-   SEND NORMAL MENU
-========================= */
+function getMenuButtons() {
+    return [
+        {
+            name: 'cta_url',
+            buttonParamsJson: JSON.stringify({
+                display_text: '📂 OPEN REPOSITORY',
+                url: REPO_URL
+            })
+        },
+        {
+            name: 'cta_url',
+            buttonParamsJson: JSON.stringify({
+                display_text: '📦 DOWNLOAD ZIP',
+                url: ZIP_URL
+            })
+        },
+        {
+            name: 'cta_url',
+            buttonParamsJson: JSON.stringify({
+                display_text: '👑 MESSAGE OWNER',
+                url: `https://wa.me/${OWNER_NUMBER}`
+            })
+        },
+        {
+            name: 'cta_url',
+            buttonParamsJson: JSON.stringify({
+                display_text: '📢 VISIT CHANNEL',
+                url: CHANNEL_URL
+            })
+        }
+    ];
+}
 
 async function sendNormalMenu(sock, chatId, msg, caption) {
+    const buttons = getMenuButtons();
+
+    /*
+     * Use wolfbtns for interactive buttons.
+     */
+    if (giftedBtns?.sendInteractiveMessage) {
+        try {
+            const payload = {
+                text: caption,
+                footer: 'Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ',
+                interactiveButtons: buttons
+            };
+
+            /*
+             * If an image exists, attach it to the
+             * interactive message when supported.
+             */
+            if (fs.existsSync(CUSTOM_MENU_IMAGE)) {
+                payload.image = fs.readFileSync(CUSTOM_MENU_IMAGE);
+            }
+
+            await giftedBtns.sendInteractiveMessage(
+                sock,
+                chatId,
+                payload
+            );
+
+            return;
+        } catch (error) {
+            console.error(
+                '[MENU] Interactive menu failed:',
+                error.message
+            );
+        }
+    }
+
+    /*
+     * Fallback: show the menu and all links as
+     * ordinary clickable URLs.
+     */
+    const fallbackCaption =
+        caption +
+        '\n\n' +
+        '╭━━━〔 🔗 QUICK LINKS 〕\n' +
+        '┃ 📂 *OPEN REPOSITORY*\n' +
+        `${REPO_URL}\n\n` +
+        '┃ 📦 *DOWNLOAD ZIP*\n' +
+        `${ZIP_URL}\n\n` +
+        '┃ 👑 *MESSAGE OWNER*\n' +
+        `https://wa.me/${OWNER_NUMBER}\n\n` +
+        '┃ 📢 *VISIT CHANNEL*\n' +
+        `${CHANNEL_URL}\n` +
+        '╰━━━━━━━━━━━━━━';
+
     const msgOptions = { quoted: msg };
 
     if (fs.existsSync(CUSTOM_MENU_IMAGE)) {
-        const img = fs.readFileSync(CUSTOM_MENU_IMAGE);
-
         await sock.sendMessage(
             chatId,
             {
-                image: img,
-                caption,
+                image: fs.readFileSync(CUSTOM_MENU_IMAGE),
+                caption: fallbackCaption,
                 mimetype: 'image/jpeg'
             },
             msgOptions
@@ -454,14 +541,10 @@ async function sendNormalMenu(sock, chatId, msg, caption) {
 
     await sock.sendMessage(
         chatId,
-        { text: caption },
+        { text: fallbackCaption },
         msgOptions
     );
 }
-
-/* =========================
-   MENU COMMAND
-========================= */
 
 module.exports = {
     name: 'menu',
@@ -481,14 +564,11 @@ module.exports = {
         let loadingMessage;
 
         try {
-            const botName = getBotName();
+            const botName = getBotName() || 'GAAJU-MD-ULTRA';
             const p = prefix || cfg.PREFIX || '.';
             const owner = cfg.OWNER_NAME || 'Chris Gaaju';
             const mode = (cfg.MODE || 'public').toUpperCase();
 
-            /*
-             * Send a small temporary loading message.
-             */
             loadingMessage = await sock.sendMessage(
                 chatId,
                 {
@@ -499,10 +579,6 @@ module.exports = {
                 { quoted: msg }
             );
 
-            /*
-             * Progress from 1% to 100%.
-             * The same WhatsApp message is edited.
-             */
             for (let step = 1; step <= LOADING_STEPS; step++) {
                 const percent = step * 10;
 
@@ -523,9 +599,6 @@ module.exports = {
                 );
             }
 
-            /*
-             * Remove the loading message.
-             */
             try {
                 await sock.sendMessage(
                     chatId,
@@ -540,9 +613,6 @@ module.exports = {
                 );
             }
 
-            /*
-             * Display the complete original menu.
-             */
             const caption = buildMenu(
                 botName,
                 p,
@@ -561,10 +631,6 @@ module.exports = {
         } catch (error) {
             console.error('[MENU ERROR]', error);
 
-            /*
-             * Try to remove the temporary loading message
-             * if an error occurs.
-             */
             if (loadingMessage) {
                 try {
                     await sock.sendMessage(
