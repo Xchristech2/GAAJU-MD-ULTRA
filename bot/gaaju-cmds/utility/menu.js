@@ -486,7 +486,8 @@ function buildMenu(botName, prefix, owner, mode, msg) {
         lines.push(`┏━━❐◁ *${label}*`);
 
         for (const cmd of cmdNames) {
-            lines.push(`┃➽ ${prefix}${cmd}`);
+            // Prefix removed from displayed commands
+            lines.push(`┃➽ ${cmd}`);
         }
 
         lines.push('┗━━❐◁');
