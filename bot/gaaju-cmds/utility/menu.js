@@ -87,14 +87,21 @@ function addCommandOnce(list, command) {
 
 function addForcedCommands(cat, cmdNames) {
     if (cat === 'owner') {
-        addCommandOnce(cmdNames, 'block');
-        addCommandOnce(cmdNames, 'unblock');
-        addCommandOnce(cmdNames, 'gaaju');
-        addCommandOnce(cmdNames, 'anticall');
-        addCommandOnce(cmdNames, 'setprofile');
-        addCommandOnce(cmdNames, 'addjid');
-        addCommandOnce(cmdNames, 'lastseen');
-        addCommandOnce(cmdNames, 'anticallmessage');
+        [
+            'block',
+            'unblock',
+            'gaaju',
+            'anticall',
+            'setprofile',
+            'addjid',
+            'lastseen',
+            'anticallmessage',
+            'health',
+            'groupadd',
+            'reshare'
+        ].forEach(command =>
+            addCommandOnce(cmdNames, command)
+        );
     }
 
     if (cat === 'utility') {
@@ -146,6 +153,17 @@ function addForcedCommands(cat, cmdNames) {
             addCommandOnce(cmdNames, command)
         );
     }
+
+    if (cat === 'fun') {
+        [
+            'hack',
+            'insult',
+            'quote',
+            'fakeblank'
+        ].forEach(command =>
+            addCommandOnce(cmdNames, command)
+        );
+    }
 }
 
 function getCategoryData() {
@@ -156,6 +174,14 @@ function getCategoryData() {
 
         if (!allCats.includes('games')) {
             allCats.push('games');
+        }
+
+        if (!allCats.includes('owner')) {
+            allCats.push('owner');
+        }
+
+        if (!allCats.includes('fun')) {
+            allCats.push('fun');
         }
 
         const ordered = [
@@ -201,6 +227,12 @@ function getCategoryData() {
         );
 
         return { catData: [], totalCmds: 0 };
+    }
+
+    for (const cat of ['owner', 'fun']) {
+        if (!allCats.includes(cat)) {
+            allCats.push(cat);
+        }
     }
 
     const ordered = [
