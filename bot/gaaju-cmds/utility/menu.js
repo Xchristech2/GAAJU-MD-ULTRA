@@ -28,24 +28,24 @@ try {
 } catch {}
 
 const CATEGORY_LABELS = {
-    ai: '🤖 AI',
-    adult: '🔞 ADULT',
-    automation: '⚙️ AUTOMATION',
-    channel: '📢 CHANNEL',
-    download: '📥 DOWNLOAD',
-    education: '📚 EDUCATION',
-    fun: '😂 FUN',
-    games: '🎮 GAMES',
-    group: '👥 GROUP',
-    image: '🖼️ IMAGE',
-    movie: '🎬 MOVIE',
-    news: '📰 NEWS',
-    owner: '👑 OWNER',
-    search: '🔎 SEARCH',
-    spiritual: '🕊️ SPIRITUAL',
-    sports: '⚽ SPORTS',
-    stalker: '🔍 STALKER',
-    utility: '🔧 UTILITY'
+    ai: 'AI',
+    adult: 'ADULT',
+    automation: 'AUTOMATION',
+    channel: 'CHANNEL',
+    download: 'DOWNLOAD',
+    education: 'EDUCATION',
+    fun: 'FUN',
+    games: 'GAMES',
+    group: 'GROUP',
+    image: 'IMAGE',
+    movie: 'MOVIE',
+    news: 'NEWS',
+    owner: 'OWNER',
+    search: 'SEARCH',
+    spiritual: 'SPIRITUAL',
+    sports: 'SPORTS',
+    stalker: 'STALKER',
+    utility: 'UTILITY'
 };
 
 const CATEGORY_ORDER = [
@@ -547,12 +547,8 @@ module.exports = {
                 '.';
 
             const owner =
-                cfg.OWNER_NUMBER
-                    ? `+${cfg.OWNER_NUMBER}`
-                    : (
-                        cfg.OWNER_NAME ||
-                        'GAAJU'
-                    );
+                cfg.OWNER_NAME ||
+                'Chris Gaaju';
 
             const mode =
                 (
@@ -570,56 +566,58 @@ module.exports = {
 
             const lines = [];
 
+            // MAIN HEADER
             lines.push(
-                `┏━━❐➽ *${botName}* ➽❐━━`
+                `┏━━❐◁ *${botName}*`
             );
 
             lines.push(
-                `┃ *Prefix:* [${p}]`
+                `┃ *ᴘʀᴇꜰɪx:* [${p}]`
             );
 
             lines.push(
-                `┃ *Owner:* ${owner}`
+                `┃ *ᴏᴡɴᴇʀ:* ${owner}`
             );
 
             lines.push(
-                `┃ *Mode:* *${mode}*`
+                `┃ *ᴍᴏᴅᴇ:* ${mode}`
             );
 
             lines.push(
-                `┃ *Platform:* *${getPlatform()}*`
+                `┃ *ᴘʟᴀᴛꜰᴏʀᴍ:* ${getPlatform()}`
             );
 
             lines.push(
-                `┃ *Speed:* *${getSpeed(msg)}*`
+                `┃ *ꜱᴘᴇᴇᴅ:* ${getSpeed(msg)}`
             );
 
             lines.push(
-                `┃ *Uptime:* *${getUptime()}*`
+                `┃ *ᴜᴘᴛɪᴍᴇ:* ${getUptime()}`
             );
 
             lines.push(
-                `┃ *Version:* *${BOT_VERSION}*`
+                `┃ *ᴠᴇʀꜱɪᴏɴ:* ${BOT_VERSION}`
             );
 
             lines.push(
-                `┃ *Usage:* *${usage.text}*`
+                `┃ *ᴜꜱᴀɢᴇ:* ${usage.text}`
             );
 
             lines.push(
-                `┃ *RAM:* ${getBar(
+                `┃ *ʀᴀᴍ:* ${getBar(
                     usage.percent
                 )}`
             );
 
             lines.push(
-                `┃ *Commands:* *${totalCmds}*`
+                `┃ *ᴄᴏᴍᴍᴀɴᴅꜱ:* ${totalCmds}`
             );
 
             lines.push(
-                `┗━━❐➽`
+                `┗━━❐◁`
             );
 
+            // REAL WHATSAPP READ MORE
             lines.push(
                 getReadMore()
             );
@@ -652,25 +650,25 @@ module.exports = {
 
                 const label =
                     CATEGORY_LABELS[cat] ||
-                    `📁 ${cat.toUpperCase()}`;
+                    cat.toUpperCase();
 
+                // CATEGORY HEADER
                 lines.push(
-                    `┃ ╭━━━〔 *${label}* 〕`
+                    `┏━━❐◁ *${label}*`
                 );
 
+                // COMMANDS
                 for (const cmd of cmdNames) {
 
-                    // Prefix removed from menu display
                     lines.push(
-                        `┃ ➽ ${cmd}`
+                        `┃➽ ${cmd}`
                     );
                 }
 
+                // CATEGORY FOOTER
                 lines.push(
-                    `╰━━━━━━━━━━━`
+                    `┗━━❐◁`
                 );
-
-                lines.push('');
 
                 categoryIndex++;
 
