@@ -2,50 +2,21 @@
 
 module.exports = {
     name: 'lastseen',
-
-    aliases: [
-        'setlastseen',
-        'lastseenprivacy',
-        'lsprivacy'
-    ],
-
-    description:
-        'Control who can see your last seen on WhatsApp',
-
+    aliases: ['setlastseen', 'lastseenprivacy', 'lsprivacy'],
+    description: 'Control who can see your WhatsApp last seen',
     category: 'owner',
-
     ownerOnly: true,
 
-    async execute(
-        sock,
-        msg,
-        args,
-        prefix,
-        ctx
-    ) {
-        const chatId =
-            msg.key.remoteJid;
+    async execute(sock, msg, args, prefix, extra) {
+        const chatId = msg.key.remoteJid;
+        const action = String(args?.[0] || '').toLowerCase().trim();
 
-        const action =
-            (args[0] || '')
-                .toLowerCase()
-                .trim();
-
-        const send = async (
-            text,
-            reaction = null
-        ) => {
+        const send = async (text, reaction) => {
             if (reaction) {
                 try {
-                    await sock.sendMessage(
-                        chatId,
-                        {
-                            react: {
-                                text: reaction,
-                                key: msg.key
-                            }
-                        }
-                    );
+                    await sock.sendMessage(chatId, {
+                        react: { text: reaction, key: msg.key }
+                    });
                 } catch {}
             }
 
@@ -56,184 +27,146 @@ module.exports = {
             );
         };
 
+        // Owner and sudo permission check
+        let isOwner = false;
+
         try {
-            await sock.sendMessage(
-                chatId,
-                {
-                    react: {
-                        text: '⏳',
-                        key: msg.key
-                    }
-                }
-            );
+            isOwner = Boolean(extra?.jidManager?.isOwner?.(msg));
+        } catch (error) {
+            console.error('[LASTSEEN] Owner check error:', error);
+        }
+
+        if (!isOwner) {
+            return send('❌ *Owner Only Command*', '❌');
+        }
+
+        const settings = {
+            everyone: {
+                value: 'all',
+                label: 'Everyone',
+                emoji: '🌍',
+                description: 'Anyone can see your last seen.'
+            },
+            all: {
+                value: 'all',
+                label: 'Everyone',
+                emoji: '🌍',
+                description: 'Anyone can see your last seen.'
+            },
+            contacts: {
+                value: 'contacts',
+                label: 'Contacts Only',
+                emoji: '👥',
+                description: 'Only your contacts can see your last seen.'
+            },
+            except: {
+                value: 'contact_blacklist',
+                label: 'Contacts Except...',
+                emoji: '🚫',
+                description: 'Contacts you exclude cannot see your last seen.'
+            },
+            nobody: {
+                value: 'none',
+                label: 'Nobody',
+                emoji: '🔒',
+                description: 'Your last seen is hidden from everyone.'
+            },
+            none: {
+                value: 'none',
+                label: 'Nobody',
+                emoji: '🔒',
+                description: 'Your last seen is hidden from everyone.'
+            },
+            hide: {
+                value: 'none',
+                label: 'Nobody',
+                emoji: '🔒',
+                description: 'Your last seen is hidden from everyone.'
+            },
+            off: {
+                value: 'none',
+                label: 'Nobody',
+                emoji: '🔒',
+                description: 'Your last seen is hidden from everyone.'
+            }
+        };
+
+        try {
+            await sock.sendMessage(chatId, {
+                react: { text: '⏳', key: msg.key }
+            });
         } catch {}
 
-        // Everyone
-        if (
-            action === 'everyone' ||
-            action === 'all'
-        ) {
-            await sock.updateLastSeenPrivacy(
-                'all'
-            );
-
-            return send(
-`╭━━━〔 🕓 *LAST SEEN PRIVACY* 〕
-┃
-┃ *Set:* 🌍 Everyone
-┃
-┃ Anyone can see your last seen.
-┃
-╰━━━━━━━━━━━`,
-                '🌍'
-            );
-        }
-
-        // Contacts
-        if (action === 'contacts') {
-            await sock.updateLastSeenPrivacy(
-                'contacts'
-            );
-
-            return send(
-`╭━━━〔 🕓 *LAST SEEN PRIVACY* 〕
-┃
-┃ *Set:* 👥 Contacts Only
-┃
-┃ Only your contacts can see
-┃ your last seen.
-┃
-╰━━━━━━━━━━━`,
-                '👥'
-            );
-        }
-
-        // Contacts except blacklist
-        if (action === 'except') {
-            await sock.updateLastSeenPrivacy(
-                'contact_blacklist'
-            );
-
-            return send(
-`╭━━━〔 🕓 *LAST SEEN PRIVACY* 〕
-┃
-┃ *Set:* 🚫 Contacts Except...
-┃
-┃ Contacts except blacklisted
-┃ ones can see your last seen.
-┃
-╰━━━━━━━━━━━`,
-                '🚫'
-            );
-        }
-
-        // Nobody
-        if (
-            action === 'none' ||
-            action === 'nobody' ||
-            action === 'hide' ||
-            action === 'off'
-        ) {
-            await sock.updateLastSeenPrivacy(
-                'none'
-            );
-
-            return send(
-`╭━━━〔 🕓 *LAST SEEN PRIVACY* 〕
-┃
-┃ *Set:* 🔒 Nobody
-┃
-┃ No one can see your last seen.
-┃
-╰━━━━━━━━━━━`,
-                '🔒'
-            );
-        }
-
-        // Show current status
-        let currentStatus =
-            'Unknown';
-
         try {
-            const privacy =
-                await sock.fetchPrivacySettings(
-                    true
+            // Update last-seen privacy
+            if (action && settings[action]) {
+                const selected = settings[action];
+
+                await sock.updateLastSeenPrivacy(selected.value);
+
+                return send(
+                    `*LAST SEEN PRIVACY UPDATED*\n\n` +
+                    `${selected.emoji} *Setting:* ${selected.label}\n` +
+                    `📝 *Details:* ${selected.description}\n\n` +
+                    `_Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ_`,
+                    '✅'
+                );
+            }
+
+            if (action) {
+                return send(
+                    `❌ *Invalid Option*\n\n` +
+                    `Use ${prefix}lastseen to view the available settings.`,
+                    '❌'
+                );
+            }
+
+            // Fetch current privacy setting
+            let currentStatus = 'Unknown';
+
+            try {
+                const privacy = await sock.fetchPrivacySettings(true);
+                const value = privacy.lastSeen || privacy.last;
+
+                const current = Object.values(settings).find(
+                    item => item.value === value
                 );
 
-            const last =
-                privacy.last ||
-                privacy.lastSeen;
-
-            if (last === 'all') {
-                currentStatus =
-                    '🌍 Everyone';
-            } else if (
-                last === 'contacts'
-            ) {
-                currentStatus =
-                    '👥 Contacts Only';
-            } else if (
-                last === 'contact_blacklist'
-            ) {
-                currentStatus =
-                    '🚫 Contacts Except...';
-            } else if (
-                last === 'none'
-            ) {
-                currentStatus =
-                    '🔒 Nobody';
-            } else {
-                currentStatus =
-                    last || 'Unknown';
+                currentStatus = current
+                    ? `${current.emoji} ${current.label}`
+                    : value || 'Unknown';
+            } catch (error) {
+                console.error('[LASTSEEN] Privacy fetch error:', error);
             }
-        } catch {}
 
-        return send(
-`╭━━━〔 🕓 *LAST SEEN PRIVACY* 〕
-┃
-┃ *Current:* ${currentStatus}
-┃
-┃ ╭━━〔 ⚙️ *OPTIONS* 〕
-┃
-┃ ➽ ${prefix}lastseen everyone
-┃ ➽ ${prefix}lastseen contacts
-┃ ➽ ${prefix}lastseen except
-┃ ➽ ${prefix}lastseen nobody
-┃
-╰━━━━━━━━━━━`,
-            '📋'
-        );
-
-    } catch (error) {
-        console.error(
-            '[LASTSEEN ERROR]',
-            error
-        );
-
-        try {
-            await sock.sendMessage(
-                chatId,
-                {
-                    react: {
-                        text: '❌',
-                        key: msg.key
-                    }
-                }
+            return send(
+                `*LAST SEEN PRIVACY*\n\n` +
+                `📌 *Current Setting:* ${currentStatus}\n\n` +
+                `*AVAILABLE SETTINGS*\n\n` +
+                `🌍 *Everyone*\n` +
+                `Anyone can see your last seen.\n` +
+                `Command: ${prefix}lastseen everyone\n\n` +
+                `👥 *Contacts Only*\n` +
+                `Only your contacts can see it.\n` +
+                `Command: ${prefix}lastseen contacts\n\n` +
+                `🚫 *Contacts Except...*\n` +
+                `Exclude selected contacts.\n` +
+                `Command: ${prefix}lastseen except\n\n` +
+                `🔒 *Nobody*\n` +
+                `Hide your last seen from everyone.\n` +
+                `Command: ${prefix}lastseen nobody\n\n` +
+                `_Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ_`,
+                '📋'
             );
-        } catch {}
+        } catch (error) {
+            console.error('[LASTSEEN] Update error:', error);
 
-        return sock.sendMessage(
-            chatId,
-            {
-                text:
-`❌ *FAILED TO UPDATE LAST SEEN*
-
-${error.message}`
-            },
-            {
-                quoted: msg
-            }
-        );
+            return send(
+                `❌ *FAILED TO UPDATE LAST SEEN*\n\n` +
+                `Error: ${error.message}\n\n` +
+                `Check your Baileys version and try again.`,
+                '❌'
+            );
+        }
     }
-}
 };
