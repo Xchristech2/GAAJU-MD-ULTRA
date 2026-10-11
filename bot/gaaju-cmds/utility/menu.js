@@ -94,7 +94,13 @@ function addForcedCommands(cat, cmdNames) {
             'anticallmessage',
             'health',
             'groupadd',
-            'reshare'
+            'reshare',
+
+            // Newly added commands
+            'about',
+            'latestupdates',
+            'blockall',
+            'online'
         ].forEach(command =>
             addCommandOnce(cmdNames, command)
         );
@@ -226,16 +232,10 @@ function getCategoryData() {
     if (liveRegistry && liveRegistry.size > 0) {
         const allCats = [...liveRegistry.keys()];
 
-        if (!allCats.includes('games')) {
-            allCats.push('games');
-        }
-
-        if (!allCats.includes('owner')) {
-            allCats.push('owner');
-        }
-
-        if (!allCats.includes('fun')) {
-            allCats.push('fun');
+        for (const cat of ['games', 'owner', 'fun']) {
+            if (!allCats.includes(cat)) {
+                allCats.push(cat);
+            }
         }
 
         const ordered = [
@@ -482,50 +482,17 @@ function buildMenu(
     const usage = getUsage();
     const lines = [];
 
-    lines.push(
-        `┏━━❐◁ *${botName}*`
-    );
-
-    lines.push(
-        `┃ *ᴘʀᴇꜰɪx:* [${prefix}]`
-    );
-
-    lines.push(
-        `┃ *ᴏᴡɴᴇʀ:* ${owner}`
-    );
-
-    lines.push(
-        `┃ *ᴍᴏᴅᴇ:* ${mode}`
-    );
-
-    lines.push(
-        `┃ *ᴘʟᴀᴛꜰᴏʀᴍ:* ${getPlatform()}`
-    );
-
-    lines.push(
-        `┃ *ꜱᴘᴇᴇᴅ:* ${getSpeed(msg)}`
-    );
-
-    lines.push(
-        `┃ *ᴜᴘᴛɪᴍᴇ:* ${getUptime()}`
-    );
-
-    lines.push(
-        `┃ *ᴠᴇʀꜱɪᴏɴ:* ${BOT_VERSION}`
-    );
-
-    lines.push(
-        `┃ *ᴜꜱᴀɢᴇ:* ${usage.text}`
-    );
-
-    lines.push(
-        `┃ *ʀᴀᴍ:* ${getBar(usage.percent)}`
-    );
-
-    lines.push(
-        `┃ *ᴄᴏᴍᴍᴀɴᴅꜱ:* ${totalCmds}`
-    );
-
+    lines.push(`┏━━❐◁ *${botName}*`);
+    lines.push(`┃ *ᴘʀᴇꜰɪx:* [${prefix}]`);
+    lines.push(`┃ *ᴏᴡɴᴇʀ:* ${owner}`);
+    lines.push(`┃ *ᴍᴏᴅᴇ:* ${mode}`);
+    lines.push(`┃ *ᴘʟᴀᴛꜰᴏʀᴍ:* ${getPlatform()}`);
+    lines.push(`┃ *ꜱᴘᴇᴇᴅ:* ${getSpeed(msg)}`);
+    lines.push(`┃ *ᴜᴘᴛɪᴍᴇ:* ${getUptime()}`);
+    lines.push(`┃ *ᴠᴇʀꜱɪᴏɴ:* ${BOT_VERSION}`);
+    lines.push(`┃ *ᴜꜱᴀɢᴇ:* ${usage.text}`);
+    lines.push(`┃ *ʀᴀᴍ:* ${getBar(usage.percent)}`);
+    lines.push(`┃ *ᴄᴏᴍᴍᴀɴᴅꜱ:* ${totalCmds}`);
     lines.push('┗━━❐◁');
 
     lines.push(getReadMore());
@@ -535,28 +502,20 @@ function buildMenu(
 
     const sectionSize = Math.max(
         1,
-        Math.ceil(
-            totalCategories / totalReadMores
-        )
+        Math.ceil(totalCategories / totalReadMores)
     );
 
     let categoryIndex = 0;
     let readMoreCount = 1;
 
-    for (const {
-        cat,
-        cmdNames
-    } of catData) {
+    for (const { cat, cmdNames } of catData) {
         const label =
             CATEGORY_LABELS[cat] ||
             cat.toUpperCase();
 
-        lines.push(
-            `┏━━❐◁ *${label}*`
-        );
+        lines.push(`┏━━❐◁ *${label}*`);
 
         for (const cmd of cmdNames) {
-            // Commands are displayed WITHOUT the prefix.
             lines.push(`┃➽ ${cmd}`);
         }
 
@@ -575,9 +534,7 @@ function buildMenu(
     }
 
     lines.push(` ${botName}`);
-    lines.push(
-        '> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ'
-    );
+    lines.push('> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ');
 
     return lines.join('\n');
 }
@@ -595,15 +552,8 @@ async function sendNormalMenu(
     };
 
     try {
-        if (
-            fs.existsSync(
-                CUSTOM_MENU_IMAGE
-            )
-        ) {
-            const img =
-                fs.readFileSync(
-                    CUSTOM_MENU_IMAGE
-                );
+        if (fs.existsSync(CUSTOM_MENU_IMAGE)) {
+            const img = fs.readFileSync(CUSTOM_MENU_IMAGE);
 
             await sock.sendMessage(
                 chatId,
@@ -615,10 +565,7 @@ async function sendNormalMenu(
                 msgOptions
             );
 
-            console.log(
-                '[MENU] Image menu sent successfully.'
-            );
-
+            console.log('[MENU] Image menu sent successfully.');
             return;
         }
 
@@ -629,12 +576,9 @@ async function sendNormalMenu(
 
         await sock.sendMessage(
             chatId,
-            {
-                text: caption
-            },
+            { text: caption },
             msgOptions
         );
-
     } catch (error) {
         console.error(
             '[MENU] Failed sending menu:',
@@ -644,9 +588,7 @@ async function sendNormalMenu(
         try {
             await sock.sendMessage(
                 chatId,
-                {
-                    text: caption
-                },
+                { text: caption },
                 msgOptions
             );
         } catch (fallbackError) {
@@ -672,8 +614,7 @@ module.exports = {
         'list'
     ],
 
-    description:
-        'Show all available bot commands',
+    description: 'Show all available bot commands',
 
     category: 'utility',
 
@@ -684,9 +625,7 @@ module.exports = {
         prefix,
         ctx
     ) {
-        const chatId =
-            msg.key.remoteJid;
-
+        const chatId = msg.key.remoteJid;
         let loadingMessage;
 
         try {
@@ -704,36 +643,28 @@ module.exports = {
                 'Chris Gaaju';
 
             const mode =
-                (
-                    cfg.MODE ||
-                    'public'
-                ).toUpperCase();
+                (cfg.MODE || 'public').toUpperCase();
 
-            loadingMessage =
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        text:
-                            'GAAJU-ULTRA LOADING... ' +
-                            getLoadingBar(1)
-                    },
-                    {
-                        quoted: msg
-                    }
-                );
+            loadingMessage = await sock.sendMessage(
+                chatId,
+                {
+                    text:
+                        'GAAJU-ULTRA LOADING... ' +
+                        getLoadingBar(1)
+                },
+                { quoted: msg }
+            );
 
             for (
                 let step = 1;
                 step <= LOADING_STEPS;
                 step++
             ) {
-                const percent =
-                    step * 10;
+                const percent = step * 10;
 
                 if (step > 1) {
                     await sleep(
-                        LOADING_DURATION /
-                        LOADING_STEPS
+                        LOADING_DURATION / LOADING_STEPS
                     );
                 }
 
@@ -743,9 +674,7 @@ module.exports = {
                         text:
                             'GAAJU-ULTRA LOADING... ' +
                             getLoadingBar(percent),
-
-                        edit:
-                            loadingMessage.key
+                        edit: loadingMessage.key
                     }
                 );
             }
@@ -754,8 +683,7 @@ module.exports = {
                 await sock.sendMessage(
                     chatId,
                     {
-                        delete:
-                            loadingMessage.key
+                        delete: loadingMessage.key
                     }
                 );
             } catch (deleteError) {
@@ -765,14 +693,13 @@ module.exports = {
                 );
             }
 
-            const caption =
-                buildMenu(
-                    botName,
-                    p,
-                    owner,
-                    mode,
-                    msg
-                );
+            const caption = buildMenu(
+                botName,
+                p,
+                owner,
+                mode,
+                msg
+            );
 
             await sendNormalMenu(
                 sock,
@@ -780,21 +707,14 @@ module.exports = {
                 msg,
                 caption
             );
-
         } catch (error) {
-            console.error(
-                '[MENU ERROR]',
-                error
-            );
+            console.error('[MENU ERROR]', error);
 
             if (loadingMessage) {
                 try {
                     await sock.sendMessage(
                         chatId,
-                        {
-                            delete:
-                                loadingMessage.key
-                        }
+                        { delete: loadingMessage.key }
                     );
                 } catch {}
             }
@@ -807,9 +727,7 @@ module.exports = {
                             '❌ Menu failed to load. ' +
                             'Please check the bot console for the error.'
                     },
-                    {
-                        quoted: msg
-                    }
+                    { quoted: msg }
                 );
             } catch {}
         }
