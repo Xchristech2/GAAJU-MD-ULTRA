@@ -1,57 +1,67 @@
 'use strict';
 
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
 const { getBotName } = require('../../lib/botname');
 
 const OWN_REPO = 'Xchristech2/GAAJU-MD-ULTRA';
-const OWN_BRANCH = 'main';
+const OWNER_NUMBER = '2348069675806';
 
-const REPO_SITE =
-    'https://github.com/Xchristech2/GAAJU-MD-ULTRA';
+const REPO_SITE = `https://github.com/${OWN_REPO}`;
+const FORK_SITE = `${REPO_SITE}/fork`;
+const ZIP_SITE = `${REPO_SITE}/archive/refs/heads/main.zip`;
+const OWNER_SITE = `https://wa.me/${OWNER_NUMBER}`;
 
-const DEPLOY_TUTORIAL =
-    'https://youtu.be/jHYSN3vUJec?si=nimF4UmjSz-Mz2fV';
+const MENU_IMAGE = path.resolve(
+    __dirname,
+    '../../../assets/menu-image.jpg'
+);
 
-const PAIR_SITE =
-    'https://gaaju-ultra-pair-ljtv.onrender.com';
-
-const VIEW_CHANNEL =
-    'https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z';
-
-function ghGet(path) {
+function ghGet(apiPath) {
     return new Promise((resolve, reject) => {
-        https.get(
-            {
-                hostname: 'api.github.com',
-                path,
-                headers: {
-                    'User-Agent': 'GAAJU-MD-ULTRA',
-                    'Accept': 'application/vnd.github+json'
-                }
+        const req = https.get({
+            hostname: 'api.github.com',
+            path: apiPath,
+            headers: {
+                'User-Agent': 'GAAJU-MD-ULTRA',
+                'Accept': 'application/vnd.github+json'
             },
-            res => {
-                let data = '';
+            timeout: 10000
+        }, res => {
+            let data = '';
 
-                res.on('data', chunk => {
-                    data += chunk;
-                });
+            res.on('data', chunk => data += chunk);
 
-                res.on('end', () => {
-                    try {
-                        resolve(JSON.parse(data));
-                    } catch (error) {
-                        reject(error);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+
+                    if (res.statusCode < 200 || res.statusCode >= 300) {
+                        return reject(
+                            new Error(json.message || 'GitHub API request failed')
+                        );
                     }
-                });
-            }
-        ).on('error', reject);
+
+                    resolve(json);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        req.on('timeout', () => {
+            req.destroy(new Error('GitHub request timed out'));
+        });
+
+        req.on('error', reject);
     });
 }
 
 function parseRepo(input) {
     if (!input) return OWN_REPO;
 
-    input = input
+    input = String(input)
         .replace(/^https?:\/\/(www\.)?github\.com\//i, '')
         .replace(/\/+$/, '')
         .replace(/^@/, '');
@@ -66,15 +76,18 @@ function parseRepo(input) {
 }
 
 function num(value) {
-    return Number(value || 0).toLocaleString();
+    return Number(value || 0).toLocaleString('en-US');
 }
 
-function trunc(text, max = 120) {
-    if (!text) return 'No description available.';
+function formatSize(kb) {
+    if (kb < 1024) return `${num(kb)} KB`;
+    return `${(kb / 1024).toFixed(2)} MB`;
+}
 
-    text = String(text)
-        .replace(/\s+/g, ' ')
-        .trim();
+function trunc(value, max = 100) {
+    if (!value) return 'No description available.';
+
+    const text = String(value).replace(/\s+/g, ' ').trim();
 
     return text.length > max
         ? `${text.slice(0, max - 3)}...`
@@ -84,83 +97,91 @@ function trunc(text, max = 120) {
 module.exports = {
     name: 'repo',
 
-    aliases: [
-        'botrepo',
-        'repository',
-        'gitinfo',
-        'repostats'
-    ],
+    aliases: ['botrepo', 'repository', 'gitinfo', 'repostats'],
 
     description: 'Display GitHub repository information',
 
     category: 'owner',
 
-    async execute(sock, msg, args, cmdName, prefix) {
+    async execute(sock, msg, args) {
         const jid = msg.key.remoteJid;
 
         try {
             const repo = parseRepo(args?.[0]);
-
             const data = await ghGet(`/repos/${repo}`);
 
-            if (!data || data.message === 'Not Found') {
-                return await sock.sendMessage(
-                    jid,
-                    {
-                        text: '❌ *Repository not found.*'
-                    },
-                    { quoted: msg }
-                );
+            const repository = data.full_name || repo;
+            const repoUrl = data.html_url || `https://github.com/${repository}`;
+            const forkUrl = `${repoUrl}/fork`;
+            const zipUrl = `${repoUrl}/archive/refs/heads/${data.default_branch || 'main'}.zip`;
+            const ownerUrl = `https://wa.me/${OWNER_NUMBER}`;
+
+            const text = `╭━━━〔 📦 *REPOSITORY* 〕
+┃
+┃ ▸ *Name:* ${repository}
+┃ ▸ ⭐ *Stars:* ${num(data.stargazers_count)}
+┃ ▸ 🍴 *Forks:* ${num(data.forks_count)}
+┃ ▸ ❗ *Open Issues:* ${num(data.open_issues_count)}
+┃ ▸ 📁 *Repo Size:* ${formatSize(data.size || 0)}
+┃ ▸ 💻 *Language:* ${data.language || 'Unknown'}
+┃
+┃ 🔗 *Fork Link:*
+┃ ${forkUrl}
+┃
+╰━━━━━━━━━━━━━━
+
+> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ`;
+
+            const buttons = [
+                {
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '⭐ STAR REPO',
+                        url: repoUrl
+                    })
+                },
+                {
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '🍴 FORK REPO',
+                        url: forkUrl
+                    })
+                },
+                {
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '📦 DOWNLOAD ZIP',
+                        url: zipUrl
+                    })
+                },
+                {
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '👑 OWNER',
+                        url: ownerUrl
+                    })
+                }
+            ];
+
+            const message = {
+                text,
+                footer: 'GAAJU-MD-ULTRA',
+                interactiveButtons: buttons
+            };
+
+            if (fs.existsSync(MENU_IMAGE)) {
+                message.image = fs.readFileSync(MENU_IMAGE);
             }
 
-            const repository = data.full_name || repo;
-            const branch = data.default_branch || OWN_BRANCH;
-
-            const text = `📦 *${repository}*
-
-👤 Owner: ${data.owner?.login || 'Unknown'}
-⭐ Stars: ${num(data.stargazers_count)}
-🍴 Forks: ${num(data.forks_count)}
-💻 Language: ${data.language || 'Unknown'}
-🌿 Branch: ${branch}
-${data.private ? '🔒 Status: Private' : '🔓 Status: Public'}
-
-📝 *Description:*
-${trunc(data.description)}
-
-🔗 *Deployment & Resources*
-
-🌐 *Repo Site*
-${REPO_SITE}
-
-🎥 *Deployment Tutorial*
-${DEPLOY_TUTORIAL}
-
-🔑 *Pair Site*
-${PAIR_SITE}
-
-📢 *View Channel*
-${VIEW_CHANNEL}
-
-> Powered by ᴄʜʀɪs ɢᴀᴀᴊᴜ`;
-
-            await sock.sendMessage(
-                jid,
-                {
-                    text: text
-                },
-                { quoted: msg }
-            );
+            await sock.sendMessage(jid, message, { quoted: msg });
 
         } catch (error) {
-            console.error('❌ Repo command error:', error);
+            console.error('Repo command error:', error);
 
             await sock.sendMessage(
                 jid,
                 {
-                    text:
-                        '❌ *Failed to fetch repository information.*\n\n' +
-                        'Please try again later.'
+                    text: '❌ *Failed to fetch repository information.*\nPlease try again later.'
                 },
                 { quoted: msg }
             );
