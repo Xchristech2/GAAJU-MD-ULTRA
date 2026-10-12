@@ -1,5 +1,6 @@
 'use strict';
 
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { getBotName } = require('../../lib/botname');
@@ -10,12 +11,103 @@ try {
     giftedBtns = require('wolfbtns');
 } catch {}
 
+const OWN_REPO = 'Xchristech2/GAAJU-MD-ULTRA';
+const OWN_BRANCH = 'main';
+
+const DEPLOY_TUTORIAL =
+    'https://youtu.be/jHYSN3vUJec?si=nimF4UmjSz-Mz2fV';
+
+const PAIR_SITE =
+    'https://gaaju-ultra-pair-ljtv.onrender.com';
+
+const VIEW_CHANNEL =
+    'https://whatsapp.com/channel/0029VbBvGgyFsn0alyIDjw0z';
+
+const MENU_IMAGE = path.resolve(
+    process.cwd(),
+    'assets',
+    'menu-image.jpg'
+);
+
+const DEFAULT_OWNER_NUMBER = '2348069675806';
+
 const CONTACT_FILE = path.join(
     process.cwd(),
     'bot_owner_contact.json'
 );
 
-const DEFAULT_OWNER_NUMBER = '2348069675806';
+function ghGet(apiPath) {
+    return new Promise((resolve, reject) => {
+        const req = https.get({
+            hostname: 'api.github.com',
+            path: apiPath,
+            headers: {
+                'User-Agent': 'GAAJU-MD-ULTRA',
+                'Accept': 'application/vnd.github+json'
+            },
+            timeout: 10000
+        }, res => {
+            let data = '';
+
+            res.on('data', chunk => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+
+                    if (res.statusCode < 200 || res.statusCode >= 300) {
+                        return reject(
+                            new Error(json.message || 'GitHub request failed')
+                        );
+                    }
+
+                    resolve(json);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        req.on('timeout', () => {
+            req.destroy(new Error('GitHub request timed out'));
+        });
+
+        req.on('error', reject);
+    });
+}
+
+function parseRepo(input) {
+    if (!input) return OWN_REPO;
+
+    input = String(input)
+        .replace(/^https?:\/\/(www\.)?github\.com\//i, '')
+        .replace(/\/+$/, '')
+        .replace(/^@/, '');
+
+    const parts = input.split('/');
+
+    if (parts.length >= 2) {
+        return `${parts[0]}/${parts[1].replace(/\.git$/i, '')}`;
+    }
+
+    return OWN_REPO;
+}
+
+function formatNumber(value) {
+    return Number(value || 0).toLocaleString('en-US');
+}
+
+function formatSize(size) {
+    size = Number(size || 0);
+
+    if (size < 1024) {
+        return `${formatNumber(size)} KB`;
+    }
+
+    return `${(size / 1024).toFixed(2)} MB`;
+}
 
 function getOwnerContact() {
     try {
@@ -24,27 +116,16 @@ function getOwnerContact() {
                 fs.readFileSync(CONTACT_FILE, 'utf8')
             );
 
-            if (data.number) {
-                const number = String(data.number).replace(/\D/g, '');
+            const number = String(data.number || '')
+                .replace(/\D/g, '');
 
-                if (number.length >= 7) {
-                    return number;
-                }
-            }
+            if (number.length >= 7) return number;
         }
     } catch (error) {
-        console.error('[OWNER] Contact file error:', error.message);
+        console.error('[REPO] Owner contact error:', error.message);
     }
 
     return DEFAULT_OWNER_NUMBER;
-}
-
-function saveOwnerContact(number) {
-    fs.writeFileSync(
-        CONTACT_FILE,
-        JSON.stringify({ number }, null, 2),
-        'utf8'
-    );
 }
 
 function getOwnerName() {
@@ -56,7 +137,7 @@ function getOwnerName() {
     }
 }
 
-function getBotDisplayName() {
+function getDisplayName() {
     try {
         return getBotName() || 'GAAJU-MD-ULTRA';
     } catch {
@@ -64,165 +145,175 @@ function getBotDisplayName() {
     }
 }
 
-function normalizePhone(raw) {
-    return String(raw || '').replace(/\D/g, '');
-}
-
 module.exports = {
-    name: 'gaaju',
-    aliases: ['creator', 'dev', 'developer'],
-    description: 'Show or update bot owner contact',
-    category: 'owner',
-    ownerOnly: false,
+    name: 'repo',
 
-    async execute(sock, msg, args, prefix, extra = {}) {
+    aliases: [
+        'botrepo',
+        'repository',
+        'gitinfo',
+        'repostats'
+    ],
+
+    description: 'Display GitHub repository information',
+
+    category: 'owner',
+
+    async execute(sock, msg, args) {
         const jid = msg.key.remoteJid;
 
-        const send = (text, options = {}) =>
-            sock.sendMessage(
-                jid,
-                { text, ...options },
-                { quoted: msg }
+        try {
+            const repo = parseRepo(args?.[0]);
+            const data = await ghGet(
+                `/repos/${repo}`
             );
 
-        const jidManager = extra.jidManager;
+            const repository = data.full_name || repo;
+            const repoUrl = data.html_url ||
+                `https://github.com/${repository}`;
 
-        let isOwner = false;
-        let isSudo = false;
+            const forkUrl = `${repoUrl}/fork`;
 
-        try {
-            isOwner =
-                typeof jidManager?.isOwner === 'function' &&
-                jidManager.isOwner(msg);
+            const zipUrl =
+                `${repoUrl}/archive/refs/heads/` +
+                `${data.default_branch || OWN_BRANCH}.zip`;
 
-            isSudo =
-                typeof extra.isSudo === 'function' &&
-                await extra.isSudo();
-        } catch (error) {
-            console.error('[OWNER] Permission check error:', error.message);
-        }
+            const ownerNumber = getOwnerContact();
+            const ownerName = getOwnerName();
+            const botName = getDisplayName();
 
-        // Update the owner contact when a number is supplied.
-        if (args[0]) {
-            if (!isOwner && !isSudo) {
-                return send(
-                    '❌ *OWNER ONLY*\n\nOnly the bot owner or an authorized sudo user can update the owner contact.'
-                );
-            }
+            const text =
+                `╭━━━〔 📦 *REPOSITORY* 〕\n` +
+                `┃\n` +
+                `┃ ▸ *Name:* ${repository}\n` +
+                `┃ ▸ ⭐ *Stars:* ${formatNumber(data.stargazers_count)}\n` +
+                `┃ ▸ 🍴 *Forks:* ${formatNumber(data.forks_count)}\n` +
+                `┃ ▸ ❗ *Open Issues:* ${formatNumber(data.open_issues_count)}\n` +
+                `┃ ▸ 📁 *Repo Size:* ${formatSize(data.size)}\n` +
+                `┃\n` +
+                `┃ 🔗 *Fork Link:*\n` +
+                `┃ ${forkUrl}\n` +
+                `╰━━━━━━━━━━━━━━`;
 
-            const newNumber = normalizePhone(args[0]);
-
-            if (newNumber.length < 10 || newNumber.length > 15) {
-                return send(
-                    `❌ *INVALID PHONE NUMBER*\n\n` +
-                    `Example: ${prefix}owner 2348069675806`
-                );
-            }
-
-            try {
-                saveOwnerContact(newNumber);
-
-                return send(
-                    `✅ *OWNER CONTACT UPDATED*\n\n` +
-                    `📱 Number: +${newNumber}\n\n` +
-                    `_Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ_`
-                );
-            } catch (error) {
-                console.error('[OWNER] Save error:', error);
-
-                return send(
-                    '❌ Could not save the owner contact. Check file permissions.'
-                );
-            }
-        }
-
-        const ownerNumber = getOwnerContact();
-        const ownerName = getOwnerName();
-        const botName = getBotDisplayName();
-
-        try {
-            await sock.sendMessage(jid, {
-                react: {
-                    text: '👑',
-                    key: msg.key
+            const buttons = [
+                {
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '⭐ Star Repo',
+                        url: repoUrl
+                    })
+                },
+                {
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '🍴 Fork Repo',
+                        url: forkUrl
+                    })
+                },
+                {
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '📦 Download ZIP',
+                        url: zipUrl
+                    })
+                },
+                {
+                    name: 'cta_copy',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '📋 Copy Owner Number',
+                        copy_code: `+${ownerNumber}`
+                    })
+                },
+                {
+                    name: 'cta_url',
+                    buttonParamsJson: JSON.stringify({
+                        display_text: '👑 Message Owner',
+                        url: `https://wa.me/${ownerNumber}`
+                    })
                 }
-            });
-        } catch {}
+            ];
 
-        const vcard =
-            'BEGIN:VCARD\r\n' +
-            'VERSION:3.0\r\n' +
-            `FN:${ownerName} (Bot Owner)\r\n` +
-            `ORG:${botName}\r\n` +
-            `TEL;type=CELL;type=VOICE;waid=${ownerNumber}:+${ownerNumber}\r\n` +
-            'END:VCARD';
+            const footer =
+                `👑 ${ownerName}\n` +
+                `Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ`;
 
-        // Interactive buttons when wolfbtns is installed.
-        if (giftedBtns?.sendInteractiveMessage) {
-            try {
-                await giftedBtns.sendInteractiveMessage(sock, jid, {
-                    text:
-                        `👑 *${botName} OWNER*\n\n` +
-                        `👤 *Name:* ${ownerName}\n` +
-                        `📱 *Number:* +${ownerNumber}`,
-                    footer: `Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ`,
-                    interactiveButtons: [
-                        {
-                            name: 'cta_copy',
-                            buttonParamsJson: JSON.stringify({
-                                display_text: '📋 Copy Number',
-                                copy_code: `+${ownerNumber}`
-                            })
-                        },
-                        {
-                            name: 'cta_url',
-                            buttonParamsJson: JSON.stringify({
-                                display_text: '💬 Message Owner',
-                                url: `https://wa.me/${ownerNumber}`
-                            })
-                        }
-                    ]
-                });
+            // Use wolfbtns for interactive buttons.
+            if (giftedBtns?.sendInteractiveMessage) {
+                try {
+                    if (fs.existsSync(MENU_IMAGE)) {
+                        await giftedBtns.sendInteractiveMessage(
+                            sock,
+                            jid,
+                            {
+                                image: fs.readFileSync(MENU_IMAGE),
+                                text,
+                                footer,
+                                interactiveButtons: buttons
+                            }
+                        );
+                    } else {
+                        await giftedBtns.sendInteractiveMessage(
+                            sock,
+                            jid,
+                            {
+                                text,
+                                footer,
+                                interactiveButtons: buttons
+                            }
+                        );
+                    }
 
+                    return;
+                } catch (error) {
+                    console.error(
+                        '[REPO] Interactive buttons error:',
+                        error.message
+                    );
+                }
+            }
+
+            // Fallback if wolfbtns is unavailable.
+            const fallbackText =
+                `${text}\n\n` +
+                `⭐ *Star Repo:*\n${repoUrl}\n\n` +
+                `🍴 *Fork Repo:*\n${forkUrl}\n\n` +
+                `📦 *Download ZIP:*\n${zipUrl}\n\n` +
+                `👑 *Owner:* ${ownerName}\n` +
+                `📱 *Number:* +${ownerNumber}\n` +
+                `💬 https://wa.me/${ownerNumber}\n\n` +
+                `🎥 *Deployment Tutorial:*\n${DEPLOY_TUTORIAL}\n\n` +
+                `🔑 *Pair Site:*\n${PAIR_SITE}\n\n` +
+                `📢 *WhatsApp Channel:*\n${VIEW_CHANNEL}\n\n` +
+                `> Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ`;
+
+            if (fs.existsSync(MENU_IMAGE)) {
                 await sock.sendMessage(
                     jid,
                     {
-                        contacts: {
-                            displayName: `${ownerName} (Bot Owner)`,
-                            contacts: [{ vcard }]
-                        }
+                        image: fs.readFileSync(MENU_IMAGE),
+                        caption: fallbackText
                     },
                     { quoted: msg }
                 );
-
-                return;
-            } catch (error) {
-                console.error(
-                    '[OWNER] Interactive buttons unavailable:',
-                    error.message
+            } else {
+                await sock.sendMessage(
+                    jid,
+                    { text: fallbackText },
+                    { quoted: msg }
                 );
             }
+        } catch (error) {
+            console.error('[REPO] Command error:', error);
+
+            await sock.sendMessage(
+                jid,
+                {
+                    text:
+                        '❌ *Failed to fetch repository information.*\n\n' +
+                        'Please try again later.'
+                },
+                { quoted: msg }
+            );
         }
-
-        // Fallback when wolfbtns is unavailable.
-        await send(
-            `👑 *${botName} OWNER*\n\n` +
-            `👤 *Name:* ${ownerName}\n` +
-            `📱 *Number:* +${ownerNumber}\n\n` +
-            `💬 *Message Owner:*\n` +
-            `https://wa.me/${ownerNumber}\n\n` +
-            `_Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ_`
-        );
-
-        await sock.sendMessage(
-            jid,
-            {
-                contacts: {
-                    displayName: `${ownerName} (Bot Owner)`,
-                    contacts: [{ vcard }]
-                }
-            },
-            { quoted: msg }
-        );
     }
 };
