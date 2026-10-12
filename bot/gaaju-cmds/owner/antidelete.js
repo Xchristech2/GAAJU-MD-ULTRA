@@ -1,375 +1,938 @@
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const { downloadMediaMessage } = require('wolfsocket');
+
 const {
-  downloadMediaMessage
-} = require("wolfsocket");
+    get,
+    set
+} = require('../../lib/autoconfig');
+
 const {
-  get,
-  set
-} = require("../../lib/autoconfig");
+    getBotName
+} = require('../../lib/botname');
+
 const {
-  getBotName
-} = require("../../lib/botname");
+    resolveDisplay
+} = require('../../lib/groupUtils');
+
 const {
-  resolveDisplay
-} = require("../../lib/groupUtils");
-const {
-  isBotDeleted
-} = require("../../lib/bot-delete-guard");
-const config = require("../../config");
+    isBotDeleted
+} = require('../../lib/bot-delete-guard');
+
+const config = require('../../config');
+
 const _store = new Map();
-const MAX_MSGS = 500;
+
+const MAX_MSGS = 1000;
+const STORE_TIME = 30 * 60 * 1000;
+
 let _sock = null;
+
 const _revokedIds = new Set();
-function _markRevoked(_0x3acd88) {
-  if (_revokedIds.has(_0x3acd88)) {
-    return false;
-  }
-  _revokedIds.add(_0x3acd88);
-  setTimeout(() => _revokedIds.delete(_0x3acd88), 10000);
-  return true;
+
+const _registered = new WeakSet();
+
+function cleanJid(jid = '') {
+    return String(jid)
+        .replace(/:\d+(?=@)/, '');
 }
-function _resolveContent(_0x1d3285) {
-  if (!_0x1d3285) {
-    return null;
-  }
-  return _0x1d3285.ephemeralMessage?.message || _0x1d3285.viewOnceMessage?.message || _0x1d3285.viewOnceMessageV2?.message?.viewOnceMessage?.message || _0x1d3285;
-}
-function _addToStore(_0x4711c7) {
-  if (!_0x4711c7?.key?.id) {
-    return;
-  }
-  const _0x1e3caa = _resolveContent(_0x4711c7.message);
-  if (!_0x1e3caa) {
-    return;
-  }
-  _store.set(_0x4711c7.key.id, {
-    msg: _0x4711c7,
-    content: _0x1e3caa,
-    at: Date.now()
-  });
-  if (_store.size > MAX_MSGS) {
-    _store.delete(_store.keys().next().value);
-  }
-}
-function _getCfg() {
-  const _0x3240db = get("antidelete") || {};
-  if (typeof _0x3240db.enabled === "boolean" && _0x3240db.global === undefined) {
-    _0x3240db.global = _0x3240db.enabled;
-    delete _0x3240db.enabled;
-  }
-  if (!_0x3240db.chats) {
-    _0x3240db.chats = {};
-  }
-  return _0x3240db;
-}
-function _chatCfg(_0x5b0310, _0x55d284) {
-  const _0x58dc1b = _0x5b0310.chats?.[_0x55d284];
-  if (!_0x58dc1b) {
-    return null;
-  }
-  if (_0x58dc1b === true) {
-    return {
-      enabled: true,
-      mode: "owner"
-    };
-  }
-  return _0x58dc1b;
-}
-function _isChatEnabled(_0x55c211) {
-  const _0x38b38c = _getCfg();
-  if (_0x38b38c.global === true) {
+
+function markRevoked(id) {
+    if (!id) return false;
+
+    if (_revokedIds.has(id)) {
+        return false;
+    }
+
+    _revokedIds.add(id);
+
+    setTimeout(() => {
+        _revokedIds.delete(id);
+    }, 15000);
+
     return true;
-  }
-  const _0x331430 = _chatCfg(_0x38b38c, _0x55c211);
-  return _0x331430?.enabled === true;
 }
-function _getChatMode(_0x452a1a, _0x17cb69) {
-  const _0x5108e8 = _chatCfg(_0x452a1a, _0x17cb69);
-  return _0x5108e8?.mode || "owner";
+
+function resolveContent(message) {
+    if (!message) return null;
+
+    if (message.ephemeralMessage?.message) {
+        return resolveContent(message.ephemeralMessage.message);
+    }
+
+    if (message.viewOnceMessage?.message) {
+        return resolveContent(message.viewOnceMessage.message);
+    }
+
+    if (message.viewOnceMessageV2?.message) {
+        return resolveContent(message.viewOnceMessageV2.message);
+    }
+
+    if (message.viewOnceMessageV2Extension?.message) {
+        return resolveContent(message.viewOnceMessageV2Extension.message);
+    }
+
+    return message;
 }
-const _adRegistered = new WeakSet();
-function initAntidelete(_0x511fc0) {
-  _sock = _0x511fc0;
-  if (_adRegistered.has(_0x511fc0)) {
-    console.log("[ANTIDELETE] Self-listener already registered for this sock — skipping duplicate");
-    return Promise.resolve();
-  }
-  _adRegistered.add(_0x511fc0);
-  _0x511fc0.ev.on("messages.upsert", ({
-    messages: _0x20f903
-  }) => {
-    for (const _0x22764 of _0x20f903) {
-      try {
-        if (_0x22764?.key?.remoteJid === "status@broadcast") {
-          continue;
-        }
-        if (!_0x22764?.key?.id || !_0x22764.message) {
-          continue;
-        }
-        if (_0x22764.messageStubType) {
-          continue;
-        }
-        const _0x49b6d4 = _0x22764.message?.protocolMessage;
-        if (_0x49b6d4 && (_0x49b6d4.type === 0 || _0x49b6d4.type === 4)) {
-          continue;
-        }
-        _addToStore(_0x22764);
-      } catch {}
+
+function addToStore(msg) {
+    if (!msg?.key?.id || !msg.message) {
+        return;
     }
-  });
-  console.log("[ANTIDELETE] Self-listener registered — storing from connect-time");
-  return Promise.resolve();
-}
-async function antideleteStoreMessage(_0x1a3b02) {
-  if (_0x1a3b02?.message) {
-    _addToStore(_0x1a3b02);
-  }
-}
-async function antideleteHandleUpdate(_0xc1e411) {
-  try {
-    const _0x16983 = _0xc1e411?.update?.message === null || _0xc1e411?.update?.messageStubType != null;
-    if (!_0x16983) {
-      return;
+
+    if (msg.key.remoteJid === 'status@broadcast') {
+        return;
     }
-    const _0x4c5d29 = _0xc1e411?.key;
-    if (!_0x4c5d29?.id) {
-      return;
+
+    const content = resolveContent(msg.message);
+
+    if (!content) {
+        return;
     }
-    const _0x2d12ec = _0x4c5d29.remoteJid;
-    if (!_markRevoked(_0x4c5d29.id)) {
-      console.log("[ANTIDELETE] ⏭️ Dedup skip for " + _0x4c5d29.id);
-      return;
-    }
-    if (!_isChatEnabled(_0x2d12ec)) {
-      return;
-    }
-    if (!_sock) {
-      console.log("[ANTIDELETE] Sock not ready");
-      return;
-    }
-    if (isBotDeleted(_0x4c5d29.id)) {
-      console.log("[ANTIDELETE] ⏭️ Skipped — bot-deleted: " + _0x4c5d29.id);
-      _store.delete(_0x4c5d29.id);
-      return;
-    }
-    console.log("[ANTIDELETE] Revoke for " + _0x4c5d29.id + " | store: " + _store.size);
-    const _0xe845cd = _store.get(_0x4c5d29.id);
-    if (!_0xe845cd) {
-      const _0x1741f6 = [..._store.keys()].slice(0, 4).join(", ");
-      console.log("[ANTIDELETE] ⚠️ Not in store | sample: [" + _0x1741f6 + "]");
-      return;
-    }
-    _store.delete(_0x4c5d29.id);
-    const {
-      msg: _0x44c26,
-      content: _0x13e538
-    } = _0xe845cd;
-    const _0x10db2f = _0x4c5d29.remoteJid || _0x44c26.key.remoteJid;
-    if (!_0x10db2f || _0x10db2f === "status@broadcast") {
-      return;
-    }
-    const _0x507d7c = _getCfg();
-    const _0x5b08bf = _getChatMode(_0x507d7c, _0x10db2f);
-    const _0xa577ad = (config.OWNER_NUMBER || "").replace(/[^0-9]/g, "") + "@s.whatsapp.net";
-    const _0x5a564d = _0x5b08bf === "owner" ? _0xa577ad : _0x10db2f;
-    if (!_0x5a564d || _0x5a564d === "@s.whatsapp.net") {
-      console.log("[ANTIDELETE] ⚠️ No valid destination — set OWNER_NUMBER in config");
-      return;
-    }
-    const _0x45889c = (_sock?.user?.id || "").split(":")[0].split("@")[0];
-    const _0x2a64c1 = _0x5a564d.split("@")[0];
-    const _0x5909a0 = _0x45889c && _0x2a64c1 === _0x45889c;
-    console.log("[ANTIDELETE] Dest: " + _0x2a64c1 + " | mode: " + _0x5b08bf + (_0x5909a0 ? " (→ Saved Messages on your WhatsApp)" : ""));
-    const _0x25f510 = _0x44c26.key.participant || _0x44c26.key.remoteJid || "";
-    const _0x566713 = _0x44c26.key.fromMe;
-    const _0x3bc34e = _0x566713 ? "You" : await resolveDisplay(_sock, _0x10db2f, _0x25f510).catch(() => _0x25f510.split("@")[0].split(":")[0]);
-    let _0x217db1 = "DM";
-    if (_0x10db2f.endsWith("@g.us")) {
-      try {
-        const _0x51ddf1 = await _sock.groupMetadata(_0x10db2f);
-        _0x217db1 = _0x51ddf1?.subject || _0x10db2f.split("@")[0];
-      } catch {
-        _0x217db1 = _0x10db2f.split("@")[0];
-      }
-    }
-    const _0xb8d0e9 = "╔═|〔  ANTI DELETE 〕\n║\n║ ▸ *From* : " + _0x3bc34e + "\n║ ▸ *Chat* : " + _0x217db1 + "\n║\n╚═|〔 " + getBotName() + " 〕";
-    const _0x3b9719 = _0x13e538?.conversation || _0x13e538?.extendedTextMessage?.text || _0x13e538?.buttonsResponseMessage?.selectedDisplayText || _0x13e538?.listResponseMessage?.title || _0x13e538?.templateButtonReplyMessage?.selectedDisplayText;
-    if (_0x3b9719) {
-      console.log("[ANTIDELETE] ✅ Text → " + _0x5a564d.split("@")[0]);
-      await _sock.sendMessage(_0x5a564d, {
-        text: _0xb8d0e9 + "\n\n" + _0x3b9719
-      });
-      return;
-    }
-    const _0x567462 = _0x13e538?.imageMessage;
-    const _0x4ec229 = _0x13e538?.videoMessage;
-    const _0x5e2fdd = _0x13e538?.audioMessage;
-    const _0x256e1a = _0x13e538?.stickerMessage;
-    const _0x3d9fc6 = _0x13e538?.documentMessage;
-    if (_0x567462 || _0x4ec229 || _0x5e2fdd || _0x256e1a || _0x3d9fc6) {
-      const _0x139c82 = _0x567462 ? "image" : _0x4ec229 ? "video" : _0x5e2fdd ? "audio" : _0x256e1a ? "sticker" : "doc";
-      console.log("[ANTIDELETE] ✅ Media (" + _0x139c82 + ") → " + _0x5a564d.split("@")[0]);
-      try {
-        const _0x11d1fd = await downloadMediaMessage({
-          key: _0x44c26.key,
-          message: _0x13e538
-        }, "buffer", {});
-        if (!_0x11d1fd?.length) {
-          throw new Error("empty buffer");
-        }
-        if (_0x567462) {
-          await _sock.sendMessage(_0x5a564d, {
-            image: _0x11d1fd,
-            caption: _0xb8d0e9
-          });
-        } else if (_0x4ec229) {
-          await _sock.sendMessage(_0x5a564d, {
-            video: _0x11d1fd,
-            caption: _0xb8d0e9,
-            mimetype: _0x4ec229.mimetype || "video/mp4"
-          });
-        } else if (_0x5e2fdd) {
-          await _sock.sendMessage(_0x5a564d, {
-            audio: _0x11d1fd,
-            mimetype: _0x5e2fdd.mimetype || "audio/ogg; codecs=opus",
-            ptt: !!_0x5e2fdd.ptt
-          });
-        } else if (_0x256e1a) {
-          await _sock.sendMessage(_0x5a564d, {
-            sticker: _0x11d1fd
-          });
-        } else if (_0x3d9fc6) {
-          await _sock.sendMessage(_0x5a564d, {
-            document: _0x11d1fd,
-            mimetype: _0x3d9fc6.mimetype || "application/octet-stream",
-            fileName: _0x3d9fc6.fileName || "file",
-            caption: _0xb8d0e9
-          });
-        }
-      } catch (_0x4d1a40) {
-        console.log("[ANTIDELETE] ⚠️ Media dl: " + _0x4d1a40.message);
-        await _sock.sendMessage(_0x5a564d, {
-          text: _0xb8d0e9 + "\n\n⚠️ [Media — download failed]"
-        });
-      }
-      return;
-    }
-    const _0x5e1de4 = Object.keys(_0x13e538 || {}).join(", ");
-    console.log("[ANTIDELETE] ⚠️ Unknown type: " + _0x5e1de4);
-    await _sock.sendMessage(_0x5a564d, {
-      text: _0xb8d0e9 + "\n\n⚠️ [Unsupported type: " + _0x5e1de4 + "]"
+
+    const id = msg.key.id;
+
+    _store.set(id, {
+        msg,
+        content,
+        chat: cleanJid(msg.key.remoteJid),
+        timestamp: Date.now()
     });
-  } catch (_0x15ea41) {
-    console.log("[ANTIDELETE] ❌ " + _0x15ea41.message);
-  }
+
+    while (_store.size > MAX_MSGS) {
+        const first = _store.keys().next().value;
+
+        if (!first) break;
+
+        _store.delete(first);
+    }
 }
-function updateAntideleteSock(_0x282eeb) {
-  _sock = _0x282eeb;
-}
-module.exports = {
-  initAntidelete: initAntidelete,
-  antideleteStoreMessage: antideleteStoreMessage,
-  antideleteHandleUpdate: antideleteHandleUpdate,
-  updateAntideleteSock: updateAntideleteSock,
-  name: "antidelete",
-  aliases: ["antidel"],
-  description: "Recover deleted messages — fully per-group",
-  category: "owner",
-  async execute(_0x1d8dc9, _0xb38b4b, _0x414baa, _0x1fa01e, _0x587e36) {
-    const _0x503b5e = _0xb38b4b.key.remoteJid;
-    try {
-      await _0x1d8dc9.sendMessage(_0x503b5e, {
-        react: {
-          text: "🗑️",
-          key: _0xb38b4b.key
+
+function cleanupStore() {
+    const now = Date.now();
+
+    for (const [id, item] of _store.entries()) {
+        if (!item?.timestamp) {
+            _store.delete(id);
+            continue;
         }
-      });
-    } catch {}
-    const _0x2e5cd4 = getBotName();
-    const _0x1c2f1b = _0x503b5e.endsWith("@g.us");
-    const _0x3d3f9a = _0x1c2f1b ? "This group" : "This DM";
-    if (!_0x587e36?.isOwnerUser && !_0x587e36?.isSudoUser) {
-      return _0x1d8dc9.sendMessage(_0x503b5e, {
-        text: "╔═|〔  ANTI DELETE 〕\n║\n║ ▸ *Status* : ❌ Owner/sudo only\n║\n╚═|〔 " + _0x2e5cd4 + " 〕"
-      }, {
-        quoted: _0xb38b4b
-      });
+
+        if (now - item.timestamp > STORE_TIME) {
+            _store.delete(id);
+        }
     }
-    let _0x1d1b8e = (_0x414baa[0] ?? "").toLowerCase().trim();
-    let _0x2405d9 = (_0x414baa[1] ?? "").toLowerCase().trim();
-    const _0x529219 = _0x3f6b2c => _0x3f6b2c === "chat" || _0x3f6b2c === "owner";
-    const _0x32bb47 = _0x46ac2f => _0x46ac2f === "on" || _0x46ac2f === "off";
-    if (_0x529219(_0x1d1b8e) && (_0x32bb47(_0x2405d9) || !_0x2405d9)) {
-      const _0x267805 = _0x1d1b8e;
-      _0x1d1b8e = _0x2405d9 || "on";
-      _0x2405d9 = _0x267805;
+}
+
+function getConfig() {
+    const cfg = get('antidelete') || {};
+
+    if (
+        typeof cfg.enabled === 'boolean' &&
+        cfg.global === undefined
+    ) {
+        cfg.global = cfg.enabled;
+        delete cfg.enabled;
     }
-    console.log("[ANTIDELETE CMD] action=\"" + _0x1d1b8e + "\" arg1=\"" + _0x2405d9 + "\" from " + _0x503b5e.split("@")[0]);
-    const _0x387cc2 = _getCfg();
-    const _0x313f35 = _chatCfg(_0x387cc2, _0x503b5e) || {
-      enabled: false,
-      mode: "owner"
-    };
-    if (!_0x1d1b8e || _0x1d1b8e === "status") {
-      const _0x3fd563 = Object.entries(_0x387cc2.chats || {}).filter(([, _0x553bb3]) => _0x553bb3 === true || _0x553bb3?.enabled).map(([_0x5cefea, _0x2f64fc]) => {
-        const _0x167718 = _0x2f64fc === true ? "owner" : _0x2f64fc?.mode || "owner";
-        return "║ ▸ " + (_0x5cefea.endsWith("@g.us") ? "👥" : "💬") + " " + _0x5cefea.split("@")[0] + " [" + _0x167718 + "]";
-      }).join("\n");
-      return _0x1d8dc9.sendMessage(_0x503b5e, {
-        text: "╔═|〔  ANTI DELETE 〕\n║\n" + ("║ ▸ *" + _0x3d3f9a + "* : " + (_0x313f35.enabled ? "✅ ON" : "❌ OFF") + "\n") + ("║ ▸ *Mode*      : " + (_0x313f35.mode || "owner") + " (chat/owner)\n") + ("║ ▸ *Global*    : " + (_0x387cc2.global ? "✅ ON" : "❌ OFF") + "\n") + ("║ ▸ *Cached*   : " + _store.size + " messages\n║\n") + (_0x3fd563 ? _0x3fd563 + "\n║\n" : "") + "║ ▸ *Usage*:\n" + ("║   " + _0x1fa01e + "antidelete on          → enable here (owner DM)\n") + ("║   " + _0x1fa01e + "antidelete on chat     → enable here (same chat)\n") + ("║   " + _0x1fa01e + "antidelete off         → disable here\n") + ("║   " + _0x1fa01e + "antidelete mode owner  → change mode this chat\n") + ("║   " + _0x1fa01e + "antidelete mode chat   → change mode this chat\n") + ("║   " + _0x1fa01e + "antidelete on all      → global on\n") + ("║   " + _0x1fa01e + "antidelete off all     → global off\n") + ("║\n╚═|〔 " + _0x2e5cd4 + " 〕")
-      }, {
-        quoted: _0xb38b4b
-      });
+
+    if (!cfg.chats || typeof cfg.chats !== 'object') {
+        cfg.chats = {};
     }
-    if (_0x1d1b8e === "on" || _0x1d1b8e === "off") {
-      const _0x4c6e04 = _0x1d1b8e === "on";
-      if (_0x2405d9 === "all") {
-        _0x387cc2.global = _0x4c6e04;
-        set("antidelete", _0x387cc2);
-        return _0x1d8dc9.sendMessage(_0x503b5e, {
-          text: "╔═|〔  ANTI DELETE 〕\n║\n║ ▸ *Global* : " + (_0x4c6e04 ? "✅ Enabled for ALL chats" : "❌ Disabled globally") + "\n║\n╚═|〔 " + _0x2e5cd4 + " 〕"
-        }, {
-          quoted: _0xb38b4b
-        });
-      }
-      _0x387cc2.chats = _0x387cc2.chats || {};
-      if (!_0x4c6e04) {
-        delete _0x387cc2.chats[_0x503b5e];
-      } else {
-        const _0x530813 = _0x2405d9 === "chat" ? "chat" : "owner";
-        _0x387cc2.chats[_0x503b5e] = {
-          enabled: true,
-          mode: _0x530813
+
+    return cfg;
+}
+
+function getChatConfig(cfg, jid) {
+    const item = cfg?.chats?.[jid];
+
+    if (!item) {
+        return null;
+    }
+
+    if (item === true) {
+        return {
+            enabled: true,
+            mode: 'owner'
         };
-      }
-      set("antidelete", _0x387cc2);
-      const _0x2160f9 = _chatCfg(_0x387cc2, _0x503b5e) || {
-        enabled: false,
-        mode: "owner"
-      };
-      return _0x1d8dc9.sendMessage(_0x503b5e, {
-        text: "╔═|〔  ANTI DELETE 〕\n║\n" + ("║ ▸ *" + _0x3d3f9a + "* : " + (_0x4c6e04 ? "✅ Enabled" : "❌ Disabled") + "\n") + (_0x4c6e04 ? "║ ▸ *Mode*      : " + _0x2160f9.mode + "\n" : "") + ("║ ▸ *Global*    : " + (_0x387cc2.global ? "✅ ON" : "❌ OFF") + "\n") + ("║\n╚═|〔 " + _0x2e5cd4 + " 〕")
-      }, {
-        quoted: _0xb38b4b
-      });
     }
-    if (_0x1d1b8e === "mode" && _0x2405d9) {
-      const _0x3aaf19 = _0x2405d9 === "chat" ? "chat" : "owner";
-      _0x387cc2.chats = _0x387cc2.chats || {};
-      const _0x912e6c = _chatCfg(_0x387cc2, _0x503b5e) || {
-        enabled: false,
-        mode: "owner"
-      };
-      _0x387cc2.chats[_0x503b5e] = {
-        ..._0x912e6c,
-        mode: _0x3aaf19
-      };
-      set("antidelete", _0x387cc2);
-      return _0x1d8dc9.sendMessage(_0x503b5e, {
-        text: "╔═|〔  ANTI DELETE 〕\n║\n" + ("║ ▸ *Mode* : *" + _0x3aaf19 + "* saved for this chat\n") + "║ ▸ chat  = recover in same chat\n║ ▸ owner = forward to owner DM\n" + ("║\n╚═|〔 " + _0x2e5cd4 + " 〕")
-      }, {
-        quoted: _0xb38b4b
-      });
+
+    return item;
+}
+
+function isChatEnabled(jid) {
+    const cfg = getConfig();
+
+    if (cfg.global === true) {
+        return true;
     }
-    return;
-  }
+
+    const chat = getChatConfig(cfg, jid);
+
+    return chat?.enabled === true;
+}
+
+function getChatMode(cfg, jid) {
+    const chat = getChatConfig(cfg, jid);
+
+    return chat?.mode === 'chat'
+        ? 'chat'
+        : 'owner';
+}
+
+function getOwnerNumber() {
+    try {
+        const number = String(
+            config.OWNER_NUMBER || ''
+        ).replace(/\D/g, '');
+
+        if (number) {
+            return number;
+        }
+    } catch {}
+
+    return '';
+}
+
+function getOwnerJid() {
+    const number = getOwnerNumber();
+
+    if (!number) {
+        return null;
+    }
+
+    return `${number}@s.whatsapp.net`;
+}
+
+async function getChatName(jid) {
+    if (!jid) {
+        return 'Unknown chat';
+    }
+
+    if (jid.endsWith('@g.us')) {
+        try {
+            const metadata = await _sock.groupMetadata(jid);
+
+            return metadata?.subject ||
+                jid.split('@')[0];
+        } catch {
+            return jid.split('@')[0];
+        }
+    }
+
+    return 'Private chat';
+}
+
+async function getSenderName(original) {
+    try {
+        const chat = cleanJid(
+            original.key.remoteJid || ''
+        );
+
+        const participant = cleanJid(
+            original.key.participant ||
+            original.key.remoteJid ||
+            ''
+        );
+
+        if (original.key.fromMe) {
+            return 'You';
+        }
+
+        const name = await resolveDisplay(
+            _sock,
+            chat,
+            participant
+        );
+
+        if (name) {
+            return name;
+        }
+
+        return participant
+            .split('@')[0]
+            .split(':')[0];
+
+    } catch {
+        return (
+            original.key.participant ||
+            original.key.remoteJid ||
+            'Unknown'
+        )
+            .split('@')[0]
+            .split(':')[0];
+    }
+}
+
+function getText(content) {
+    if (!content) return null;
+
+    return (
+        content.conversation ||
+        content.extendedTextMessage?.text ||
+        content.imageMessage?.caption ||
+        content.videoMessage?.caption ||
+        content.documentMessage?.caption ||
+        content.buttonsResponseMessage?.selectedDisplayText ||
+        content.listResponseMessage?.title ||
+        content.templateButtonReplyMessage?.selectedDisplayText ||
+        null
+    );
+}
+
+function getMediaType(content) {
+    if (!content) return null;
+
+    if (content.imageMessage) return 'image';
+    if (content.videoMessage) return 'video';
+    if (content.audioMessage) return 'audio';
+    if (content.stickerMessage) return 'sticker';
+    if (content.documentMessage) return 'document';
+
+    return null;
+}
+
+function buildHeader(sender, chatName) {
+    return (
+        `🗑️ *Anti Delete*\n\n` +
+        `👤 From: ${sender}\n` +
+        `💬 Chat: ${chatName}\n`
+    );
+}
+
+async function sendRecoveredMessage(
+    destination,
+    original,
+    content,
+    sender,
+    chatName
+) {
+    const header = buildHeader(
+        sender,
+        chatName
+    );
+
+    const text = getText(content);
+
+    if (text) {
+        await _sock.sendMessage(
+            destination,
+            {
+                text:
+                    `${header}\n` +
+                    `📝 Message:\n${text}`
+            }
+        );
+
+        return;
+    }
+
+    const mediaType = getMediaType(content);
+
+    if (!mediaType) {
+        await _sock.sendMessage(
+            destination,
+            {
+                text:
+                    `${header}\n` +
+                    `⚠️ Unsupported deleted message type.`
+            }
+        );
+
+        return;
+    }
+
+    let buffer;
+
+    try {
+        buffer = await downloadMediaMessage(
+            {
+                key: original.key,
+                message: content
+            },
+            'buffer',
+            {},
+            {
+                logger: console,
+                reuploadRequest: _sock.updateMediaMessage
+            }
+        );
+    } catch (error) {
+        console.log(
+            '[ANTIDELETE] Media download error:',
+            error.message
+        );
+
+        await _sock.sendMessage(
+            destination,
+            {
+                text:
+                    `${header}\n\n` +
+                    `⚠️ Media could not be recovered.`
+            }
+        );
+
+        return;
+    }
+
+    if (!buffer || !buffer.length) {
+        await _sock.sendMessage(
+            destination,
+            {
+                text:
+                    `${header}\n\n` +
+                    `⚠️ Media buffer is empty.`
+            }
+        );
+
+        return;
+    }
+
+    if (mediaType === 'image') {
+        await _sock.sendMessage(
+            destination,
+            {
+                image: buffer,
+                caption: header
+            }
+        );
+
+        return;
+    }
+
+    if (mediaType === 'video') {
+        await _sock.sendMessage(
+            destination,
+            {
+                video: buffer,
+                caption: header,
+                mimetype:
+                    content.videoMessage?.mimetype ||
+                    'video/mp4'
+            }
+        );
+
+        return;
+    }
+
+    if (mediaType === 'audio') {
+        await _sock.sendMessage(
+            destination,
+            {
+                audio: buffer,
+                mimetype:
+                    content.audioMessage?.mimetype ||
+                    'audio/ogg; codecs=opus',
+                ptt: !!content.audioMessage?.ptt
+            }
+        );
+
+        return;
+    }
+
+    if (mediaType === 'sticker') {
+        await _sock.sendMessage(
+            destination,
+            {
+                sticker: buffer
+            }
+        );
+
+        return;
+    }
+
+    if (mediaType === 'document') {
+        await _sock.sendMessage(
+            destination,
+            {
+                document: buffer,
+                mimetype:
+                    content.documentMessage?.mimetype ||
+                    'application/octet-stream',
+                fileName:
+                    content.documentMessage?.fileName ||
+                    'deleted-file'
+            }
+        );
+    }
+}
+
+async function handleDeletedMessage(
+    deletedKey
+) {
+    try {
+        if (!deletedKey?.id) {
+            return;
+        }
+
+        const id = deletedKey.id;
+
+        if (!markRevoked(id)) {
+            return;
+        }
+
+        const original = _store.get(id);
+
+        if (!original) {
+            console.log(
+                `[ANTIDELETE] Message not found in cache: ${id}`
+            );
+            return;
+        }
+
+        _store.delete(id);
+
+        const chatJid = cleanJid(
+            original.msg.key.remoteJid ||
+            deletedKey.remoteJid ||
+            ''
+        );
+
+        if (!chatJid || chatJid === 'status@broadcast') {
+            return;
+        }
+
+        if (!isChatEnabled(chatJid)) {
+            return;
+        }
+
+        if (isBotDeleted(id)) {
+            return;
+        }
+
+        const cfg = getConfig();
+
+        const mode = getChatMode(
+            cfg,
+            chatJid
+        );
+
+        const destination =
+            mode === 'chat'
+                ? chatJid
+                : getOwnerJid();
+
+        if (!destination) {
+            console.log(
+                '[ANTIDELETE] OWNER_NUMBER is not configured.'
+            );
+            return;
+        }
+
+        const sender = await getSenderName(
+            original.msg
+        );
+
+        const chatName = await getChatName(
+            chatJid
+        );
+
+        console.log(
+            `[ANTIDELETE] Recovering ${id} → ${destination}`
+        );
+
+        await sendRecoveredMessage(
+            destination,
+            original.msg,
+            original.content,
+            sender,
+            chatName
+        );
+
+    } catch (error) {
+        console.log(
+            '[ANTIDELETE] Recovery error:',
+            error.message
+        );
+    }
+}
+
+function extractDeletedKey(update) {
+    if (!update) {
+        return null;
+    }
+
+    const message =
+        update.update?.message ||
+        update.message ||
+        null;
+
+    const protocol =
+        message?.protocolMessage ||
+        update.update?.protocolMessage ||
+        update.protocolMessage ||
+        null;
+
+    if (!protocol) {
+        return null;
+    }
+
+    const type = protocol.type;
+
+    /*
+     * WhatsApp revoke/delete:
+     * REVOKE = 0
+     */
+    if (
+        type !== 0 &&
+        type !== '0' &&
+        String(type).toUpperCase() !== 'REVOKE'
+    ) {
+        return null;
+    }
+
+    return protocol.key || null;
+}
+
+function registerListeners(sock) {
+    if (!sock || _registered.has(sock)) {
+        return;
+    }
+
+    _registered.add(sock);
+
+    _sock = sock;
+
+    sock.ev.on(
+        'messages.upsert',
+        ({ messages = [] }) => {
+            for (const message of messages) {
+                try {
+                    if (!message?.key?.id) {
+                        continue;
+                    }
+
+                    if (
+                        message.key.remoteJid ===
+                        'status@broadcast'
+                    ) {
+                        continue;
+                    }
+
+                    /*
+                     * Never store revoke protocol messages.
+                     */
+                    if (
+                        message.message?.protocolMessage
+                    ) {
+                        continue;
+                    }
+
+                    if (!message.message) {
+                        continue;
+                    }
+
+                    addToStore(message);
+                } catch (error) {
+                    console.log(
+                        '[ANTIDELETE] Store error:',
+                        error.message
+                    );
+                }
+            }
+
+            cleanupStore();
+        }
+    );
+
+    sock.ev.on(
+        'messages.update',
+        async updates => {
+            for (const update of updates || []) {
+                try {
+                    const deletedKey =
+                        extractDeletedKey(update);
+
+                    if (deletedKey) {
+                        await handleDeletedMessage(
+                            deletedKey
+                        );
+                    }
+                } catch (error) {
+                    console.log(
+                        '[ANTIDELETE] Update error:',
+                        error.message
+                    );
+                }
+            }
+
+            cleanupStore();
+        }
+    );
+
+    console.log(
+        '[ANTIDELETE] Listener registered'
+    );
+}
+
+async function initAntidelete(sock) {
+    _sock = sock;
+
+    registerListeners(sock);
+
+    return Promise.resolve();
+}
+
+async function antideleteStoreMessage(msg) {
+    if (msg?.message) {
+        addToStore(msg);
+    }
+}
+
+async function antideleteHandleUpdate(update) {
+    const deletedKey =
+        extractDeletedKey(update);
+
+    if (deletedKey) {
+        await handleDeletedMessage(
+            deletedKey
+        );
+    }
+}
+
+function updateAntideleteSock(sock) {
+    _sock = sock;
+
+    registerListeners(sock);
+}
+
+module.exports = {
+    initAntidelete,
+    antideleteStoreMessage,
+    antideleteHandleUpdate,
+    updateAntideleteSock,
+
+    name: 'antidelete',
+
+    aliases: [
+        'antidel'
+    ],
+
+    description:
+        'Recover deleted messages',
+
+    category: 'owner',
+
+    async execute(
+        sock,
+        msg,
+        args,
+        prefix,
+        extra = {}
+    ) {
+        const jid =
+            msg.key.remoteJid;
+
+        try {
+            await sock.sendMessage(
+                jid,
+                {
+                    react: {
+                        text: '🗑️',
+                        key: msg.key
+                    }
+                }
+            );
+        } catch {}
+
+        const isOwner =
+            extra?.isOwnerUser === true;
+
+        const isSudo =
+            extra?.isSudoUser === true;
+
+        if (!isOwner && !isSudo) {
+            return sock.sendMessage(
+                jid,
+                {
+                    text:
+                        '❌ *Owner/Sudo only*\n\n' +
+                        'You do not have permission to configure Anti Delete.'
+                },
+                { quoted: msg }
+            );
+        }
+
+        const action =
+            String(args?.[0] || 'status')
+                .toLowerCase();
+
+        const option =
+            String(args?.[1] || '')
+                .toLowerCase();
+
+        const cfg = getConfig();
+
+        if (action === 'status') {
+            const chat =
+                getChatConfig(
+                    cfg,
+                    jid
+                );
+
+            return sock.sendMessage(
+                jid,
+                {
+                    text:
+                        `🗑️ *Anti Delete*\n\n` +
+                        `Status: ${
+                            cfg.global ||
+                            chat?.enabled
+                                ? '✅ ON'
+                                : '❌ OFF'
+                        }\n` +
+                        `Mode: ${
+                            chat?.mode ||
+                            'owner'
+                        }\n` +
+                        `Cached: ${_store.size} messages\n\n` +
+                        `Usage:\n` +
+                        `${prefix}antidelete on\n` +
+                        `${prefix}antidelete off\n` +
+                        `${prefix}antidelete on chat\n` +
+                        `${prefix}antidelete on owner\n` +
+                        `${prefix}antidelete mode chat\n` +
+                        `${prefix}antidelete mode owner\n` +
+                        `${prefix}antidelete on all\n` +
+                        `${prefix}antidelete off all`
+                },
+                { quoted: msg }
+            );
+        }
+
+        if (
+            action === 'on' ||
+            action === 'off'
+        ) {
+            const enabled =
+                action === 'on';
+
+            if (option === 'all') {
+                cfg.global = enabled;
+
+                set(
+                    'antidelete',
+                    cfg
+                );
+
+                return sock.sendMessage(
+                    jid,
+                    {
+                        text:
+                            `🗑️ *Anti Delete*\n\n` +
+                            `Global: ${
+                                enabled
+                                    ? '✅ Enabled'
+                                    : '❌ Disabled'
+                            }`
+                    },
+                    { quoted: msg }
+                );
+            }
+
+            cfg.chats = cfg.chats || {};
+
+            if (!enabled) {
+                delete cfg.chats[jid];
+            } else {
+                cfg.chats[jid] = {
+                    enabled: true,
+                    mode:
+                        option === 'chat'
+                            ? 'chat'
+                            : 'owner'
+                };
+            }
+
+            set(
+                'antidelete',
+                cfg
+            );
+
+            const current =
+                getChatConfig(
+                    cfg,
+                    jid
+                );
+
+            return sock.sendMessage(
+                jid,
+                {
+                    text:
+                        `🗑️ *Anti Delete*\n\n` +
+                        `Status: ${
+                            enabled
+                                ? '✅ Enabled'
+                                : '❌ Disabled'
+                        }` +
+                        (
+                            enabled
+                                ? `\nMode: ${current?.mode || 'owner'}`
+                                : ''
+                        )
+                },
+                { quoted: msg }
+            );
+        }
+
+        if (
+            action === 'mode' &&
+            (
+                option === 'chat' ||
+                option === 'owner'
+            )
+        ) {
+            cfg.chats = cfg.chats || {};
+
+            const current =
+                getChatConfig(
+                    cfg,
+                    jid
+                ) || {
+                    enabled: false
+                };
+
+            cfg.chats[jid] = {
+                ...current,
+                enabled: true,
+                mode: option
+            };
+
+            set(
+                'antidelete',
+                cfg
+            );
+
+            return sock.sendMessage(
+                jid,
+                {
+                    text:
+                        `🗑️ *Anti Delete*\n\n` +
+                        `Mode: *${option}*\n` +
+                        (
+                            option === 'chat'
+                                ? 'Deleted messages will be recovered in this chat.'
+                                : 'Deleted messages will be forwarded to the owner.'
+                        )
+                },
+                { quoted: msg }
+            );
+        }
+
+        return sock.sendMessage(
+            jid,
+            {
+                text:
+                    `🗑️ *Anti Delete*\n\n` +
+                    `Use:\n` +
+                    `${prefix}antidelete on\n` +
+                    `${prefix}antidelete off\n` +
+                    `${prefix}antidelete on chat\n` +
+                    `${prefix}antidelete on owner\n` +
+                    `${prefix}antidelete mode chat\n` +
+                    `${prefix}antidelete mode owner`
+            },
+            { quoted: msg }
+        );
+    }
 };
