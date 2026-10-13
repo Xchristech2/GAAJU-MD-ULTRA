@@ -172,6 +172,7 @@ function addForcedCommands(cat, cmdNames) {
             'tovv',
             'blur',
             'unblur',
+            'rotate',
             'hosting',
             'checkbotname'
         ].forEach(command =>
