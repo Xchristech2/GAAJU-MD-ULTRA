@@ -1,189 +1,272 @@
 'use strict';
 
-const https = require('https');
+const axios = require('axios');
+const moment = require('moment-timezone');
 const fs = require('fs');
 const path = require('path');
 const { getBotName } = require('../../lib/botname');
 
-const OWN_REPO = 'Xchristech2/GAAJU-MD-ULTRA';
+let giftedBtns;
+try {
+    giftedBtns = require('wolfbtns');
+} catch {}
+
+const REPO_OWNER = 'Xchristech2';
+const REPO_NAME = 'GAAJU-MD-ULTRA';
+
+const REPO_URL =
+    'https://github.com/Xchristech2/GAAJU-MD-ULTRA';
+
+const REPO_ZIP =
+    'https://github.com/Xchristech2/GAAJU-MD-ULTRA/archive/refs/heads/main.zip';
+
 const OWNER_NUMBER = '2348069675806';
 
-const REPO_SITE = `https://github.com/${OWN_REPO}`;
-const FORK_SITE = `${REPO_SITE}/fork`;
-const ZIP_SITE = `${REPO_SITE}/archive/refs/heads/main.zip`;
-const OWNER_SITE = `https://wa.me/${OWNER_NUMBER}`;
+const DEFAULT_IMAGE_URL =
+    'https://i.ibb.co/Gvkt4q9d/Chat-GPT-Image-Feb-21-2026-12-47-33-AM.png';
 
-const MENU_IMAGE = path.resolve(
-    __dirname,
-    '../../../assets/menu-image.jpg'
-);
+function getRepoImage() {
+    const imagePaths = [
+        path.join(__dirname, '../../../assets/menu-image.jpg'),
+        path.join(__dirname, '../../../assets/menu-image.png'),
+        path.join(__dirname, '../media/wolfbot.jpg'),
+        path.join(__dirname, '../media/wolfbot.png')
+    ];
 
-function ghGet(apiPath) {
-    return new Promise((resolve, reject) => {
-        const req = https.get({
-            hostname: 'api.github.com',
-            path: apiPath,
-            headers: {
-                'User-Agent': 'GAAJU-MD-ULTRA',
-                'Accept': 'application/vnd.github+json'
-            },
-            timeout: 10000
-        }, res => {
-            let data = '';
-
-            res.on('data', chunk => data += chunk);
-
-            res.on('end', () => {
-                try {
-                    const json = JSON.parse(data);
-
-                    if (res.statusCode < 200 || res.statusCode >= 300) {
-                        return reject(
-                            new Error(json.message || 'GitHub API request failed')
-                        );
-                    }
-
-                    resolve(json);
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        });
-
-        req.on('timeout', () => {
-            req.destroy(new Error('GitHub request timed out'));
-        });
-
-        req.on('error', reject);
-    });
-}
-
-function parseRepo(input) {
-    if (!input) return OWN_REPO;
-
-    input = String(input)
-        .replace(/^https?:\/\/(www\.)?github\.com\//i, '')
-        .replace(/\/+$/, '')
-        .replace(/^@/, '');
-
-    const parts = input.split('/');
-
-    if (parts.length >= 2) {
-        return `${parts[0]}/${parts[1].replace(/\.git$/i, '')}`;
+    for (const file of imagePaths) {
+        if (fs.existsSync(file)) {
+            try {
+                return {
+                    type: 'buffer',
+                    data: fs.readFileSync(file)
+                };
+            } catch {}
+        }
     }
 
-    return OWN_REPO;
+    return {
+        type: 'url',
+        data: DEFAULT_IMAGE_URL
+    };
 }
 
-function num(value) {
-    return Number(value || 0).toLocaleString('en-US');
+function formatSize(sizeKB) {
+    const size = Number(sizeKB || 0);
+
+    if (size >= 1024) {
+        return `${(size / 1024).toFixed(2)} MB`;
+    }
+
+    return `${size} KB`;
 }
 
-function formatSize(kb) {
-    if (kb < 1024) return `${num(kb)} KB`;
-    return `${(kb / 1024).toFixed(2)} MB`;
+function createFakeContact(msg) {
+    const number =
+        msg.key.participant?.split('@')[0] ||
+        msg.key.remoteJid?.split('@')[0] ||
+        OWNER_NUMBER;
+
+    return {
+        key: {
+            participants: '0@s.whatsapp.net',
+            remoteJid: 'status@broadcast',
+            fromMe: false,
+            id: getBotName()
+        },
+        message: {
+            contactMessage: {
+                vcard:
+                    `BEGIN:VCARD\n` +
+                    `VERSION:3.0\n` +
+                    `N:Bot;${getBotName()};;;\n` +
+                    `FN:${getBotName()}\n` +
+                    `item1.TEL;waid=${number}:${number}\n` +
+                    `item1.X-ABLabel:WhatsApp\n` +
+                    `END:VCARD`
+            }
+        },
+        participant: '0@s.whatsapp.net'
+    };
 }
 
-function trunc(value, max = 100) {
-    if (!value) return 'No description available.';
+async function sendRepoCard(sock, jid, caption, imagePayload, msg) {
+    const fkontak = createFakeContact(msg);
 
-    const text = String(value).replace(/\s+/g, ' ').trim();
+    if (giftedBtns?.sendInteractiveMessage) {
+        try {
+            await giftedBtns.sendInteractiveMessage(
+                sock,
+                jid,
+                {
+                    text: caption,
 
-    return text.length > max
-        ? `${text.slice(0, max - 3)}...`
-        : text;
+                    footer: `⚡ ${getBotName()}`,
+
+                    interactiveButtons: [
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '⭐ Star Repo',
+                                url: `${REPO_URL}/stargazers`
+                            })
+                        },
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '🍴 Fork Repo',
+                                url: `${REPO_URL}/fork`
+                            })
+                        },
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '📦 Download ZIP',
+                                url: REPO_ZIP
+                            })
+                        },
+                        {
+                            name: 'cta_copy',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '📋 Copy Owner',
+                                copy_code: `+${OWNER_NUMBER}`
+                            })
+                        },
+                        {
+                            name: 'cta_url',
+                            buttonParamsJson: JSON.stringify({
+                                display_text: '💬 Message Owner',
+                                url: `https://wa.me/${OWNER_NUMBER}`
+                            })
+                        }
+                    ],
+
+                    ...(imagePayload.image
+                        ? { image: imagePayload.image }
+                        : {})
+                },
+                {
+                    quoted: fkontak
+                }
+            );
+
+            return;
+        } catch (error) {
+            console.error('Repo button error:', error);
+        }
+    }
+
+    await sock.sendMessage(
+        jid,
+        {
+            ...imagePayload,
+            caption
+        },
+        {
+            quoted: msg
+        }
+    );
 }
 
 module.exports = {
     name: 'repo',
 
-    aliases: ['botrepo', 'repository', 'gitinfo', 'repostats'],
+    aliases: [
+        'r',
+        'sc',
+        'source',
+        'github',
+        'git',
+        'botrepo',
+        'repository',
+        'repostats'
+    ],
 
-    description: 'Display GitHub repository information',
+    description: 'Show GAAJU-MD-ULTRA GitHub repository information',
 
     category: 'owner',
 
-    async execute(sock, msg, args) {
+    async execute(sock, msg, args, cmdName, prefix) {
         const jid = msg.key.remoteJid;
 
         try {
-            const repo = parseRepo(args?.[0]);
-            const data = await ghGet(`/repos/${repo}`);
+            const image = getRepoImage();
 
-            const repository = data.full_name || repo;
-            const repoUrl = data.html_url || `https://github.com/${repository}`;
-            const forkUrl = `${repoUrl}/fork`;
-            const zipUrl = `${repoUrl}/archive/refs/heads/${data.default_branch || 'main'}.zip`;
-            const ownerUrl = `https://wa.me/${OWNER_NUMBER}`;
+            const imagePayload =
+                image.type === 'buffer'
+                    ? { image: image.data }
+                    : { image: { url: image.data } };
 
-            const text = `╭━━━〔 📦 *REPOSITORY* 〕
-┃
-┃ ▸ *Name:* ${repository}
-┃ ▸ ⭐ *Stars:* ${num(data.stargazers_count)}
-┃ ▸ 🍴 *Forks:* ${num(data.forks_count)}
-┃ ▸ ❗ *Open Issues:* ${num(data.open_issues_count)}
-┃ ▸ 📁 *Repo Size:* ${formatSize(data.size || 0)}
-┃ ▸ 💻 *Language:* ${data.language || 'Unknown'}
-┃
-┃ 🔗 *Fork Link:*
-┃ ${forkUrl}
-┃
-╰━━━━━━━━━━━━━━
+            const { data } = await axios.get(
+                `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`,
+                {
+                    timeout: 10000,
+                    headers: {
+                        'User-Agent': 'GAAJU-MD-ULTRA',
+                        Accept: 'application/vnd.github+json'
+                    }
+                }
+            );
+
+            const size = formatSize(data.size);
+
+            const updated = data.updated_at
+                ? moment(data.updated_at).format('DD/MM/YYYY HH:mm:ss')
+                : 'Unknown';
+
+            const caption =
+`📦 *GAAJU-MD-ULTRA*
+
+👤 *Owner:* ${data.owner?.login || REPO_OWNER}
+⭐ *Stars:* ${data.stargazers_count || 0}
+🍴 *Forks:* ${data.forks_count || 0}
+👁️ *Watchers:* ${data.watchers_count || 0}
+🐞 *Open Issues:* ${data.open_issues_count || 0}
+💾 *Size:* ${size}
+🌿 *Branch:* ${data.default_branch || 'main'}
+🕒 *Updated:* ${updated}
+
+📝 *Description:*
+${data.description || 'A powerful WhatsApp multi-device bot.'}
+
+🔗 *Fork Link:*
+${REPO_URL}/fork
 
 > Powered by ᴄʜʀɪꜱ ɢᴀᴀᴊᴜ`;
 
-            const buttons = [
-                {
-                    name: 'cta_url',
-                    buttonParamsJson: JSON.stringify({
-                        display_text: '⭐ STAR REPO',
-                        url: repoUrl
-                    })
-                },
-                {
-                    name: 'cta_url',
-                    buttonParamsJson: JSON.stringify({
-                        display_text: '🍴 FORK REPO',
-                        url: forkUrl
-                    })
-                },
-                {
-                    name: 'cta_url',
-                    buttonParamsJson: JSON.stringify({
-                        display_text: '📦 DOWNLOAD ZIP',
-                        url: zipUrl
-                    })
-                },
-                {
-                    name: 'cta_url',
-                    buttonParamsJson: JSON.stringify({
-                        display_text: '👑 OWNER',
-                        url: ownerUrl
-                    })
-                }
-            ];
-
-            const message = {
-                text,
-                footer: 'GAAJU-MD-ULTRA',
-                interactiveButtons: buttons
-            };
-
-            if (fs.existsSync(MENU_IMAGE)) {
-                message.image = fs.readFileSync(MENU_IMAGE);
-            }
-
-            await sock.sendMessage(jid, message, { quoted: msg });
-
-        } catch (error) {
-            console.error('Repo command error:', error);
+            await sendRepoCard(
+                sock,
+                jid,
+                caption,
+                imagePayload,
+                msg
+            );
 
             await sock.sendMessage(
                 jid,
                 {
-                    text: '❌ *Failed to fetch repository information.*\nPlease try again later.'
+                    react: {
+                        text: '⭐',
+                        key: msg.key
+                    }
+                }
+            );
+
+        } catch (error) {
+            console.error('❌ Repo command error:', error);
+
+            await sock.sendMessage(
+                jid,
+                {
+                    text:
+`❌ *Failed to fetch repository information.*
+
+🔗 ${REPO_URL}
+
+📦 ${REPO_ZIP}`
                 },
-                { quoted: msg }
+                {
+                    quoted: msg
+                }
             );
         }
     }
