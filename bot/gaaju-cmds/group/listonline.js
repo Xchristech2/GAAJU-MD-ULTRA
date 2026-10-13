@@ -1,297 +1,280 @@
 'use strict';
 
-const { getBotName } = require('../../lib/botname');
-
-const presenceCache = new Map();
-
-let presenceListenerInstalled = false;
-
-function installPresenceListener(sock) {
-    if (presenceListenerInstalled) return;
-
-    if (!sock?.ev?.on) return;
-
-    presenceListenerInstalled = true;
-
-    sock.ev.on('presence.update', update => {
-        try {
-            const groupId = update?.id;
-
-            if (
-                !groupId ||
-                !groupId.endsWith('@g.us')
-            ) {
-                return;
-            }
-
-            if (!presenceCache.has(groupId)) {
-                presenceCache.set(
-                    groupId,
-                    new Map()
-                );
-            }
-
-            const groupPresence =
-                presenceCache.get(groupId);
-
-            const presences =
-                update.presences || {};
-
-            for (const [jid, data] of Object.entries(presences)) {
-
-                if (!jid || !data) continue;
-
-                const status =
-                    data.lastKnownPresence ||
-                    data.presence ||
-                    'unavailable';
-
-                if (
-                    status === 'available' ||
-                    status === 'composing' ||
-                    status === 'recording'
-                ) {
-                    groupPresence.set(jid, {
-                        status,
-                        time: Date.now()
-                    });
-                } else {
-                    groupPresence.delete(jid);
-                }
-            }
-
-        } catch (error) {
-            console.log(
-                '[LISTONLINE PRESENCE]',
-                error?.message || error
-            );
-        }
-    });
-}
-
-function cleanJid(jid) {
-    return String(jid || '')
-        .split('@')[0]
-        .split(':')[0];
-}
-
 module.exports = {
     name: 'listonline',
 
     aliases: [
-        'online',
-        'onlineusers',
-        'onlinelist'
+        'whoonline',
+        'onlinelist',
+        'activeusers'
     ],
 
-    description:
-        'Show members currently known as online',
+    description: 'Detect online/active members in a group',
 
     category: 'group',
 
-    async execute(
-        sock,
-        msg,
-        args,
-        prefix,
-        ctx
-    ) {
+    async execute(sock, msg, args, cmdName, prefix) {
+        const jid = msg.key.remoteJid;
 
-        const chatId =
-            msg?.key?.remoteJid;
-
-        const botName =
-            getBotName();
-
-        /*
-         * START PRESENCE LISTENER
-         */
-        installPresenceListener(sock);
-
-        /*
-         * GROUP ONLY
-         */
-        if (
-            !chatId ||
-            !chatId.endsWith('@g.us')
-        ) {
-
+        if (!jid?.endsWith('@g.us')) {
             return await sock.sendMessage(
-                chatId,
-                {
-                    text:
-                        `┏━━❐ 👥 GROUP ❐\n` +
-                        `┃✦ Status: ❌ Group only\n` +
-                        `┃✦ Command: ${prefix || '.'}listonline\n` +
-                        `┗━━❐`
-                },
-                {
-                    quoted: msg
-                }
+                jid,
+                { text: '❌ Group only.' },
+                { quoted: msg }
             );
         }
 
-        /*
-         * REACTION
-         */
         try {
-            await sock.sendMessage(
-                chatId,
-                {
-                    react: {
-                        text: '🟢',
-                        key: msg.key
-                    }
+            await sock.sendMessage(jid, {
+                react: {
+                    text: '⏳',
+                    key: msg.key
                 }
-            );
+            });
         } catch {}
 
         try {
+            const group = await sock.groupMetadata(jid);
+            const groupName = group.subject || 'Group';
 
-            /*
-             * GET GROUP DATA
-             */
-            const metadata =
-                await sock.groupMetadata(
-                    chatId
-                );
+            const botJid =
+                sock.user?.id?.split(':')[0] +
+                '@s.whatsapp.net';
 
-            const participants =
-                metadata?.participants || [];
+            const presenceResults = new Map();
+            const scanDuration = 10000;
 
-            /*
-             * GET PRESENCE
-             */
-            const groupPresence =
-                presenceCache.get(chatId) ||
-                new Map();
+            const presenceHandler = json => {
+                if (!json || json.id !== jid) return;
+                if (!json.presences) return;
 
-            /*
-             * FIND ONLINE MEMBERS
-             */
-            const onlineMembers = [];
+                for (const [participantJid, data] of Object.entries(
+                    json.presences
+                )) {
+                    if (
+                        data?.lastKnownPresence &&
+                        participantJid !== botJid
+                    ) {
+                        presenceResults.set(participantJid, {
+                            presence: data.lastKnownPresence,
+                            timestamp: Date.now()
+                        });
+                    }
+                }
+            };
+
+            sock.ev.on(
+                'presence.update',
+                presenceHandler
+            );
+
+            try {
+                await sock.presenceSubscribe(jid);
+            } catch {}
+
+            const members = group.participants.filter(
+                member => member.id !== botJid
+            );
+
+            const batchSize = 30;
 
             for (
-                const participant
-                of participants
+                let i = 0;
+                i < Math.min(members.length, 100);
+                i += batchSize
             ) {
+                const batch = members.slice(
+                    i,
+                    i + batchSize
+                );
 
-                const jid =
-                    participant?.id;
+                await Promise.allSettled(
+                    batch.map(member =>
+                        sock
+                            .presenceSubscribe(member.id)
+                            .catch(() => {})
+                    )
+                );
 
-                if (!jid) continue;
+                await new Promise(resolve =>
+                    setTimeout(resolve, 500)
+                );
+            }
 
-                if (
-                    groupPresence.has(jid)
-                ) {
-                    onlineMembers.push(jid);
+            await new Promise(resolve =>
+                setTimeout(resolve, scanDuration)
+            );
+
+            sock.ev.off(
+                'presence.update',
+                presenceHandler
+            );
+
+            const onlineMembers = [];
+            const typingMembers = [];
+            const recordingMembers = [];
+
+            for (const [participantId, data] of presenceResults) {
+                const normalized = participantId
+                    .split(':')[0]
+                    .split('@')[0];
+
+                const participant =
+                    group.participants.find(member =>
+                        member.id
+                            .split(':')[0]
+                            .split('@')[0] === normalized
+                    );
+
+                const memberInfo = {
+                    id: participant?.id || participantId,
+                    phone: normalized,
+                    isAdmin: !!participant?.admin,
+                    presence: data.presence
+                };
+
+                if (data.presence === 'available') {
+                    onlineMembers.push(memberInfo);
+                } else if (data.presence === 'composing') {
+                    typingMembers.push(memberInfo);
+                } else if (data.presence === 'recording') {
+                    recordingMembers.push(memberInfo);
                 }
             }
 
-            /*
-             * REMOVE DUPLICATES
-             */
-            const uniqueMembers = [
-                ...new Set(
-                    onlineMembers
-                )
+            const allActive = [
+                ...onlineMembers,
+                ...typingMembers,
+                ...recordingMembers
             ];
 
-            /*
-             * BUILD YOUR MENU STYLE
-             */
-            const lines = [];
+            if (allActive.length === 0) {
+                await sock.sendMessage(
+                    jid,
+                    {
+                        text:
+`🔍 *ONLINE SCAN*
 
-            lines.push(
-                `┏━━❐ 👥 GROUP ❐`
-            );
+📌 Group: ${groupName}
 
-            lines.push(
-                `┃✦ 🟢 Online Members: ${uniqueMembers.length}`
-            );
+😴 No online members detected.
 
-            lines.push(
-                `┃✦ Group: ${metadata.subject || 'Unknown'}`
-            );
+👥 Scanned: ${members.length} members
+⏱️ Duration: ${scanDuration / 1000}s
 
-            lines.push(
-                `┃`
-            );
-
-            /*
-             * NO ONLINE MEMBERS
-             */
-            if (
-                uniqueMembers.length === 0
-            ) {
-
-                lines.push(
-                    `┃✦ No online members detected`
+💡 Some members may have privacy settings that hide their presence.`
+                    },
+                    { quoted: msg }
                 );
 
-                lines.push(
-                    `┃✦ WhatsApp presence is not available`
-                );
+                try {
+                    await sock.sendMessage(jid, {
+                        react: {
+                            text: '😴',
+                            key: msg.key
+                        }
+                    });
+                } catch {}
 
-            } else {
-
-                /*
-                 * LIST MEMBERS
-                 */
-                uniqueMembers.forEach(
-                    (jid, index) => {
-
-                        const number =
-                            cleanJid(jid);
-
-                        lines.push(
-                            `┃✦ ${index + 1}. @${number}`
-                        );
-                    }
-                );
+                return;
             }
 
-            lines.push(
-                `┗━━❐`
+            let message =
+`🔍 *ONLINE SCAN*
+
+📌 Group: ${groupName}
+
+👥 Active: ${allActive.length}/${members.length}
+
+`;
+
+            if (onlineMembers.length > 0) {
+                message += `🟢 *ONLINE*\n`;
+
+                onlineMembers.forEach(member => {
+                    const icon = member.isAdmin
+                        ? '👑'
+                        : '👤';
+
+                    message += `${icon} @${member.phone}\n`;
+                });
+
+                message += '\n';
+            }
+
+            if (typingMembers.length > 0) {
+                message += `⌨️ *TYPING*\n`;
+
+                typingMembers.forEach(member => {
+                    const icon = member.isAdmin
+                        ? '👑'
+                        : '👤';
+
+                    message += `${icon} @${member.phone}\n`;
+                });
+
+                message += '\n';
+            }
+
+            if (recordingMembers.length > 0) {
+                message += `🎙️ *RECORDING*\n`;
+
+                recordingMembers.forEach(member => {
+                    const icon = member.isAdmin
+                        ? '👑'
+                        : '👤';
+
+                    message += `${icon} @${member.phone}\n`;
+                });
+            }
+
+            const mentions = allActive.map(
+                member => member.id
             );
 
-            /*
-             * SEND
-             */
             await sock.sendMessage(
-                chatId,
+                jid,
                 {
-                    text:
-                        lines.join('\n'),
-
-                    mentions:
-                        uniqueMembers
+                    text: message.trim(),
+                    mentions
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
+
+            try {
+                await sock.sendMessage(jid, {
+                    react: {
+                        text: '✅',
+                        key: msg.key
+                    }
+                });
+            } catch {}
 
         } catch (error) {
-
             console.error(
-                '[LISTONLINE ERROR]',
+                'ListOnline error:',
                 error
             );
 
             await sock.sendMessage(
-                chatId,
+                jid,
                 {
                     text:
-                        `┏━━❐ 👥 GROUP ❐\n` +
-                        `┃✦ Status: ❌ Failed\n` +
-                        `┃✦ Reason: ${error?.message || error}\n` +
-                        `┗━━❐`
+`❌ *Online scan failed.*
+
+${error.message || 'Unknown error'}`
                 },
-                {
-                    quoted: msg
-                }
+                { quoted: msg }
             );
+
+            try {
+                await sock.sendMessage(jid, {
+                    react: {
+                        text: '❌',
+                        key: msg.key
+                    }
+                });
+            } catch {}
         }
     }
 };
