@@ -1,6 +1,5 @@
 'use strict';
 
-const { getBotName } = require("../../lib/botname");
 const { getTarget, resolveDisplay } = require("../../lib/groupUtils");
 const { dlBuffer } = require("../../lib/keithapi");
 
@@ -34,24 +33,29 @@ module.exports = {
 
         const display = await resolveDisplay(sock, chatId, target).catch(() => null);
         const user = display || target.split("@")[0].split(":")[0];
+        const username = user.startsWith("+") ? user : `+${user}`;
 
         try {
             const url = await sock.profilePictureUrl(target, "image");
             const buffer = await dlBuffer(url);
 
-            await sock.sendMessage(chatId, {
-                image: buffer,
-                caption: `\`\`\`ⓘ Profile Picture\nUser: ${user.startsWith("+") ? user : "+" + user}\`\`\``
-            }, {
-                quoted: msg
-            });
+            await sock.sendMessage(
+                chatId,
+                {
+                    image: buffer,
+                    caption: `📸 *Profile Picture*\n👤 User: ${username}`
+                },
+                { quoted: msg }
+            );
 
         } catch {
-            await sock.sendMessage(chatId, {
-                text: `\`\`\`❌ No profile picture found.\nUser: ${user.startsWith("+") ? user : "+" + user}\`\`\``
-            }, {
-                quoted: msg
-            });
+            await sock.sendMessage(
+                chatId,
+                {
+                    text: `❌ No profile picture found for ${username}.`
+                },
+                { quoted: msg }
+            );
         }
     }
 };
