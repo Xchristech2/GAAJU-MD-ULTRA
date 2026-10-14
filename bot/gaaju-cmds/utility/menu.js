@@ -202,7 +202,12 @@ function addForcedCommands(cat, cmdNames) {
     }
 
     if (cat === 'download') {
-        addCommandOnce(cmdNames, 'video');
+        [
+            'video',
+            'play'
+        ].forEach(command =>
+            addCommandOnce(cmdNames, command)
+        );
     }
 
     if (cat === 'games') {
